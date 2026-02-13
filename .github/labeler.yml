@@ -1,0 +1,58 @@
+# Auto-label PRs based on changed files
+
+'documentation':
+  - changed-files:
+    - any-glob-to-any-file: 'docs/**/*'
+    - any-glob-to-any-file: '*.md'
+
+'gradle':
+  - changed-files:
+    - any-glob-to-any-file: '**/*.gradle*'
+    - any-glob-to-any-file: 'gradle/**/*'
+
+'dependencies':
+  - changed-files:
+    - any-glob-to-any-file: 'gradle/libs.versions.toml'
+
+'feature: habits':
+  - changed-files:
+    - any-glob-to-any-file: 'feature/habits/**/*'
+
+'feature: tasks':
+  - changed-files:
+    - any-glob-to-any-file: 'feature/tasks/**/*'
+
+'feature: routines':
+  - changed-files:
+    - any-glob-to-any-file: 'feature/routines/**/*'
+
+'feature: pomodoro':
+  - changed-files:
+    - any-glob-to-any-file: 'feature/pomodoro/**/*'
+
+'domain':
+  - changed-files:
+    - any-glob-to-any-file: 'domain/**/*'
+
+'data':
+  - changed-files:
+    - any-glob-to-any-file: 'data/**/*'
+
+'ui':
+  - changed-files:
+    - any-glob-to-any-file: 'core/ui/**/*'
+
+'testing':
+  - changed-files:
+    - any-glob-to-any-file: '**/src/test/**/*'
+    - any-glob-to-any-file: '**/src/androidTest/**/*'
+    - any-glob-to-any-file: 'core/testing/**/*'
+
+'ci/cd':
+  - changed-files:
+    - any-glob-to-any-file: '.github/**/*'
+
+'security':
+  - changed-files:
+    - any-glob-to-any-file: '**/proguard-rules.pro'
+    - any-glob-to-any-file: 'app/src/main/java/**/security/**/*'
