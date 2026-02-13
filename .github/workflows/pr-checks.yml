@@ -1,0 +1,165 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # ============================================================================
+  # PR Title and Description Validation
+  # ============================================================================
+  pr-validation:
+    name: Validate PR
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check PR Title Format
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Require conventional commit format: feat:, fix:, docs:, etc.
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            chore
+            ci
+            build
+          requireScope: false
+          subjectPattern: ^[A-Z].+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            didn't match the configured pattern. Please ensure that the subject
+            starts with an uppercase character.
+      
+      - name: Check PR has Description
+        if: github.event.pull_request.body == ''
+        run: |
+          echo "::error::Pull request must have a description"
+          exit 1
+      
+      - name: Check PR Size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const additions = pr.additions;
+            const deletions = pr.deletions;
+            const total = additions + deletions;
+            
+            // Warn if PR is very large (>800 lines changed)
+            if (total > 800) {
+              core.warning(`This PR is quite large (${total} lines changed). Consider breaking it into smaller PRs.`);
+            }
+            
+            // Fail if PR is extremely large (>1500 lines changed)
+            if (total > 1500) {
+              core.setFailed(`This PR is too large (${total} lines changed). Please break it into smaller, reviewable PRs.`);
+            }
+
+  # ============================================================================
+  # Check for TODO/FIXME Comments
+  # ============================================================================
+  code-hygiene:
+    name: Code Hygiene Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check for TODOs in Changed Files
+        run: |
+          # Get list of changed .kt files
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.kt$' || true)
+          
+          if [ -n "$CHANGED_FILES" ]; then
+            TODO_COUNT=$(echo "$CHANGED_FILES" | xargs grep -n "TODO" || true | wc -l)
+            FIXME_COUNT=$(echo "$CHANGED_FILES" | xargs grep -n "FIXME" || true | wc -l)
+            
+            if [ $TODO_COUNT -gt 0 ]; then
+              echo "::warning::Found $TODO_COUNT TODO comments in changed files"
+              echo "$CHANGED_FILES" | xargs grep -n "TODO" || true
+            fi
+            
+            if [ $FIXME_COUNT -gt 0 ]; then
+              echo "::error::Found $FIXME_COUNT FIXME comments in changed files. Please resolve before merging."
+              echo "$CHANGED_FILES" | xargs grep -n "FIXME" || true
+              exit 1
+            fi
+          fi
+
+  # ============================================================================
+  # Ensure Tests are Included
+  # ============================================================================
+  test-coverage-check:
+    name: Test Coverage Requirement
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check Test Files Added
+        run: |
+          # Get changed files
+          SRC_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'src/main/.*\.kt$' || true)
+          TEST_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep 'src/test/.*\.kt$' || true)
+          
+          SRC_COUNT=$(echo "$SRC_FILES" | grep -c '' || echo 0)
+          TEST_COUNT=$(echo "$TEST_FILES" | grep -c '' || echo 0)
+          
+          if [ $SRC_COUNT -gt 0 ] && [ $TEST_COUNT -eq 0 ]; then
+            echo "::warning::Source files changed but no test files added. Consider adding tests."
+          fi
+          
+          echo "::notice::Source files changed: $SRC_COUNT"
+          echo "::notice::Test files changed: $TEST_COUNT"
+
+  # ============================================================================
+  # Conflict Check
+  # ============================================================================
+  conflict-check:
+    name: Check for Merge Conflicts
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check for Conflict Markers
+        run: |
+          if git grep -n '<<<<<<< HEAD' -- '*.kt' '*.xml' '*.gradle*'; then
+            echo "::error::Conflict markers found. Please resolve merge conflicts."
+            exit 1
+          fi
+
+  # ============================================================================
+  # Label Management
+  # ============================================================================
+  auto-label:
+    name: Auto Label PR
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Label PR by Changed Files
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
