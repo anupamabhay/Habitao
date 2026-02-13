@@ -1,0 +1,1 @@
+# Alarms module ProGuard rules
