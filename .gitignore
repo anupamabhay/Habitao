@@ -140,3 +140,4 @@ androidTest-results/
 secrets/
 .env
 .env.local
+/%TEMP%
