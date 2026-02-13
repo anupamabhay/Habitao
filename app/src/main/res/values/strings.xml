@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Habitao</string>
+
+    <string name="permission_notifications_rationale">Habitao needs notifications to remind you about habits and tasks.</string>
+    <string name="permission_exact_alarm_rationale">Habitao needs precise alarms for scheduled reminders.</string>
+    <string name="permission_foreground_service_rationale">Habitao uses a foreground service for accurate timers.</string>
+    <string name="permission_boot_rationale">Habitao restores reminders after device restart.</string>
+</resources>
