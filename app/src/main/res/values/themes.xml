@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Habitao" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Placeholder theme values (to be replaced with MD3 tokens) -->
+    </style>
+
+    <style name="Theme.Habitao.Splash" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Placeholder splash theme; customize later -->
+    </style>
+</resources>
