@@ -115,6 +115,7 @@ dependencies {
     // Compose
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
+    implementation(libs.compose.material3)
     debugImplementation(libs.bundles.compose.debug)
 
     // Navigation
