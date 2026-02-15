@@ -27,9 +27,6 @@ plugins {
     // Code Quality
     alias(libs.plugins.detekt)
     alias(libs.plugins.ktlint)
-    
-    // Testing
-    alias(libs.plugins.junit5.android) apply false
 }
 
 // Configure Detekt for code quality
