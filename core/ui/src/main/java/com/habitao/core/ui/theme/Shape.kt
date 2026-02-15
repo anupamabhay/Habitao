@@ -26,9 +26,7 @@ val Shapes = Shapes(
 
 // Expressive shapes for Material Design 3
 // Can be used for special components like FABs or hero cards
-val ExpressiveShapes = ExpressiveShapes()
-
-class ExpressiveShapes {
+object ExpressiveShapes {
     // Hero card shapes - larger radii for emphasis
     val heroCard = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
     

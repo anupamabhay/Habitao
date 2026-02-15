@@ -21,7 +21,7 @@ import com.habitao.data.local.entity.HabitLogEntity
         // TODO: Add TaskEntity, PomodoroSessionEntity
     ],
     version = 1,
-    exportSchema = true
+    exportSchema = false
 )
 abstract class HabitaoDatabase : RoomDatabase() {
     
