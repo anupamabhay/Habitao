@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
-    alias(libs.plugins.junit5.android)
 }
 
 android {
@@ -20,7 +19,6 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArguments["runnerBuilder"] = "de.mannodermaus.junit5.AndroidJUnit5Builder"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -146,5 +144,4 @@ dependencies {
     androidTestImplementation(libs.bundles.testing.android)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test.junit4)
-    androidTestRuntimeOnly(libs.junit5.android.runner)
 }
