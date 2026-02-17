@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalTime
 import javax.inject.Inject
 
 /**
@@ -37,6 +38,10 @@ data class CreateHabitState(
     // Checklist items (for CHECKLIST habit type)
     val checklistItems: List<String> = emptyList(),
     val newChecklistItem: String = "",
+
+    // Reminder settings
+    val reminderEnabled: Boolean = false,
+    val reminderTime: LocalTime? = null,
 
     // Validation errors
     val titleError: String? = null,
@@ -66,6 +71,8 @@ sealed class CreateHabitIntent {
     data class UpdateNewChecklistItem(val text: String) : CreateHabitIntent()
     data object AddChecklistItem : CreateHabitIntent()
     data class RemoveChecklistItem(val index: Int) : CreateHabitIntent()
+    data class UpdateReminderEnabled(val enabled: Boolean) : CreateHabitIntent()
+    data class UpdateReminderTime(val time: LocalTime) : CreateHabitIntent()
     data object SaveHabit : CreateHabitIntent()
     data object ClearError : CreateHabitIntent()
     data object ResetForm : CreateHabitIntent()
@@ -93,6 +100,8 @@ class CreateHabitViewModel @Inject constructor(
             is CreateHabitIntent.UpdateNewChecklistItem -> updateNewChecklistItem(intent.text)
             is CreateHabitIntent.AddChecklistItem -> addChecklistItem()
             is CreateHabitIntent.RemoveChecklistItem -> removeChecklistItem(intent.index)
+            is CreateHabitIntent.UpdateReminderEnabled -> updateReminderEnabled(intent.enabled)
+            is CreateHabitIntent.UpdateReminderTime -> updateReminderTime(intent.time)
             is CreateHabitIntent.SaveHabit -> saveHabit()
             is CreateHabitIntent.ClearError -> clearError()
             is CreateHabitIntent.ResetForm -> resetForm()
@@ -128,7 +137,9 @@ class CreateHabitViewModel @Inject constructor(
                             frequencyType = habit.frequencyType,
                             frequencyValue = habit.frequencyValue.toString(),
                             scheduledDays = habit.scheduledDays,
-                            checklistItems = habit.checklist.map { item -> item.text }
+                            checklistItems = habit.checklist.map { item -> item.text },
+                            reminderEnabled = habit.reminderEnabled,
+                            reminderTime = habit.reminderTime
                         )
                     }
                 }
@@ -224,6 +235,24 @@ class CreateHabitViewModel @Inject constructor(
         }
     }
 
+    private fun updateReminderEnabled(enabled: Boolean) {
+        _state.update {
+            it.copy(
+                reminderEnabled = enabled,
+                // Set default time to 9:00 AM when enabling for the first time
+                reminderTime = if (enabled && it.reminderTime == null) {
+                    LocalTime.of(9, 0)
+                } else {
+                    it.reminderTime
+                }
+            )
+        }
+    }
+
+    private fun updateReminderTime(time: LocalTime) {
+        _state.update { it.copy(reminderTime = time) }
+    }
+
     private fun saveHabit() {
         val currentState = _state.value
 
@@ -269,7 +298,9 @@ class CreateHabitViewModel @Inject constructor(
                 frequencyType = currentState.frequencyType,
                 frequencyValue = currentState.frequencyValue.toIntOrNull() ?: 1,
                 scheduledDays = currentState.scheduledDays,
-                checklist = checklist
+                checklist = checklist,
+                reminderEnabled = currentState.reminderEnabled,
+                reminderTime = currentState.reminderTime
             )
 
             val result = if (currentState.isEditMode) {
