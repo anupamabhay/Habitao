@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.habitao.core.ui.theme.HabitaoTheme
@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             HabitaoTheme {
-                var currentScreen by rememberSaveable { mutableStateOf<Screen>(Screen.HabitsList) }
+                var currentScreen by remember { mutableStateOf<Screen>(Screen.HabitsList) }
 
                 when (val screen = currentScreen) {
                     Screen.HabitsList -> {
