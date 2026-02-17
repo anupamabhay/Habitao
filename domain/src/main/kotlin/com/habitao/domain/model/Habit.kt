@@ -17,34 +17,29 @@ data class Habit(
     val description: String? = null,
     val icon: String? = null,
     val color: String? = null,
-
     // Tracking Configuration
     val habitType: HabitType = HabitType.SIMPLE,
     val targetValue: Int = 1,
     val unit: String? = null,
     val targetOperator: TargetOperator = TargetOperator.AT_LEAST,
     val checklist: List<ChecklistItem> = emptyList(),
-
     // Legacy field for backward compatibility - maps to targetValue
     @Deprecated("Use targetValue instead", ReplaceWith("targetValue"))
     val goalCount: Int = targetValue,
-
     // Scheduling - flexible frequency support
     val frequencyType: FrequencyType = FrequencyType.DAILY,
     val frequencyValue: Int = 1,
     val scheduledDays: Set<DayOfWeek> = emptySet(),
     val startDate: LocalDate = LocalDate.now(),
     val endDate: LocalDate? = null,
-
     // Reminders
     val reminderEnabled: Boolean = false,
     val reminderTime: LocalTime? = null,
-
     // Metadata
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val isArchived: Boolean = false,
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
 ) {
     /**
      * Check if this habit is scheduled for a given date
@@ -71,8 +66,11 @@ data class Habit(
         return when (frequencyType) {
             FrequencyType.DAILY -> "Every day"
             FrequencyType.SPECIFIC_DAYS -> {
-                if (scheduledDays.size == 7) "Every day"
-                else scheduledDays.sorted().joinToString(", ") { it.shortName }
+                if (scheduledDays.size == 7) {
+                    "Every day"
+                } else {
+                    scheduledDays.sorted().joinToString(", ") { it.shortName }
+                }
             }
             FrequencyType.TIMES_PER_WEEK -> "$frequencyValue times per week"
             FrequencyType.EVERY_X_DAYS -> "Every $frequencyValue days"
@@ -99,9 +97,9 @@ data class Habit(
  * Type of habit tracking
  */
 enum class HabitType {
-    SIMPLE,      // Binary yes/no completion
-    MEASURABLE,  // Numeric progress toward target
-    CHECKLIST    // Multiple sub-tasks to complete
+    SIMPLE, // Binary yes/no completion
+    MEASURABLE, // Numeric progress toward target
+    CHECKLIST, // Multiple sub-tasks to complete
 }
 
 /**
@@ -110,17 +108,17 @@ enum class HabitType {
  */
 enum class TargetOperator {
     AT_LEAST,
-    AT_MOST
+    AT_MOST,
 }
 
 /**
  * Scheduling frequency type
  */
 enum class FrequencyType {
-    DAILY,           // Every day
-    SPECIFIC_DAYS,   // Mon, Wed, Fri (uses scheduledDays)
-    TIMES_PER_WEEK,  // 3 times per week (uses frequencyValue)
-    EVERY_X_DAYS     // Every 3 days (uses frequencyValue)
+    DAILY, // Every day
+    SPECIFIC_DAYS, // Mon, Wed, Fri (uses scheduledDays)
+    TIMES_PER_WEEK, // 3 times per week (uses frequencyValue)
+    EVERY_X_DAYS, // Every 3 days (uses frequencyValue)
 }
 
 /**
@@ -133,7 +131,7 @@ enum class DayOfWeek(val shortName: String) {
     THURSDAY("Thu"),
     FRIDAY("Fri"),
     SATURDAY("Sat"),
-    SUNDAY("Sun")
+    SUNDAY("Sun"),
 }
 
 /**
@@ -157,7 +155,7 @@ fun java.time.DayOfWeek.toDomainDay(): DayOfWeek {
 data class ChecklistItem(
     val id: String = UUID.randomUUID().toString(),
     val text: String,
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
 )
 
 /**
@@ -167,12 +165,14 @@ data class ChecklistItem(
 enum class TrackingType {
     COUNT,
     DURATION,
-    BINARY;
+    BINARY,
+    ;
 
-    fun toHabitType(): HabitType = when (this) {
-        COUNT, DURATION -> HabitType.MEASURABLE
-        BINARY -> HabitType.SIMPLE
-    }
+    fun toHabitType(): HabitType =
+        when (this) {
+            COUNT, DURATION -> HabitType.MEASURABLE
+            BINARY -> HabitType.SIMPLE
+        }
 }
 
 /**
@@ -183,14 +183,16 @@ enum class RepeatPattern {
     DAILY,
     WEEKLY,
     CUSTOM,
-    SPECIFIC_DATES;
+    SPECIFIC_DATES,
+    ;
 
-    fun toFrequencyType(): FrequencyType = when (this) {
-        DAILY -> FrequencyType.DAILY
-        WEEKLY -> FrequencyType.SPECIFIC_DAYS
-        CUSTOM -> FrequencyType.EVERY_X_DAYS
-        SPECIFIC_DATES -> FrequencyType.SPECIFIC_DAYS
-    }
+    fun toFrequencyType(): FrequencyType =
+        when (this) {
+            DAILY -> FrequencyType.DAILY
+            WEEKLY -> FrequencyType.SPECIFIC_DAYS
+            CUSTOM -> FrequencyType.EVERY_X_DAYS
+            SPECIFIC_DATES -> FrequencyType.SPECIFIC_DAYS
+        }
 }
 
 /**
@@ -201,19 +203,16 @@ data class HabitLog(
     val id: String = UUID.randomUUID().toString(),
     val habitId: String,
     val date: LocalDate,
-
     // Progress tracking
     val currentValue: Int = 0,
     val targetValue: Int = 1,
     val isCompleted: Boolean = false,
-
     // Checklist progress (for CHECKLIST habits)
     val completedChecklistItems: Set<String> = emptySet(),
-
     // Timestamps
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
-    val completedAt: Long? = null
+    val completedAt: Long? = null,
 ) {
     // Legacy property for backward compatibility
     @Deprecated("Use currentValue instead", ReplaceWith("currentValue"))
@@ -226,11 +225,12 @@ data class HabitLog(
      * Calculate progress as a fraction (0.0 to 1.0)
      */
     val progress: Float
-        get() = if (targetValue > 0) {
-            (currentValue.toFloat() / targetValue).coerceIn(0f, 1f)
-        } else {
-            if (isCompleted) 1f else 0f
-        }
+        get() =
+            if (targetValue > 0) {
+                (currentValue.toFloat() / targetValue).coerceIn(0f, 1f)
+            } else {
+                if (isCompleted) 1f else 0f
+            }
 }
 
 /**
@@ -240,7 +240,7 @@ data class StreakInfo(
     val currentStreak: Int,
     val longestStreak: Int,
     val totalCompletions: Int,
-    val completionRate: Float = 0f  // 0.0 to 1.0
+    val completionRate: Float = 0f, // 0.0 to 1.0
 )
 
 /**
@@ -255,7 +255,7 @@ data class HabitPreset(
     val targetValue: Int = 1,
     val unit: String? = null,
     val frequencyType: FrequencyType = FrequencyType.DAILY,
-    val frequencyValue: Int = 1
+    val frequencyValue: Int = 1,
 )
 
 enum class PresetCategory {
@@ -263,125 +263,121 @@ enum class PresetCategory {
     FITNESS,
     MINDFULNESS,
     PRODUCTIVITY,
-    LEARNING
+    LEARNING,
 }
 
 /**
  * Built-in habit presets
  */
 object HabitPresets {
-    val all = listOf(
-        // Health
-        HabitPreset(
-            title = "Drink Water",
-            description = "Stay hydrated throughout the day",
-            icon = "water_drop",
-            category = PresetCategory.HEALTH,
-            habitType = HabitType.MEASURABLE,
-            targetValue = 8,
-            unit = "glasses"
-        ),
-        HabitPreset(
-            title = "Take Medication",
-            description = "Take daily medication on time",
-            icon = "medication",
-            category = PresetCategory.HEALTH,
-            habitType = HabitType.SIMPLE
-        ),
-        HabitPreset(
-            title = "Sleep 8 Hours",
-            description = "Get enough rest",
-            icon = "bedtime",
-            category = PresetCategory.HEALTH,
-            habitType = HabitType.MEASURABLE,
-            targetValue = 8,
-            unit = "hours"
-        ),
-
-        // Fitness
-        HabitPreset(
-            title = "Workout",
-            description = "Exercise at the gym",
-            icon = "fitness_center",
-            category = PresetCategory.FITNESS,
-            habitType = HabitType.SIMPLE,
-            frequencyType = FrequencyType.TIMES_PER_WEEK,
-            frequencyValue = 3
-        ),
-        HabitPreset(
-            title = "Morning Walk",
-            description = "Start the day with a walk",
-            icon = "directions_walk",
-            category = PresetCategory.FITNESS,
-            habitType = HabitType.SIMPLE
-        ),
-        HabitPreset(
-            title = "Run",
-            description = "Go for a run",
-            icon = "directions_run",
-            category = PresetCategory.FITNESS,
-            habitType = HabitType.MEASURABLE,
-            targetValue = 30,
-            unit = "minutes"
-        ),
-
-        // Mindfulness
-        HabitPreset(
-            title = "Meditation",
-            description = "Practice mindfulness",
-            icon = "self_improvement",
-            category = PresetCategory.MINDFULNESS,
-            habitType = HabitType.MEASURABLE,
-            targetValue = 10,
-            unit = "minutes"
-        ),
-        HabitPreset(
-            title = "Gratitude Journal",
-            description = "Write things you are grateful for",
-            icon = "edit_note",
-            category = PresetCategory.MINDFULNESS,
-            habitType = HabitType.SIMPLE
-        ),
-
-        // Productivity
-        HabitPreset(
-            title = "Deep Work",
-            description = "Focused work without distractions",
-            icon = "psychology",
-            category = PresetCategory.PRODUCTIVITY,
-            habitType = HabitType.MEASURABLE,
-            targetValue = 4,
-            unit = "pomodoros"
-        ),
-        HabitPreset(
-            title = "No Social Media",
-            description = "Limit social media usage",
-            icon = "phonelink_off",
-            category = PresetCategory.PRODUCTIVITY,
-            habitType = HabitType.SIMPLE
-        ),
-
-        // Learning
-        HabitPreset(
-            title = "Read",
-            description = "Read books or articles",
-            icon = "menu_book",
-            category = PresetCategory.LEARNING,
-            habitType = HabitType.MEASURABLE,
-            targetValue = 30,
-            unit = "minutes"
-        ),
-        HabitPreset(
-            title = "Learn Language",
-            description = "Practice a new language",
-            icon = "translate",
-            category = PresetCategory.LEARNING,
-            habitType = HabitType.MEASURABLE,
-            targetValue = 15,
-            unit = "minutes"
+    val all =
+        listOf(
+            // Health
+            HabitPreset(
+                title = "Drink Water",
+                description = "Stay hydrated throughout the day",
+                icon = "water_drop",
+                category = PresetCategory.HEALTH,
+                habitType = HabitType.MEASURABLE,
+                targetValue = 8,
+                unit = "glasses",
+            ),
+            HabitPreset(
+                title = "Take Medication",
+                description = "Take daily medication on time",
+                icon = "medication",
+                category = PresetCategory.HEALTH,
+                habitType = HabitType.SIMPLE,
+            ),
+            HabitPreset(
+                title = "Sleep 8 Hours",
+                description = "Get enough rest",
+                icon = "bedtime",
+                category = PresetCategory.HEALTH,
+                habitType = HabitType.MEASURABLE,
+                targetValue = 8,
+                unit = "hours",
+            ),
+            // Fitness
+            HabitPreset(
+                title = "Workout",
+                description = "Exercise at the gym",
+                icon = "fitness_center",
+                category = PresetCategory.FITNESS,
+                habitType = HabitType.SIMPLE,
+                frequencyType = FrequencyType.TIMES_PER_WEEK,
+                frequencyValue = 3,
+            ),
+            HabitPreset(
+                title = "Morning Walk",
+                description = "Start the day with a walk",
+                icon = "directions_walk",
+                category = PresetCategory.FITNESS,
+                habitType = HabitType.SIMPLE,
+            ),
+            HabitPreset(
+                title = "Run",
+                description = "Go for a run",
+                icon = "directions_run",
+                category = PresetCategory.FITNESS,
+                habitType = HabitType.MEASURABLE,
+                targetValue = 30,
+                unit = "minutes",
+            ),
+            // Mindfulness
+            HabitPreset(
+                title = "Meditation",
+                description = "Practice mindfulness",
+                icon = "self_improvement",
+                category = PresetCategory.MINDFULNESS,
+                habitType = HabitType.MEASURABLE,
+                targetValue = 10,
+                unit = "minutes",
+            ),
+            HabitPreset(
+                title = "Gratitude Journal",
+                description = "Write things you are grateful for",
+                icon = "edit_note",
+                category = PresetCategory.MINDFULNESS,
+                habitType = HabitType.SIMPLE,
+            ),
+            // Productivity
+            HabitPreset(
+                title = "Deep Work",
+                description = "Focused work without distractions",
+                icon = "psychology",
+                category = PresetCategory.PRODUCTIVITY,
+                habitType = HabitType.MEASURABLE,
+                targetValue = 4,
+                unit = "pomodoros",
+            ),
+            HabitPreset(
+                title = "No Social Media",
+                description = "Limit social media usage",
+                icon = "phonelink_off",
+                category = PresetCategory.PRODUCTIVITY,
+                habitType = HabitType.SIMPLE,
+            ),
+            // Learning
+            HabitPreset(
+                title = "Read",
+                description = "Read books or articles",
+                icon = "menu_book",
+                category = PresetCategory.LEARNING,
+                habitType = HabitType.MEASURABLE,
+                targetValue = 30,
+                unit = "minutes",
+            ),
+            HabitPreset(
+                title = "Learn Language",
+                description = "Practice a new language",
+                icon = "translate",
+                category = PresetCategory.LEARNING,
+                habitType = HabitType.MEASURABLE,
+                targetValue = 15,
+                unit = "minutes",
+            ),
         )
-    )
 
-    fun getByCategory(category: PresetCategory): List<HabitPreset> =
-        all.filter { it.category == category }
+    fun getByCategory(category: PresetCategory): List<HabitPreset> = all.filter { it.category == category }
 }

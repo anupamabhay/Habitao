@@ -1,10 +1,7 @@
 package com.habitao.data.repository
 
-import com.habitao.data.local.entity.FrequencyTypeEntity
 import com.habitao.data.local.entity.HabitEntity
 import com.habitao.data.local.entity.HabitLogEntity
-import com.habitao.data.local.entity.HabitTypeEntity
-import com.habitao.data.local.entity.TargetOperatorEntity
 import com.habitao.domain.model.ChecklistItem
 import com.habitao.domain.model.DayOfWeek
 import com.habitao.domain.model.FrequencyType
@@ -12,19 +9,18 @@ import com.habitao.domain.model.Habit
 import com.habitao.domain.model.HabitLog
 import com.habitao.domain.model.HabitType
 import com.habitao.domain.model.TargetOperator
+import org.json.JSONArray
+import org.json.JSONObject
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
-import org.json.JSONArray
-import org.json.JSONObject
+
+// HABIT MAPPERS
 
 /**
  * Extension functions to convert between Entity and Domain models
  */
-
-// ============== HABIT MAPPERS ==============
-
 fun HabitEntity.toDomainModel(): Habit {
     return Habit(
         id = id,
@@ -47,7 +43,7 @@ fun HabitEntity.toDomainModel(): Habit {
         createdAt = createdAt,
         updatedAt = updatedAt,
         isArchived = isArchived,
-        sortOrder = sortOrder
+        sortOrder = sortOrder,
     )
 }
 
@@ -74,7 +70,7 @@ fun Habit.toEntity(): HabitEntity {
         createdAt = createdAt,
         updatedAt = updatedAt,
         isArchived = isArchived,
-        sortOrder = sortOrder
+        sortOrder = sortOrder,
     )
 }
 
@@ -91,7 +87,7 @@ fun HabitLogEntity.toDomainModel(): HabitLog {
         completedChecklistItems = completedChecklistItemsJson?.let { parseStringSet(it) } ?: emptySet(),
         createdAt = createdAt,
         updatedAt = updatedAt,
-        completedAt = completedAt
+        completedAt = completedAt,
     )
 }
 
@@ -108,7 +104,7 @@ fun HabitLog.toEntity(): HabitLogEntity {
         goalCount = targetValue, // Legacy field
         createdAt = createdAt,
         updatedAt = updatedAt,
-        completedAt = completedAt
+        completedAt = completedAt,
     )
 }
 
@@ -203,7 +199,7 @@ private fun parseChecklist(json: String): List<ChecklistItem> {
             ChecklistItem(
                 id = obj.getString("id"),
                 text = obj.getString("text"),
-                sortOrder = obj.optInt("sortOrder", index)
+                sortOrder = obj.optInt("sortOrder", index),
             )
         }
     } catch (e: Exception) {
@@ -214,11 +210,12 @@ private fun parseChecklist(json: String): List<ChecklistItem> {
 private fun checklistToJson(items: List<ChecklistItem>): String {
     val array = JSONArray()
     items.forEach { item ->
-        val obj = JSONObject().apply {
-            put("id", item.id)
-            put("text", item.text)
-            put("sortOrder", item.sortOrder)
-        }
+        val obj =
+            JSONObject().apply {
+                put("id", item.id)
+                put("text", item.text)
+                put("sortOrder", item.sortOrder)
+            }
         array.put(obj)
     }
     return array.toString()

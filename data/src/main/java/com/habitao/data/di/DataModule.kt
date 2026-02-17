@@ -22,42 +22,38 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-    
     @Binds
     @Singleton
-    abstract fun bindHabitRepository(
-        impl: HabitRepositoryImpl
-    ): HabitRepository
+    abstract fun bindHabitRepository(impl: HabitRepositoryImpl): HabitRepository
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-    
     @Provides
     @Singleton
     fun provideDatabase(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
     ): HabitaoDatabase {
         return Room.databaseBuilder(
             context,
             HabitaoDatabase::class.java,
-            HabitaoDatabase.DATABASE_NAME
+            HabitaoDatabase.DATABASE_NAME,
         )
             .fallbackToDestructiveMigration() // TODO: Add proper migrations
             .build()
     }
-    
+
     @Provides
     fun provideHabitDao(database: HabitaoDatabase): HabitDao {
         return database.habitDao()
     }
-    
+
     @Provides
     fun provideHabitLogDao(database: HabitaoDatabase): HabitLogDao {
         return database.habitLogDao()
     }
-    
+
     @Provides
     fun provideCoroutineDispatcher(): kotlinx.coroutines.CoroutineDispatcher {
         return Dispatchers.IO

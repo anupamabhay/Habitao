@@ -18,17 +18,17 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class HabitaoDatabaseTest {
-
     private lateinit var database: HabitaoDatabase
     private lateinit var habitDao: com.habitao.data.local.dao.HabitDao
 
     @Before
     fun setup() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        database = Room.inMemoryDatabaseBuilder(
-            context,
-            HabitaoDatabase::class.java
-        ).allowMainThreadQueries().build()
+        database =
+            Room.inMemoryDatabaseBuilder(
+                context,
+                HabitaoDatabase::class.java,
+            ).allowMainThreadQueries().build()
         habitDao = database.habitDao()
     }
 
@@ -38,44 +38,50 @@ class HabitaoDatabaseTest {
     }
 
     @Test
-    fun insertAndRetrieveHabit() = runBlocking {
-        // Given
-        val habit = HabitEntity(
-            id = "test-id",
-            title = "Test Habit",
-            goalCount = 5,
-            trackingType = TrackingType.COUNT.name,
-            repeatPattern = RepeatPattern.DAILY.name,
-            startDate = System.currentTimeMillis(),
-            nextScheduledDate = System.currentTimeMillis()
-        )
+    fun insertAndRetrieveHabit() =
+        runBlocking {
+            // Given
+            val habit =
+                HabitEntity(
+                    id = "test-id",
+                    title = "Test Habit",
+                    goalCount = 5,
+                    trackingType = TrackingType.COUNT.name,
+                    repeatPattern = RepeatPattern.DAILY.name,
+                    startDate = System.currentTimeMillis(),
+                    nextScheduledDate = System.currentTimeMillis(),
+                )
 
-        // When
-        habitDao.insertHabit(habit)
-        val retrieved = habitDao.getHabitById("test-id")
+            // When
+            habitDao.insertHabit(habit)
+            val retrieved = habitDao.getHabitById("test-id")
 
-        // Then
-        assertNotNull(retrieved)
-        assertEquals("Test Habit", retrieved?.title)
-        assertEquals(5, retrieved?.goalCount)
-    }
+            // Then
+            assertNotNull(retrieved)
+            assertEquals("Test Habit", retrieved?.title)
+            assertEquals(5, retrieved?.goalCount)
+        }
 
     @Test
-    fun observeAllHabitsEmitsList() = runBlocking {
-        // Given
-        val habit1 = createHabitEntity("1", "Habit 1")
-        val habit2 = createHabitEntity("2", "Habit 2")
+    fun observeAllHabitsEmitsList() =
+        runBlocking {
+            // Given
+            val habit1 = createHabitEntity("1", "Habit 1")
+            val habit2 = createHabitEntity("2", "Habit 2")
 
-        // When
-        habitDao.insertHabit(habit1)
-        habitDao.insertHabit(habit2)
-        val habits = habitDao.observeAllHabits().first()
+            // When
+            habitDao.insertHabit(habit1)
+            habitDao.insertHabit(habit2)
+            val habits = habitDao.observeAllHabits().first()
 
-        // Then
-        assertEquals(2, habits.size)
-    }
+            // Then
+            assertEquals(2, habits.size)
+        }
 
-    private fun createHabitEntity(id: String, title: String): HabitEntity {
+    private fun createHabitEntity(
+        id: String,
+        title: String,
+    ): HabitEntity {
         return HabitEntity(
             id = id,
             title = title,
@@ -83,7 +89,7 @@ class HabitaoDatabaseTest {
             trackingType = TrackingType.COUNT.name,
             repeatPattern = RepeatPattern.DAILY.name,
             startDate = System.currentTimeMillis(),
-            nextScheduledDate = System.currentTimeMillis()
+            nextScheduledDate = System.currentTimeMillis(),
         )
     }
 }

@@ -38,7 +38,7 @@ android {
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             // TODO: Configure signing config for release builds
             // signingConfig = signingConfigs.getByName("release")
@@ -53,11 +53,12 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs += listOf(
-            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
-            "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
-            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
-        )
+        freeCompilerArgs +=
+            listOf(
+                "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
+                "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi",
+                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+            )
     }
 
     buildFeatures {

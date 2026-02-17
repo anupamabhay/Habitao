@@ -27,7 +27,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CheckCircleOutline
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Notifications
@@ -69,9 +68,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.window.Dialog
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -80,6 +76,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.habitao.domain.model.DayOfWeek
 import com.habitao.domain.model.FrequencyType
@@ -87,6 +84,8 @@ import com.habitao.domain.model.HabitType
 import com.habitao.feature.habits.viewmodel.CreateHabitIntent
 import com.habitao.feature.habits.viewmodel.CreateHabitState
 import com.habitao.feature.habits.viewmodel.CreateHabitViewModel
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,7 +93,7 @@ fun CreateHabitScreen(
     onNavigateBack: () -> Unit,
     onHabitCreated: () -> Unit,
     habitId: String? = null,
-    viewModel: CreateHabitViewModel = hiltViewModel(key = habitId ?: "create")
+    viewModel: CreateHabitViewModel = hiltViewModel(key = habitId ?: "create"),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -129,33 +128,35 @@ fun CreateHabitScreen(
                 title = {
                     Text(
                         text = if (state.isEditMode) "Edit Habit" else "New Habit",
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
                         )
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
-                )
+                colors =
+                    TopAppBarDefaults.largeTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    ),
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = MaterialTheme.colorScheme.surface,
     ) { paddingValues ->
         if (state.isLoadingHabit) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator()
             }
@@ -163,7 +164,7 @@ fun CreateHabitScreen(
             CreateHabitForm(
                 state = state,
                 onIntent = viewModel::processIntent,
-                modifier = Modifier.padding(paddingValues)
+                modifier = Modifier.padding(paddingValues),
             )
         }
     }
@@ -173,17 +174,18 @@ fun CreateHabitScreen(
 private fun CreateHabitForm(
     state: CreateHabitState,
     onIntent: (CreateHabitIntent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val inputShape = RoundedCornerShape(12.dp)
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        modifier =
+            modifier
+                .fillMaxSize()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Spacer(modifier = Modifier.height(4.dp))
 
@@ -198,11 +200,12 @@ private fun CreateHabitForm(
                 isError = state.titleError != null,
                 supportingText = state.titleError?.let { { Text(it) } },
                 shape = inputShape,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                ),
-                modifier = Modifier.fillMaxWidth()
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    ),
+                modifier = Modifier.fillMaxWidth(),
             )
 
             OutlinedTextField(
@@ -213,11 +216,12 @@ private fun CreateHabitForm(
                 minLines = 2,
                 maxLines = 3,
                 shape = inputShape,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                ),
-                modifier = Modifier.fillMaxWidth()
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    ),
+                modifier = Modifier.fillMaxWidth(),
             )
         }
 
@@ -225,20 +229,20 @@ private fun CreateHabitForm(
         FormSection(title = "Tracking style") {
             HabitTypeSelector(
                 selectedType = state.habitType,
-                onTypeSelected = { onIntent(CreateHabitIntent.UpdateHabitType(it)) }
+                onTypeSelected = { onIntent(CreateHabitIntent.UpdateHabitType(it)) },
             )
 
             // Conditional fields for MEASURABLE type
             AnimatedVisibility(
                 visible = state.habitType == HabitType.MEASURABLE,
                 enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
+                exit = fadeOut() + shrinkVertically(),
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         OutlinedTextField(
                             value = state.targetValue,
@@ -250,11 +254,12 @@ private fun CreateHabitForm(
                             isError = state.targetValueError != null,
                             supportingText = state.targetValueError?.let { { Text(it) } },
                             shape = inputShape,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                            ),
-                            modifier = Modifier.weight(1f)
+                            colors =
+                                OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                                ),
+                            modifier = Modifier.weight(1f),
                         )
 
                         OutlinedTextField(
@@ -264,11 +269,12 @@ private fun CreateHabitForm(
                             placeholder = { Text("glasses, pages") },
                             singleLine = true,
                             shape = inputShape,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                            ),
-                            modifier = Modifier.weight(1f)
+                            colors =
+                                OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                                ),
+                            modifier = Modifier.weight(1f),
                         )
                     }
                 }
@@ -278,7 +284,7 @@ private fun CreateHabitForm(
             AnimatedVisibility(
                 visible = state.habitType == HabitType.CHECKLIST,
                 enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
+                exit = fadeOut() + shrinkVertically(),
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -287,7 +293,7 @@ private fun CreateHabitForm(
                     state.checklistItems.forEachIndexed { index, item ->
                         ChecklistItemRow(
                             text = item,
-                            onRemove = { onIntent(CreateHabitIntent.RemoveChecklistItem(index)) }
+                            onRemove = { onIntent(CreateHabitIntent.RemoveChecklistItem(index)) },
                         )
                     }
 
@@ -295,7 +301,7 @@ private fun CreateHabitForm(
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         OutlinedTextField(
                             value = state.newChecklistItem,
@@ -306,29 +312,32 @@ private fun CreateHabitForm(
                             isError = state.checklistError != null,
                             supportingText = state.checklistError?.let { { Text(it) } },
                             shape = inputShape,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                            ),
-                            modifier = Modifier.weight(1f)
+                            colors =
+                                OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                                ),
+                            modifier = Modifier.weight(1f),
                         )
 
                         FilledTonalIconButton(
                             onClick = { onIntent(CreateHabitIntent.AddChecklistItem) },
-                            enabled = state.newChecklistItem.isNotBlank()
+                            enabled = state.newChecklistItem.isNotBlank(),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Add,
-                                contentDescription = "Add item"
+                                contentDescription = "Add item",
                             )
                         }
                     }
 
                     if (state.checklistItems.isNotEmpty()) {
                         Text(
-                            text = "${state.checklistItems.size} item${if (state.checklistItems.size != 1) "s" else ""} added",
+                            text =
+                                "${state.checklistItems.size} item" +
+                                    "${if (state.checklistItems.size != 1) "s" else ""} added",
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -339,20 +348,20 @@ private fun CreateHabitForm(
         FormSection(title = "Schedule") {
             FrequencyTypeSelector(
                 selectedType = state.frequencyType,
-                onTypeSelected = { onIntent(CreateHabitIntent.UpdateFrequencyType(it)) }
+                onTypeSelected = { onIntent(CreateHabitIntent.UpdateFrequencyType(it)) },
             )
 
             // Conditional: Day picker for SPECIFIC_DAYS
             AnimatedVisibility(
                 visible = state.frequencyType == FrequencyType.SPECIFIC_DAYS,
                 enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
+                exit = fadeOut() + shrinkVertically(),
             ) {
                 Column {
                     Spacer(modifier = Modifier.height(8.dp))
                     DaySelector(
                         selectedDays = state.scheduledDays,
-                        onDayToggled = { onIntent(CreateHabitIntent.ToggleScheduledDay(it)) }
+                        onDayToggled = { onIntent(CreateHabitIntent.ToggleScheduledDay(it)) },
                     )
                 }
             }
@@ -361,7 +370,7 @@ private fun CreateHabitForm(
             AnimatedVisibility(
                 visible = state.frequencyType == FrequencyType.TIMES_PER_WEEK,
                 enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
+                exit = fadeOut() + shrinkVertically(),
             ) {
                 Column {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -370,7 +379,7 @@ private fun CreateHabitForm(
                         onValueChange = { onIntent(CreateHabitIntent.UpdateFrequencyValue(it)) },
                         label = "Times per week",
                         placeholder = "3",
-                        shape = inputShape
+                        shape = inputShape,
                     )
                 }
             }
@@ -379,7 +388,7 @@ private fun CreateHabitForm(
             AnimatedVisibility(
                 visible = state.frequencyType == FrequencyType.EVERY_X_DAYS,
                 enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
+                exit = fadeOut() + shrinkVertically(),
             ) {
                 Column {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -388,7 +397,7 @@ private fun CreateHabitForm(
                         onValueChange = { onIntent(CreateHabitIntent.UpdateFrequencyValue(it)) },
                         label = "Every X days",
                         placeholder = "2",
-                        shape = inputShape
+                        shape = inputShape,
                     )
                 }
             }
@@ -400,7 +409,7 @@ private fun CreateHabitForm(
                 reminderEnabled = state.reminderEnabled,
                 reminderTime = state.reminderTime,
                 onReminderEnabledChange = { onIntent(CreateHabitIntent.UpdateReminderEnabled(it)) },
-                onReminderTimeChange = { onIntent(CreateHabitIntent.UpdateReminderTime(it)) }
+                onReminderTimeChange = { onIntent(CreateHabitIntent.UpdateReminderTime(it)) },
             )
         }
 
@@ -411,21 +420,24 @@ private fun CreateHabitForm(
             onClick = { onIntent(CreateHabitIntent.SaveHabit) },
             enabled = !state.isSaving,
             shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                ),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
         ) {
             Text(
-                text = when {
-                    state.isSaving -> "Saving..."
-                    state.isEditMode -> "Save Changes"
-                    else -> "Create Habit"
-                },
+                text =
+                    when {
+                        state.isSaving -> "Saving..."
+                        state.isEditMode -> "Save Changes"
+                        else -> "Create Habit"
+                    },
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
         }
 
@@ -436,14 +448,14 @@ private fun CreateHabitForm(
 @Composable
 private fun FormSection(
     title: String,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = title,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         content()
     }
@@ -453,24 +465,26 @@ private fun FormSection(
 @Composable
 private fun HabitTypeSelector(
     selectedType: HabitType,
-    onTypeSelected: (HabitType) -> Unit
+    onTypeSelected: (HabitType) -> Unit,
 ) {
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         HabitType.entries.forEachIndexed { index, habitType ->
             SegmentedButton(
                 selected = selectedType == habitType,
                 onClick = { onTypeSelected(habitType) },
-                shape = SegmentedButtonDefaults.itemShape(
-                    index = index,
-                    count = HabitType.entries.size,
-                    baseShape = RoundedCornerShape(12.dp)
-                ),
-                colors = SegmentedButtonDefaults.colors(
-                    activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                    inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
+                shape =
+                    SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = HabitType.entries.size,
+                        baseShape = RoundedCornerShape(12.dp),
+                    ),
+                colors =
+                    SegmentedButtonDefaults.colors(
+                        activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
                 icon = {
                     SegmentedButtonDefaults.Icon(
                         active = selectedType == habitType,
@@ -478,22 +492,22 @@ private fun HabitTypeSelector(
                             Icon(
                                 imageVector = habitType.icon(),
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
                             )
                         },
                         inactiveContent = {
                             Icon(
                                 imageVector = habitType.icon(),
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
                             )
-                        }
+                        },
                     )
-                }
+                },
             ) {
                 Text(
                     text = habitType.displayName(),
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.labelLarge,
                 )
             }
         }
@@ -504,7 +518,7 @@ private fun HabitTypeSelector(
 @Composable
 private fun FrequencyTypeSelector(
     selectedType: FrequencyType,
-    onTypeSelected: (FrequencyType) -> Unit
+    onTypeSelected: (FrequencyType) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // First row: DAILY and SPECIFIC_DAYS
@@ -514,21 +528,23 @@ private fun FrequencyTypeSelector(
                 SegmentedButton(
                     selected = selectedType == frequencyType,
                     onClick = { onTypeSelected(frequencyType) },
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = firstRowTypes.size,
-                        baseShape = RoundedCornerShape(12.dp)
-                    ),
-                    colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        activeContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    shape =
+                        SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = firstRowTypes.size,
+                            baseShape = RoundedCornerShape(12.dp),
+                        ),
+                    colors =
+                        SegmentedButtonDefaults.colors(
+                            activeContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            activeContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
                 ) {
                     Text(
                         text = frequencyType.displayName(),
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.labelLarge,
                     )
                 }
             }
@@ -541,21 +557,23 @@ private fun FrequencyTypeSelector(
                 SegmentedButton(
                     selected = selectedType == frequencyType,
                     onClick = { onTypeSelected(frequencyType) },
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = secondRowTypes.size,
-                        baseShape = RoundedCornerShape(12.dp)
-                    ),
-                    colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        activeContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    shape =
+                        SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = secondRowTypes.size,
+                            baseShape = RoundedCornerShape(12.dp),
+                        ),
+                    colors =
+                        SegmentedButtonDefaults.colors(
+                            activeContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            activeContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
                 ) {
                     Text(
                         text = frequencyType.displayName(),
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.labelLarge,
                     )
                 }
             }
@@ -567,19 +585,20 @@ private fun FrequencyTypeSelector(
 @Composable
 private fun DaySelector(
     selectedDays: Set<DayOfWeek>,
-    onDayToggled: (DayOfWeek) -> Unit
+    onDayToggled: (DayOfWeek) -> Unit,
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         FlowRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             DayOfWeek.entries.forEach { day ->
                 val isSelected = selectedDays.contains(day)
@@ -590,21 +609,23 @@ private fun DaySelector(
                         Text(
                             text = day.shortName,
                             style = MaterialTheme.typography.labelMedium,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         )
                     },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = isSelected,
-                        borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                        selectedBorderColor = MaterialTheme.colorScheme.primary
-                    )
+                    colors =
+                        FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                    border =
+                        FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSelected,
+                            borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                            selectedBorderColor = MaterialTheme.colorScheme.primary,
+                        ),
                 )
             }
         }
@@ -617,24 +638,25 @@ private fun FrequencyValueInput(
     onValueChange: (String) -> Unit,
     label: String,
     placeholder: String,
-    shape: RoundedCornerShape
+    shape: RoundedCornerShape,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.secondaryContainer),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = Icons.Outlined.Repeat,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
             )
         }
 
@@ -646,73 +668,78 @@ private fun FrequencyValueInput(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
             shape = shape,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-            ),
-            modifier = Modifier.weight(1f)
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                ),
+            modifier = Modifier.weight(1f),
         )
     }
 }
 
-private fun HabitType.displayName(): String = when (this) {
-    HabitType.SIMPLE -> "Yes/No"
-    HabitType.MEASURABLE -> "Number"
-    HabitType.CHECKLIST -> "Checklist"
-}
+private fun HabitType.displayName(): String =
+    when (this) {
+        HabitType.SIMPLE -> "Yes/No"
+        HabitType.MEASURABLE -> "Number"
+        HabitType.CHECKLIST -> "Checklist"
+    }
 
-private fun HabitType.icon(): ImageVector = when (this) {
-    HabitType.SIMPLE -> Icons.Outlined.CheckCircleOutline
-    HabitType.MEASURABLE -> Icons.Outlined.Numbers
-    HabitType.CHECKLIST -> Icons.Outlined.Checklist
-}
+private fun HabitType.icon(): ImageVector =
+    when (this) {
+        HabitType.SIMPLE -> Icons.Outlined.CheckCircleOutline
+        HabitType.MEASURABLE -> Icons.Outlined.Numbers
+        HabitType.CHECKLIST -> Icons.Outlined.Checklist
+    }
 
 @Composable
 private fun ChecklistItemRow(
     text: String,
     onRemove: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
-            
+
             IconButton(
                 onClick = onRemove,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(32.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Remove item",
                     modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
     }
 }
 
-private fun FrequencyType.displayName(): String = when (this) {
-    FrequencyType.DAILY -> "Daily"
-    FrequencyType.SPECIFIC_DAYS -> "Specific days"
-    FrequencyType.TIMES_PER_WEEK -> "X per week"
-    FrequencyType.EVERY_X_DAYS -> "Every X days"
-}
+private fun FrequencyType.displayName(): String =
+    when (this) {
+        FrequencyType.DAILY -> "Daily"
+        FrequencyType.SPECIFIC_DAYS -> "Specific days"
+        FrequencyType.TIMES_PER_WEEK -> "X per week"
+        FrequencyType.EVERY_X_DAYS -> "Every X days"
+    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -720,41 +747,42 @@ private fun ReminderSection(
     reminderEnabled: Boolean,
     reminderTime: LocalTime?,
     onReminderEnabledChange: (Boolean) -> Unit,
-    onReminderTimeChange: (LocalTime) -> Unit
+    onReminderTimeChange: (LocalTime) -> Unit,
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
 
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             // Enable/disable toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
+                        modifier =
+                            Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Notifications,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(20.dp),
                         )
                     }
 
@@ -763,12 +791,12 @@ private fun ReminderSection(
                             text = "Daily reminder",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
                             text = "Get notified to complete this habit",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -776,10 +804,11 @@ private fun ReminderSection(
                 Switch(
                     checked = reminderEnabled,
                     onCheckedChange = onReminderEnabledChange,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.primary,
-                        checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                    colors =
+                        SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.primary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                        ),
                 )
             }
 
@@ -787,34 +816,35 @@ private fun ReminderSection(
             AnimatedVisibility(
                 visible = reminderEnabled,
                 enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
+                exit = fadeOut() + shrinkVertically(),
             ) {
                 Surface(
                     onClick = { showTimePicker = true },
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Schedule,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             Text(
                                 text = "Reminder time",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
                         }
 
@@ -822,7 +852,7 @@ private fun ReminderSection(
                             text = reminderTime?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "9:00 AM",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
                         )
                     }
                 }
@@ -838,7 +868,7 @@ private fun ReminderSection(
                 onReminderTimeChange(it)
                 showTimePicker = false
             },
-            onDismiss = { showTimePicker = false }
+            onDismiss = { showTimePicker = false },
         )
     }
 }
@@ -848,51 +878,55 @@ private fun ReminderSection(
 private fun TimePickerDialog(
     initialTime: LocalTime,
     onTimeSelected: (LocalTime) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
-    val timePickerState = rememberTimePickerState(
-        initialHour = initialTime.hour,
-        initialMinute = initialTime.minute,
-        is24Hour = false
-    )
+    val timePickerState =
+        rememberTimePickerState(
+            initialHour = initialTime.hour,
+            initialMinute = initialTime.minute,
+            is24Hour = false,
+        )
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp
+            tonalElevation = 6.dp,
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
                     text = "Select time",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 20.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 20.dp),
                 )
 
                 TimePicker(
                     state = timePickerState,
-                    colors = TimePickerDefaults.colors(
-                        clockDialColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        selectorColor = MaterialTheme.colorScheme.primary,
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        periodSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        periodSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    colors =
+                        TimePickerDefaults.colors(
+                            clockDialColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            selectorColor = MaterialTheme.colorScheme.primary,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            periodSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            periodSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        ),
                 )
 
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 20.dp),
-                    horizontalArrangement = Arrangement.End
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 20.dp),
+                    horizontalArrangement = Arrangement.End,
                 ) {
                     TextButton(onClick = onDismiss) {
                         Text("Cancel")
@@ -900,7 +934,7 @@ private fun TimePickerDialog(
                     TextButton(
                         onClick = {
                             onTimeSelected(LocalTime.of(timePickerState.hour, timePickerState.minute))
-                        }
+                        },
                     ) {
                         Text("OK")
                     }
