@@ -16,37 +16,37 @@ import com.habitao.data.local.entity.HabitLogEntity
 @Database(
     entities = [
         HabitEntity::class,
-        HabitLogEntity::class
+        HabitLogEntity::class,
         // TODO: Add RoutineEntity, RoutineStepEntity, RoutineLogEntity
         // TODO: Add TaskEntity, PomodoroSessionEntity
     ],
     version = 2,
-    exportSchema = false
+    exportSchema = false,
 )
 abstract class HabitaoDatabase : RoomDatabase() {
-    
     abstract fun habitDao(): HabitDao
+
     abstract fun habitLogDao(): HabitLogDao
-    
+
     companion object {
         const val DATABASE_NAME = "habitao.db"
-        
+
         @Volatile
-        private var INSTANCE: HabitaoDatabase? = null
-        
+        private var instance: HabitaoDatabase? = null
+
         fun getInstance(context: Context): HabitaoDatabase {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: buildDatabase(context).also { 
-                    INSTANCE = it 
+            return instance ?: synchronized(this) {
+                instance ?: buildDatabase(context).also {
+                    instance = it
                 }
             }
         }
-        
+
         private fun buildDatabase(context: Context): HabitaoDatabase {
             return Room.databaseBuilder(
                 context.applicationContext,
                 HabitaoDatabase::class.java,
-                DATABASE_NAME
+                DATABASE_NAME,
             )
                 .fallbackToDestructiveMigration() // TODO: Add proper migrations for production
                 .build()

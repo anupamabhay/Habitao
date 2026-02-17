@@ -19,7 +19,9 @@ import dagger.hilt.android.AndroidEntryPoint
  */
 private sealed class Screen {
     data object HabitsList : Screen()
+
     data object CreateHabit : Screen()
+
     data class EditHabit(val habitId: String) : Screen()
 }
 
@@ -37,20 +39,20 @@ class MainActivity : ComponentActivity() {
                     Screen.HabitsList -> {
                         HabitsScreen(
                             onAddHabit = { currentScreen = Screen.CreateHabit },
-                            onEditHabit = { habitId -> currentScreen = Screen.EditHabit(habitId) }
+                            onEditHabit = { habitId -> currentScreen = Screen.EditHabit(habitId) },
                         )
                     }
                     Screen.CreateHabit -> {
                         CreateHabitScreen(
                             onNavigateBack = { currentScreen = Screen.HabitsList },
-                            onHabitCreated = { currentScreen = Screen.HabitsList }
+                            onHabitCreated = { currentScreen = Screen.HabitsList },
                         )
                     }
                     is Screen.EditHabit -> {
                         CreateHabitScreen(
                             onNavigateBack = { currentScreen = Screen.HabitsList },
                             onHabitCreated = { currentScreen = Screen.HabitsList },
-                            habitId = screen.habitId
+                            habitId = screen.habitId,
                         )
                     }
                 }

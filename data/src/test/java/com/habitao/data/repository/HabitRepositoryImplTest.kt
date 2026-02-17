@@ -22,7 +22,6 @@ import java.time.LocalDate
 
 @ExperimentalCoroutinesApi
 class HabitRepositoryImplTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var habitDao: HabitDao
     private lateinit var habitLogDao: HabitLogDao
@@ -37,46 +36,49 @@ class HabitRepositoryImplTest {
     }
 
     @Test
-    fun `createHabit should insert habit into database`() = runTest {
-        // Given
-        val habit = createTestHabit()
-        coEvery { habitDao.insertHabit(any()) } returns 1L
+    fun `createHabit should insert habit into database`() =
+        runTest {
+            // Given
+            val habit = createTestHabit()
+            coEvery { habitDao.insertHabit(any()) } returns 1L
 
-        // When
-        val result = repository.createHabit(habit)
+            // When
+            val result = repository.createHabit(habit)
 
-        // Then
-        assertTrue(result.isSuccess)
-        coVerify { habitDao.insertHabit(any()) }
-    }
-
-    @Test
-    fun `getHabitById should return habit when found`() = runTest {
-        // Given
-        val habitId = "test-id"
-        val entity = createTestHabitEntity(habitId)
-        coEvery { habitDao.getHabitById(habitId) } returns entity
-
-        // When
-        val result = repository.getHabitById(habitId)
-
-        // Then
-        assertTrue(result.isSuccess)
-        assertEquals(habitId, result.getOrNull()?.id)
-    }
+            // Then
+            assertTrue(result.isSuccess)
+            coVerify { habitDao.insertHabit(any()) }
+        }
 
     @Test
-    fun `getHabitById should return failure when not found`() = runTest {
-        // Given
-        val habitId = "non-existent"
-        coEvery { habitDao.getHabitById(habitId) } returns null
+    fun `getHabitById should return habit when found`() =
+        runTest {
+            // Given
+            val habitId = "test-id"
+            val entity = createTestHabitEntity(habitId)
+            coEvery { habitDao.getHabitById(habitId) } returns entity
 
-        // When
-        val result = repository.getHabitById(habitId)
+            // When
+            val result = repository.getHabitById(habitId)
 
-        // Then
-        assertTrue(result.isFailure)
-    }
+            // Then
+            assertTrue(result.isSuccess)
+            assertEquals(habitId, result.getOrNull()?.id)
+        }
+
+    @Test
+    fun `getHabitById should return failure when not found`() =
+        runTest {
+            // Given
+            val habitId = "non-existent"
+            coEvery { habitDao.getHabitById(habitId) } returns null
+
+            // When
+            val result = repository.getHabitById(habitId)
+
+            // Then
+            assertTrue(result.isFailure)
+        }
 
     private fun createTestHabit(): Habit {
         return Habit(
@@ -86,7 +88,7 @@ class HabitRepositoryImplTest {
             trackingType = TrackingType.COUNT,
             repeatPattern = RepeatPattern.DAILY,
             startDate = LocalDate.now(),
-            nextScheduledDate = LocalDate.now()
+            nextScheduledDate = LocalDate.now(),
         )
     }
 
@@ -98,7 +100,7 @@ class HabitRepositoryImplTest {
             trackingType = TrackingType.COUNT.name,
             repeatPattern = RepeatPattern.DAILY.name,
             startDate = System.currentTimeMillis(),
-            nextScheduledDate = System.currentTimeMillis()
+            nextScheduledDate = System.currentTimeMillis(),
         )
     }
 }

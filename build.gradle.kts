@@ -5,25 +5,25 @@ plugins {
     // Android plugins (applied to subprojects)
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
-    
+
     // Kotlin plugins
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.kotlin.compose) apply false
-    
+
     // KSP for annotation processing
     alias(libs.plugins.ksp) apply false
-    
+
     // Dependency Injection
     alias(libs.plugins.hilt) apply false
-    
+
     // Database
     alias(libs.plugins.room) apply false
-    
+
     // Proto DataStore
     alias(libs.plugins.protobuf) apply false
-    
+
     // Code Quality
     alias(libs.plugins.detekt)
     alias(libs.plugins.ktlint)
@@ -55,7 +55,7 @@ ktlint {
 subprojects {
     // Apply Ktlint to all subprojects
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
-    
+
     // Configure Ktlint for subprojects
     configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
         version.set("1.2.1")

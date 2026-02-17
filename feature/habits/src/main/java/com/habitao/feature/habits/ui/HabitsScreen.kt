@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.habitao.domain.model.Habit
 import com.habitao.feature.habits.viewmodel.HabitsIntent
 import com.habitao.feature.habits.viewmodel.HabitsState
 import com.habitao.feature.habits.viewmodel.HabitsViewModel
@@ -45,7 +44,7 @@ import java.time.format.DateTimeFormatter
 fun HabitsScreen(
     onAddHabit: () -> Unit,
     onEditHabit: (String) -> Unit = {},
-    viewModel: HabitsViewModel = hiltViewModel()
+    viewModel: HabitsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -60,7 +59,7 @@ fun HabitsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Habits") }
+                title = { Text("Habits") },
             )
         },
         floatingActionButton = {
@@ -68,7 +67,7 @@ fun HabitsScreen(
                 Icon(Icons.Default.Add, contentDescription = "Add Habit")
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
         HabitsContent(
             state = state,
@@ -81,8 +80,11 @@ fun HabitsScreen(
             onDeleteHabit = { habitId ->
                 viewModel.processIntent(HabitsIntent.DeleteHabit(habitId))
             },
+            onToggleChecklistItem = { habitId, itemId ->
+                viewModel.processIntent(HabitsIntent.ToggleChecklistItem(habitId, itemId))
+            },
             onEditHabit = onEditHabit,
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier.padding(paddingValues),
         )
     }
 }
@@ -93,14 +95,15 @@ private fun HabitsContent(
     onCompleteHabit: (String) -> Unit,
     onIncrementHabit: (String) -> Unit,
     onDeleteHabit: (String) -> Unit,
+    onToggleChecklistItem: (habitId: String, itemId: String) -> Unit,
     onEditHabit: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when {
             state.isLoading -> {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
                 )
             }
             state.habits.isEmpty() -> {
@@ -110,7 +113,7 @@ private fun HabitsContent(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     item {
                         DateHeader(date = state.selectedDate)
@@ -118,7 +121,7 @@ private fun HabitsContent(
 
                     items(
                         items = state.habits,
-                        key = { it.id }
+                        key = { it.id },
                     ) { habit ->
                         HabitCard(
                             habit = habit,
@@ -127,7 +130,10 @@ private fun HabitsContent(
                             onComplete = { onCompleteHabit(habit.id) },
                             onIncrement = { onIncrementHabit(habit.id) },
                             onTap = { onEditHabit(habit.id) },
-                            onDelete = { onDeleteHabit(habit.id) }
+                            onDelete = { onDeleteHabit(habit.id) },
+                            onToggleChecklistItem = { itemId ->
+                                onToggleChecklistItem(habit.id, itemId)
+                            },
                         )
                     }
 
@@ -143,7 +149,7 @@ private fun HabitsContent(
 @Composable
 private fun DateHeader(
     date: LocalDate,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d")
     val dateText = date.format(formatter)
@@ -152,25 +158,23 @@ private fun DateHeader(
         Text(
             text = dateText,
             style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
 @Composable
-private fun EmptyState(
-    modifier: Modifier = Modifier
-) {
+private fun EmptyState(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = "No habits yet",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -179,9 +183,7 @@ private fun EmptyState(
             text = "Tap the + button to create your first habit",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }
-
-

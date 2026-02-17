@@ -14,7 +14,7 @@ java {
 
 kotlin {
     jvmToolchain(17)
-    
+
     compilerOptions {
         freeCompilerArgs.add("-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi")
     }
@@ -26,16 +26,16 @@ dependencies {
 
     // Kotlin
     implementation(libs.kotlin.stdlib)
-    
+
     // Coroutines (core only - no Android)
     implementation(libs.kotlinx.coroutines.core)
-    
+
     // Serialization (for data classes)
     implementation(libs.kotlinx.serialization.json)
-    
+
     // DateTime (KMP-compatible)
     implementation(libs.kotlinx.datetime)
-    
+
     // Testing
     testImplementation(libs.bundles.testing.unit)
     testRuntimeOnly(libs.junit5.engine)
