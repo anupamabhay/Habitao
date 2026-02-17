@@ -1,4 +1,4 @@
-# Data Model & Database Schema
+﻿# Data Model & Database Schema
 ## Habitao - Entity Design & Relationships
 
 **Version:** 1.0  
@@ -147,7 +147,7 @@ data class HabitLog(
 **Business Rules:**
 - One log per habit per day (enforced by unique index)
 - `isCompleted` auto-updates when `currentCount >= goalCount`
-- `completedAt` set when `isCompleted` transitions from false → true
+- `completedAt` set when `isCompleted` transitions from false  true
 - Logs older than 2 years can be archived/compressed (future optimization)
 
 **Queries:**
@@ -482,39 +482,39 @@ enum class SyncFrequency { MANUAL, HOURLY, DAILY, REAL_TIME }
 ### 4.1 ER Diagram (Text Representation)
 
 ```
-┌─────────────┐         ┌──────────────┐
-│   Habit     │ 1     * │  HabitLog    │
-│─────────────│◄────────│──────────────│
-│ id (PK)     │         │ id (PK)      │
-│ title       │         │ habitId (FK) │
-│ goalCount   │         │ date         │
-│ repeatPattern│         │ currentCount │
-│ ...         │         │ isCompleted  │
-└─────────────┘         └──────────────┘
+         
+   Habit      1     *   HabitLog    
 
-┌─────────────┐         ┌──────────────┐         ┌──────────────┐
-│  Routine    │ 1     * │ RoutineStep  │         │  RoutineLog  │
-│─────────────│◄────────│──────────────│         │──────────────│
-│ id (PK)     │         │ id (PK)      │         │ id (PK)      │
-│ title       │         │ routineId(FK)│         │ routineId(FK)│
-│ repeatPattern│         │ stepOrder    │    *    │ date         │
-│ ...         │         │ title        │◄────────│ completedIds │
-└─────────────┘         └──────────────┘    1    └──────────────┘
+ id (PK)               id (PK)      
+ title                 habitId (FK) 
+ goalCount             date         
+ repeatPattern          currentCount 
+ ...                   isCompleted  
+         
 
-┌─────────────┐                               ┌──────────────────┐
-│    Task     │ 1                           * │ PomodoroSession  │
-│─────────────│◄──────────────────────────────│──────────────────│
-│ id (PK)     │                               │ id (PK)          │
-│ title       │                               │ associatedTaskId │
-│ parentTaskId│ (Self-referencing for subtasks)│ sessionType      │
-│ dueDate     │                               │ startedAt        │
-│ priority    │                               │ completedAt      │
-│ isCompleted │                               └──────────────────┘
-└─────────────┘
-       │
-       │ (Self-reference)
-       │
-       ▼
+                  
+  Routine     1     *  RoutineStep             RoutineLog  
+         
+ id (PK)               id (PK)                id (PK)      
+ title                 routineId(FK)          routineId(FK)
+ repeatPattern          stepOrder        *     date         
+ ...                   title         completedIds 
+             1    
+
+                               
+    Task      1                           *  PomodoroSession  
+
+ id (PK)                                     id (PK)          
+ title                                       associatedTaskId 
+ parentTaskId (Self-referencing for subtasks) sessionType      
+ dueDate                                     startedAt        
+ priority                                    completedAt      
+ isCompleted                                
+
+       
+        (Self-reference)
+       
+       
     Subtasks (same table, parentTaskId IS NOT NULL)
 ```
 
@@ -586,7 +586,7 @@ enum class SyncFrequency { MANUAL, HOURLY, DAILY, REAL_TIME }
 - Version 3: Add projects/categories
 - Version 4: Add habit templates
 
-### 6.2 Migration Example (v1 → v2)
+### 6.2 Migration Example (v1  v2)
 
 ```kotlin
 val MIGRATION_1_2 = object : Migration(1, 2) {

@@ -1,4 +1,4 @@
-# Security & Privacy Design
+﻿# Security & Privacy Design
 ## Habitao - Security Architecture & Data Protection
 
 **Version:** 1.0  
@@ -134,13 +134,13 @@ Room.databaseBuilder(context, HabitaoDatabase::class.java, "habitao.db")
 ### 2.3 Sensitive Data Handling
 
 **What Gets Encrypted:**
-- ✅ App Settings (Proto DataStore + Tink)
-- ✅ Future: User authentication tokens (if cloud sync implemented)
-- ✅ Backup files (AES-256)
+-  App Settings (Proto DataStore + Tink)
+-  Future: User authentication tokens (if cloud sync implemented)
+-  Backup files (AES-256)
 
 **What Stays Unencrypted:**
-- ❌ Habit/Task/Routine data (relies on Android filesystem encryption)
-- ❌ Logs (HabitLog, TaskLog) - too frequent writes, performance cost
+-  Habit/Task/Routine data (relies on Android filesystem encryption)
+-  Logs (HabitLog, TaskLog) - too frequent writes, performance cost
 
 ---
 
@@ -149,13 +149,13 @@ Room.databaseBuilder(context, HabitaoDatabase::class.java, "habitao.db")
 ### 3.1 Key Storage
 
 **Never store encryption keys in:**
-- ❌ SharedPreferences (even "secure" ones)
-- ❌ `gradle.properties` or BuildConfig
-- ❌ Hardcoded strings in source code
-- ❌ Assets or resources folder
+-  SharedPreferences (even "secure" ones)
+-  `gradle.properties` or BuildConfig
+-  Hardcoded strings in source code
+-  Assets or resources folder
 
 **Always store in:**
-- ✅ **Android Keystore System** (hardware-backed if available)
+-  **Android Keystore System** (hardware-backed if available)
 
 **Implementation:**
 
@@ -472,26 +472,26 @@ val client = OkHttpClient.Builder()
 ### 7.1 Privacy Policy Summary
 
 **Data Collection:**
-- ✅ **Local Only (MVP):** Habits, tasks, routines, Pomodoro sessions - ALL stored locally
-- ✅ **No Account Required:** No email, phone, or personal identifiers collected
-- ✅ **Optional Analytics:** Crash reports (Firebase Crashlytics), anonymized usage stats
+-  **Local Only (MVP):** Habits, tasks, routines, Pomodoro sessions - ALL stored locally
+-  **No Account Required:** No email, phone, or personal identifiers collected
+-  **Optional Analytics:** Crash reports (Firebase Crashlytics), anonymized usage stats
 
 **Data Sharing:**
-- ❌ **No Third-Party Sharing:** User data never sold or shared
-- ✅ **Export Anytime:** Users can export all data as JSON
+-  **No Third-Party Sharing:** User data never sold or shared
+-  **Export Anytime:** Users can export all data as JSON
 
 **Data Deletion:**
-- ✅ **Uninstall = Delete:** All local data deleted on app uninstall
-- ✅ **In-App Deletion:** Settings → Delete All Data (irreversible)
+-  **Uninstall = Delete:** All local data deleted on app uninstall
+-  **In-App Deletion:** Settings  Delete All Data (irreversible)
 
 ### 7.2 GDPR Compliance (Future Cloud Sync)
 
 **Requirements:**
-- ✅ Explicit consent before collecting data
-- ✅ Right to access (export function)
-- ✅ Right to deletion (account deletion)
-- ✅ Data portability (JSON export)
-- ✅ Privacy Policy in-app and on website
+-  Explicit consent before collecting data
+-  Right to access (export function)
+-  Right to deletion (account deletion)
+-  Data portability (JSON export)
+-  Privacy Policy in-app and on website
 
 **Implementation:**
 
@@ -735,19 +735,19 @@ security:
 
 ### 11.1 Security Tips (In-App)
 
-**Settings → Security:**
+**Settings  Security:**
 
-- ✅ "Use a device screen lock (PIN/Pattern/Biometric) to protect your data"
-- ✅ "Disable battery optimization for Habitao to ensure timely reminders"
-- ✅ "Enable auto-backups to prevent data loss"
-- ⚠️ "Habitao does not sync to cloud. Uninstalling will delete all data."
+-  "Use a device screen lock (PIN/Pattern/Biometric) to protect your data"
+-  "Disable battery optimization for Habitao to ensure timely reminders"
+-  "Enable auto-backups to prevent data loss"
+-  "Habitao does not sync to cloud. Uninstalling will delete all data."
 
 ### 11.2 Transparency
 
-**About → Privacy:**
+**About  Privacy:**
 - Link to privacy policy
 - "View data Habitao has collected" (shows empty state for MVP)
-- "Export my data" button → generates JSON file
+- "Export my data" button  generates JSON file
 - "Delete all data" button (with confirmation)
 
 ---

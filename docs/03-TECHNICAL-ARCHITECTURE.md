@@ -1,4 +1,4 @@
-# Technical Architecture (HLD)
+﻿# Technical Architecture (HLD)
 ## Habitao - High-Level Design
 
 **Version:** 1.0  
@@ -39,148 +39,148 @@
 ### 2.1 Layered Architecture (Clean Architecture)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    PRESENTATION LAYER                        │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   UI (Compose)  │  │  ViewModel   │  │  Navigation  │      │
-│  │   Screens       │  │  (MVI State) │  │  (Voyager)   │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└────────────────────────┬────────────────────────────────────┘
-                         │ State (Flow), Intents
-┌────────────────────────▼────────────────────────────────────┐
-│                      DOMAIN LAYER                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  Use Cases   │  │  Entities    │  │  Repository  │      │
-│  │  (Business   │  │  (Models)    │  │  Interfaces  │      │
-│  │   Logic)     │  │              │  │              │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└────────────────────────┬────────────────────────────────────┘
-                         │ Domain Models
-┌────────────────────────▼────────────────────────────────────┐
-│                       DATA LAYER                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  Repository  │  │  Local DB    │  │  Remote API  │      │
-│  │  Impl        │  │  (Room)      │  │  (Future)    │      │
-│  └──────┬───────┘  └──────────────┘  └──────────────┘      │
-│         │                                                     │
-│  ┌──────▼───────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  Data Source │  │  DAO         │  │  API Service │      │
-│  │  (Proto DS)  │  │  (Room)      │  │  (Ktor)      │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────┐
-│                    SYSTEM LAYER                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  Notifications│  │  WorkManager │  │  Alarms      │      │
-│  │  (NotificationMgr)│  (Sync, Backup)│  (Reminders) │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
+                    PRESENTATION LAYER                        
+            
+     UI (Compose)      ViewModel       Navigation        
+     Screens           (MVI State)     (Voyager)         
+            
+
+                          State (Flow), Intents
+
+                      DOMAIN LAYER                            
+            
+    Use Cases       Entities        Repository        
+    (Business       (Models)        Interfaces        
+     Logic)                                           
+            
+
+                          Domain Models
+
+                       DATA LAYER                             
+            
+    Repository      Local DB        Remote API        
+    Impl            (Room)          (Future)          
+            
+                                                              
+            
+    Data Source     DAO             API Service       
+    (Proto DS)      (Room)          (Ktor)            
+            
+
+
+
+                    SYSTEM LAYER                              
+            
+    Notifications    WorkManager     Alarms            
+    (NotificationMgr)  (Sync, Backup)  (Reminders)       
+            
+
 ```
 
 ### 2.2 Module Structure (Gradle Multi-Module)
 
 ```
 habitao/
-├── app/                          # Android app module
-│   ├── src/main/
-│   │   ├── java/com/habitao/
-│   │   │   ├── HabitaoApplication.kt
-│   │   │   ├── MainActivity.kt
-│   │   │   └── di/               # Hilt modules
-│   │   └── res/                  # Resources, themes
-│   └── build.gradle.kts
-│
-├── feature/                      # Feature modules (presentation)
-│   ├── habits/
-│   │   ├── src/main/java/
-│   │   │   ├── ui/
-│   │   │   │   ├── HabitsScreen.kt
-│   │   │   │   ├── HabitDetailScreen.kt
-│   │   │   │   └── components/
-│   │   │   └── viewmodel/
-│   │   │       └── HabitsViewModel.kt
-│   │   └── build.gradle.kts
-│   │
-│   ├── routines/
-│   │   ├── ui/
-│   │   └── viewmodel/
-│   │
-│   ├── tasks/
-│   │   ├── ui/
-│   │   └── viewmodel/
-│   │
-│   └── pomodoro/
-│       ├── ui/
-│       └── viewmodel/
-│
-├── domain/                       # Business logic (pure Kotlin, KMP-ready)
-│   ├── src/commonMain/kotlin/
-│   │   ├── model/                # Domain entities
-│   │   │   ├── Habit.kt
-│   │   │   ├── Task.kt
-│   │   │   └── Routine.kt
-│   │   ├── repository/           # Repository interfaces
-│   │   │   ├── HabitRepository.kt
-│   │   │   └── TaskRepository.kt
-│   │   └── usecase/              # Use cases (business logic)
-│   │       ├── habit/
-│   │       │   ├── CreateHabitUseCase.kt
-│   │       │   ├── GetTodaysHabitsUseCase.kt
-│   │       │   └── CalculateStreakUseCase.kt
-│   │       ├── task/
-│   │       └── routine/
-│   └── build.gradle.kts
-│
-├── data/                         # Data layer (KMP-ready)
-│   ├── src/commonMain/kotlin/
-│   │   ├── repository/           # Repository implementations
-│   │   │   └── HabitRepositoryImpl.kt
-│   │   ├── local/
-│   │   │   ├── database/         # Room database
-│   │   │   │   ├── HabitaoDatabase.kt
-│   │   │   │   ├── dao/
-│   │   │   │   │   ├── HabitDao.kt
-│   │   │   │   │   └── TaskDao.kt
-│   │   │   │   └── entity/       # Room entities (separate from domain)
-│   │   │   │       ├── HabitEntity.kt
-│   │   │   │       └── HabitLogEntity.kt
-│   │   │   └── preferences/      # Proto DataStore
-│   │   │       └── AppPreferences.kt
-│   │   └── remote/               # Future: API client (Ktor)
-│   │       └── api/
-│   └── build.gradle.kts
-│
-├── core/                         # Shared utilities (KMP-ready)
-│   ├── common/                   # Pure Kotlin utilities
-│   │   ├── DateTimeUtils.kt
-│   │   ├── StringUtils.kt
-│   │   └── Result.kt             # Result wrapper for error handling
-│   ├── ui/                       # Shared Compose UI components
-│   │   ├── theme/
-│   │   │   ├── Theme.kt
-│   │   │   ├── Color.kt
-│   │   │   └── Typography.kt
-│   │   └── components/
-│   │       ├── HabitCard.kt
-│   │       └── ProgressIndicator.kt
-│   └── testing/                  # Test utilities
-│       └── FakeRepositories.kt
-│
-├── system/                       # Android system integrations
-│   ├── notifications/
-│   │   ├── NotificationManager.kt
-│   │   └── NotificationChannels.kt
-│   ├── alarms/
-│   │   └── AlarmScheduler.kt
-│   ├── work/
-│   │   ├── BackupWorker.kt
-│   │   └── SyncWorker.kt
-│   └── widget/
-│       ├── HabitWidgetProvider.kt
-│       └── TaskWidgetProvider.kt
-│
-└── build.gradle.kts              # Root build configuration
+ app/                          # Android app module
+    src/main/
+       java/com/habitao/
+          HabitaoApplication.kt
+          MainActivity.kt
+          di/               # Hilt modules
+       res/                  # Resources, themes
+    build.gradle.kts
+
+ feature/                      # Feature modules (presentation)
+    habits/
+       src/main/java/
+          ui/
+             HabitsScreen.kt
+             HabitDetailScreen.kt
+             components/
+          viewmodel/
+              HabitsViewModel.kt
+       build.gradle.kts
+   
+    routines/
+       ui/
+       viewmodel/
+   
+    tasks/
+       ui/
+       viewmodel/
+   
+    pomodoro/
+        ui/
+        viewmodel/
+
+ domain/                       # Business logic (pure Kotlin, KMP-ready)
+    src/commonMain/kotlin/
+       model/                # Domain entities
+          Habit.kt
+          Task.kt
+          Routine.kt
+       repository/           # Repository interfaces
+          HabitRepository.kt
+          TaskRepository.kt
+       usecase/              # Use cases (business logic)
+           habit/
+              CreateHabitUseCase.kt
+              GetTodaysHabitsUseCase.kt
+              CalculateStreakUseCase.kt
+           task/
+           routine/
+    build.gradle.kts
+
+ data/                         # Data layer (KMP-ready)
+    src/commonMain/kotlin/
+       repository/           # Repository implementations
+          HabitRepositoryImpl.kt
+       local/
+          database/         # Room database
+             HabitaoDatabase.kt
+             dao/
+                HabitDao.kt
+                TaskDao.kt
+             entity/       # Room entities (separate from domain)
+                 HabitEntity.kt
+                 HabitLogEntity.kt
+          preferences/      # Proto DataStore
+              AppPreferences.kt
+       remote/               # Future: API client (Ktor)
+           api/
+    build.gradle.kts
+
+ core/                         # Shared utilities (KMP-ready)
+    common/                   # Pure Kotlin utilities
+       DateTimeUtils.kt
+       StringUtils.kt
+       Result.kt             # Result wrapper for error handling
+    ui/                       # Shared Compose UI components
+       theme/
+          Theme.kt
+          Color.kt
+          Typography.kt
+       components/
+           HabitCard.kt
+           ProgressIndicator.kt
+    testing/                  # Test utilities
+        FakeRepositories.kt
+
+ system/                       # Android system integrations
+    notifications/
+       NotificationManager.kt
+       NotificationChannels.kt
+    alarms/
+       AlarmScheduler.kt
+    work/
+       BackupWorker.kt
+       SyncWorker.kt
+    widget/
+        HabitWidgetProvider.kt
+        TaskWidgetProvider.kt
+
+ build.gradle.kts              # Root build configuration
 ```
 
 ---
@@ -250,7 +250,7 @@ habitao/
 ### 4.1 MVI (Model-View-Intent) Pattern
 
 **Why MVI over MVVM?**
-- Jetpack Compose is declarative → MVI's unidirectional flow is natural fit
+- Jetpack Compose is declarative  MVI's unidirectional flow is natural fit
 - Single immutable state eliminates state desync bugs
 - Easier debugging (all state changes via explicit intents)
 - Better testability (state transitions are pure functions)
@@ -416,7 +416,7 @@ class CalculateStreakUseCase @Inject constructor(
 
 ### 4.4 Mapper Pattern
 
-**Purpose:** Convert between entity types (Database ↔ Domain ↔ UI).
+**Purpose:** Convert between entity types (Database  Domain  UI).
 
 ```kotlin
 // Data layer entity (Room)
@@ -466,20 +466,20 @@ fun Habit.toEntity(): HabitEntity {
 
 ```
 User Action (Intent)
-        │
-        ▼
+        
+        
     ViewModel.processIntent()
-        │
-        ▼
+        
+        
     Use Case Execution
-        │
-        ▼
+        
+        
     Repository Query
-        │
-        ▼
+        
+        
     StateFlow Update (immutable state)
-        │
-        ▼
+        
+        
     Compose Recomposition
 ```
 
@@ -872,19 +872,19 @@ val habitsPager = Pager(
 ### 10.1 Test Pyramid
 
 ```
-        ┌────────────┐
-        │    E2E     │  10% - Maestro (critical user flows)
-        │  (Maestro) │
-        └────────────┘
-     ┌────────────────┐
-     │  Integration   │  20% - Repository + Room, ViewModel + UseCase
-     │   (JUnit +     │
-     │    Room Test)  │
-     └────────────────┘
-  ┌────────────────────┐
-  │   Unit Tests       │  70% - Use Cases, ViewModels (mocked repos)
-  │  (JUnit + Mockk)   │
-  └────────────────────┘
+        
+            E2E       10% - Maestro (critical user flows)
+          (Maestro) 
+        
+     
+       Integration     20% - Repository + Room, ViewModel + UseCase
+        (JUnit +     
+         Room Test)  
+     
+  
+     Unit Tests         70% - Use Cases, ViewModels (mocked repos)
+    (JUnit + Mockk)   
+  
 ```
 
 ### 10.2 Test Examples
