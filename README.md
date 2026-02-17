@@ -76,14 +76,17 @@ Data (Room + Repository Implementations)
 ## Features
 
 ### Implemented
-- Habits list view with Material Design 3 theming
+- Habit list view with Material Design 3 theming
+- Create habit form with support for three habit types:
+  - Simple (Yes/No completion)
+  - Measurable (numeric targets with progress tracking)
+  - Checklist (sub-tasks that can be checked off)
+- Edit existing habits
+- Habit completion tracking with daily logs
+- Flexible scheduling (daily, specific days, interval-based)
 - Dynamic color support (Material You)
 - Empty state handling
 - Database schema for habits and logs
-
-### In Progress
-- Create/Edit habit form
-- Habit completion tracking
 
 ### Planned
 - Routines with ordered steps
@@ -91,6 +94,7 @@ Data (Room + Repository Implementations)
 - Pomodoro timer with notifications
 - Home screen widgets
 - Statistics and streaks
+- Habit reminders and notifications
 
 ## Development
 
