@@ -1,4 +1,4 @@
-# Habitao - Project Overview & Master Plan
+﻿# Habitao - Project Overview & Master Plan
 
 **Project Name:** Habitao  
 **Type:** Native Android Productivity App  
@@ -8,7 +8,7 @@
 
 ---
 
-## 📋 Quick Links
+##  Quick Links
 
 - [Product Requirements](./01-PRODUCT-REQUIREMENTS.md) - Features, user stories, MVP scope
 - [Data Model & Schema](./02-DATA-MODEL-SCHEMA.md) - Database design, entities, relationships
@@ -21,7 +21,7 @@
 
 ---
 
-## 🎯 Project Vision
+##  Project Vision
 
 **Problem:** Users currently juggle multiple apps for habits, tasks, routines, and focus timers (TickTick + habit tracker + Pomodoro app).
 
@@ -35,13 +35,13 @@
 
 ---
 
-## 🏗️ Architecture Decision Summary
+##  Architecture Decision Summary
 
 ### Why Kotlin Multiplatform (KMP) + Jetpack Compose?
 
 Based on comprehensive research of industry leaders (TickTick, Todoist, Microsoft To Do), the decision is:
 
-**✅ CHOSEN: Kotlin Multiplatform + Jetpack Compose**
+** CHOSEN: Kotlin Multiplatform + Jetpack Compose**
 
 **Key Reasons:**
 1. **Industry Standard:** Todoist (pioneer of KMP), TickTick, Microsoft To Do all use native development
@@ -50,13 +50,13 @@ Based on comprehensive research of industry leaders (TickTick, Todoist, Microsof
 4. **Background Reliability:** First-class `AlarmManager`, `WorkManager`, `ForegroundService` access
 5. **Material Design 3 Expressive:** Latest 2026 design system fully supported in Compose
 6. **Future-Proof:** Can share business logic with iOS via KMP without rewriting Android app
-7. **Your Background:** Natural progression from Java → Kotlin (similar syntax, same ecosystem)
+7. **Your Background:** Natural progression from Java  Kotlin (similar syntax, same ecosystem)
 
 **Rejected:** React Native (would require native modules for widgets/alarms, introduces JS bridge overhead, lags behind on MD3 Expressive features)
 
 ---
 
-## 📊 Tech Stack
+##  Tech Stack
 
 ### Core Technologies
 
@@ -99,7 +99,7 @@ Based on comprehensive research of industry leaders (TickTick, Todoist, Microsof
 
 ---
 
-## 🎨 Design System
+##  Design System
 
 **Material Design 3 Expressive (2026)**
 
@@ -120,51 +120,51 @@ The latest evolution of Material Design, introduced in May 2025 with Android 16.
 
 ---
 
-## 🗂️ Module Structure
+##  Module Structure
 
 ```
 habitao/
-├── app/                    # Android application module
-├── feature/                # Feature modules (UI + ViewModels)
-│   ├── habits/
-│   ├── routines/
-│   ├── tasks/
-│   └── pomodoro/
-├── domain/                 # Business logic (pure Kotlin, KMP-ready)
-│   ├── model/
-│   ├── repository/
-│   └── usecase/
-├── data/                   # Data layer (repositories, database, API)
-│   ├── local/
-│   │   ├── database/       # Room
-│   │   └── preferences/    # Proto DataStore
-│   └── remote/             # Future: API client
-├── core/                   # Shared utilities
-│   ├── common/             # Pure Kotlin utils
-│   ├── ui/                 # Shared Compose components
-│   └── testing/            # Test utilities
-└── system/                 # Android system integrations
-    ├── notifications/
-    ├── alarms/
-    ├── work/
-    └── widget/
+ app/                    # Android application module
+ feature/                # Feature modules (UI + ViewModels)
+    habits/
+    routines/
+    tasks/
+    pomodoro/
+ domain/                 # Business logic (pure Kotlin, KMP-ready)
+    model/
+    repository/
+    usecase/
+ data/                   # Data layer (repositories, database, API)
+    local/
+       database/       # Room
+       preferences/    # Proto DataStore
+    remote/             # Future: API client
+ core/                   # Shared utilities
+    common/             # Pure Kotlin utils
+    ui/                 # Shared Compose components
+    testing/            # Test utilities
+ system/                 # Android system integrations
+     notifications/
+     alarms/
+     work/
+     widget/
 ```
 
 ---
 
-## 🔐 Security & Privacy
+##  Security & Privacy
 
 ### Data Encryption
-- ✅ **Proto DataStore + Google Tink:** AES-256-GCM for app settings
-- ✅ **Android Keystore:** Hardware-backed key storage
-- ✅ **Encrypted Backups:** Daily automated backups with encryption
-- ⚠️ **Room Database:** NOT encrypted (relies on Android filesystem encryption for performance)
+-  **Proto DataStore + Google Tink:** AES-256-GCM for app settings
+-  **Android Keystore:** Hardware-backed key storage
+-  **Encrypted Backups:** Daily automated backups with encryption
+-  **Room Database:** NOT encrypted (relies on Android filesystem encryption for performance)
 
 ### Privacy
-- ✅ **Local-First:** All data stored on device (no cloud in MVP)
-- ✅ **No Account Required:** No email, phone, or personal identifiers
-- ✅ **Export Anytime:** JSON export of all user data
-- ✅ **GDPR-Ready:** Right to access, right to deletion
+-  **Local-First:** All data stored on device (no cloud in MVP)
+-  **No Account Required:** No email, phone, or personal identifiers
+-  **Export Anytime:** JSON export of all user data
+-  **GDPR-Ready:** Right to access, right to deletion
 
 ### Permissions
 - `POST_NOTIFICATIONS` - Habit/task reminders
@@ -180,20 +180,20 @@ habitao/
 
 ---
 
-## 🧪 Testing Strategy
+##  Testing Strategy
 
 ### Test Pyramid (70/20/10)
 
 ```
-        ┌─────────┐
-        │   E2E   │  10% - Maestro (critical user flows)
-        └─────────┘
-     ┌─────────────┐
-     │ Integration │  20% - Repository + Room, ViewModel + UseCase
-     └─────────────┘
-  ┌─────────────────┐
-  │  Unit Tests     │  70% - Use Cases, ViewModels (mocked repos)
-  └─────────────────┘
+        
+           E2E     10% - Maestro (critical user flows)
+        
+     
+      Integration   20% - Repository + Room, ViewModel + UseCase
+     
+  
+    Unit Tests       70% - Use Cases, ViewModels (mocked repos)
+  
 ```
 
 ### Coverage Targets
@@ -209,14 +209,14 @@ habitao/
 
 ---
 
-## 🚀 Development Roadmap
+##  Development Roadmap
 
 ### Phase 1: Foundation (Weeks 1-2)
-- ✅ Project setup (multi-module Gradle structure)
-- ✅ Database schema implementation (Room)
-- ✅ Design system setup (MD3 tokens, theme)
-- ✅ Navigation infrastructure (Voyager)
-- ✅ CI/CD pipeline (GitHub Actions)
+-  Project setup (multi-module Gradle structure)
+-  Database schema implementation (Room)
+-  Design system setup (MD3 tokens, theme)
+-  Navigation infrastructure (Voyager)
+-  CI/CD pipeline (GitHub Actions)
 
 ### Phase 2: Core Features - Habits (Weeks 3-4)
 - Habit CRUD operations
@@ -253,9 +253,9 @@ habitao/
 
 ---
 
-## 📦 MVP Feature Scope
+##  MVP Feature Scope
 
-### ✅ Included in v1.0
+###  Included in v1.0
 
 **Habits:**
 - Add/edit/delete habits with count-based tracking
@@ -286,7 +286,7 @@ habitao/
 - Data export (JSON)
 - Basic statistics (completion %, simple charts)
 
-### ❌ Deferred to v1.1+
+###  Deferred to v1.1+
 
 - Month calendar view (Day + Week only in MVP)
 - Cloud sync (architecture ready, implementation later)
@@ -300,32 +300,32 @@ habitao/
 
 ---
 
-## 🔀 Git Workflow
+##  Git Workflow
 
 ### Branching Strategy
 
 ```
 main (protected, production-ready)
-  │
-  ├── dev (primary, latest development)
-  │     │
-  │     ├── feature/habits-crud
-  │     ├── feature/task-management
-  │     ├── feature/pomodoro-timer
-  │     ├── feature/widget-implementation
-  │     │
-  │     └── bugfix/notification-crash
-  │
-  └── hotfix/critical-data-loss (emergency only)
+  
+   dev (primary, latest development)
+       
+        feature/habits-crud
+        feature/task-management
+        feature/pomodoro-timer
+        feature/widget-implementation
+       
+        bugfix/notification-crash
+  
+   hotfix/critical-data-loss (emergency only)
 ```
 
 **Rules:**
-- ✅ `dev` is the primary branch (where all features merge)
-- ✅ Create feature branches from `dev`: `feature/<description>`
-- ✅ Never commit directly to `dev` or `main`
-- ✅ All merges via Pull Request with code review
-- ✅ Merge to `main` only for releases (after QA)
-- ❌ No merges without explicit user approval
+-  `dev` is the primary branch (where all features merge)
+-  Create feature branches from `dev`: `feature/<description>`
+-  Never commit directly to `dev` or `main`
+-  All merges via Pull Request with code review
+-  Merge to `main` only for releases (after QA)
+-  No merges without explicit user approval
 
 **Branch Naming:**
 - `feature/habit-streak-calculation`
@@ -335,7 +335,7 @@ main (protected, production-ready)
 
 ---
 
-## 👥 Stakeholder Roles
+##  Stakeholder Roles
 
 ### From User Requirements
 Think from these perspectives:
@@ -353,7 +353,7 @@ Think from these perspectives:
 
 ---
 
-## 🎯 Success Metrics
+##  Success Metrics
 
 ### User Experience
 - Time to first habit created: < 2 minutes
@@ -378,7 +378,7 @@ Think from these perspectives:
 
 ---
 
-## 🚨 Risks & Mitigations
+##  Risks & Mitigations
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
@@ -390,11 +390,11 @@ Think from these perspectives:
 
 ---
 
-## 📚 Documentation Index
+##  Documentation Index
 
 All planning documents are in the `docs/` directory:
 
-1. **00-PROJECT-OVERVIEW.md** ← You are here
+1. **00-PROJECT-OVERVIEW.md**  You are here
 2. **01-PRODUCT-REQUIREMENTS.md** - Comprehensive feature specifications
 3. **02-DATA-MODEL-SCHEMA.md** - Database design and entity relationships
 4. **03-TECHNICAL-ARCHITECTURE.md** - System architecture and design patterns
@@ -406,29 +406,29 @@ All planning documents are in the `docs/` directory:
 
 ---
 
-## 🏁 Next Steps
+##  Next Steps
 
 1. **Review & Approve:** User reviews all planning documents
 2. **Initialize Repository:** Set up Git with `dev` as primary branch
 3. **Project Setup:** Create multi-module Gradle structure
 4. **Sprint 1 Kickoff:** Implement database schema + design system
-5. **Iterative Development:** Feature branches → PR → dev → test → repeat
-6. **Launch Preparation:** Beta testing → bug fixes → Play Store release
+5. **Iterative Development:** Feature branches  PR  dev  test  repeat
+6. **Launch Preparation:** Beta testing  bug fixes  Play Store release
 
 ---
 
-## 📝 Open Questions (Pre-Implementation)
+##  Open Questions (Pre-Implementation)
 
 ### To Be Resolved:
-- ⏳ **Onboarding Flow:** Step-by-step wizard vs. template gallery vs. blank slate?
-- ⏳ **Widget Variants:** Single unified widget or separate (Habits, Tasks, Timer)?
-- ⏳ **Routine Completion Logic:** All steps required or percentage-based (80%)?
-- ⏳ **Pomodoro-Task Association:** Link Pomodoro to specific task in MVP or defer?
-- ⏳ **Default Values:** Should new habits default to count=1 or force user input?
+-  **Onboarding Flow:** Step-by-step wizard vs. template gallery vs. blank slate?
+-  **Widget Variants:** Single unified widget or separate (Habits, Tasks, Timer)?
+-  **Routine Completion Logic:** All steps required or percentage-based (80%)?
+-  **Pomodoro-Task Association:** Link Pomodoro to specific task in MVP or defer?
+-  **Default Values:** Should new habits default to count=1 or force user input?
 
 ---
 
-## 🔧 Development Prerequisites
+##  Development Prerequisites
 
 ### Required Tools:
 - Android Studio Ladybug (2024.2.1) or newer
@@ -444,7 +444,7 @@ All planning documents are in the `docs/` directory:
 
 ---
 
-## 📞 Contact & Collaboration
+##  Contact & Collaboration
 
 **Project Owner:** [User]  
 **Repository:** [To be created at C:\Development\Projects\Habitao]  
@@ -454,7 +454,7 @@ All planning documents are in the `docs/` directory:
 ---
 
 **Last Updated:** February 13, 2026  
-**Document Status:** ✅ APPROVED - Ready for implementation
+**Document Status:**  APPROVED - Ready for implementation
 
 ---
 

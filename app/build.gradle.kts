@@ -112,6 +112,9 @@ dependencies {
     implementation(libs.androidx.splashscreen)
     implementation(libs.bundles.lifecycle)
 
+    // Material Components (for XML themes)
+    implementation(libs.material.components)
+
     // Compose
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)

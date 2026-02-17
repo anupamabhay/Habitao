@@ -48,20 +48,22 @@ interface HabitDao {
     fun observeArchivedHabits(): Flow<List<HabitEntity>>
     
     // ============== TODAY'S HABITS ==============
-    
+
     @Query("""
         SELECT * FROM habits 
         WHERE isArchived = 0 
-        AND nextScheduledDate <= :date
-        ORDER BY sortOrder ASC
+        AND startDate <= :date
+        AND (endDate IS NULL OR endDate >= :date)
+        ORDER BY sortOrder ASC, createdAt DESC
     """)
     suspend fun getHabitsForDate(date: Long): List<HabitEntity>
-    
+
     @Query("""
         SELECT * FROM habits 
         WHERE isArchived = 0 
-        AND nextScheduledDate <= :date
-        ORDER BY sortOrder ASC
+        AND startDate <= :date
+        AND (endDate IS NULL OR endDate >= :date)
+        ORDER BY sortOrder ASC, createdAt DESC
     """)
     fun observeHabitsForDate(date: Long): Flow<List<HabitEntity>>
     
@@ -112,6 +114,9 @@ interface HabitLogDao {
     
     @Query("SELECT * FROM habit_logs WHERE habitId = :habitId AND date = :date")
     fun observeLogForHabitAndDate(habitId: String, date: Long): Flow<HabitLogEntity?>
+
+    @Query("SELECT * FROM habit_logs WHERE date = :date")
+    fun observeLogsForDate(date: Long): Flow<List<HabitLogEntity>>
     
     // ============== STREAK CALCULATION ==============
     

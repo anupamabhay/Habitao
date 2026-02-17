@@ -1,9 +1,9 @@
-# CI/CD Pipeline Documentation
+﻿# CI/CD Pipeline Documentation
 ## Habitao - Automated Testing & Deployment
 
 **Version:** 1.0  
 **Last Updated:** February 13, 2026  
-**Status:** ✅ Configured and Active
+**Status:**  Configured and Active
 
 ---
 
@@ -153,7 +153,7 @@ Steps:
 - Outdated libraries with security patches
 - License compliance
 
-**Threshold:** Fails if CVSS score ≥ 7.0
+**Threshold:** Fails if CVSS score  7.0
 
 **Artifacts produced:**
 - `dependency-check-report.html` - Detailed vulnerability report
@@ -278,7 +278,7 @@ git push -u origin feature/habit-streak-calculation
 **Step 4: Wait for CI Checks**
 - GitHub Actions will automatically run
 - Check status at: `https://github.com/YOUR_USERNAME/habitao/actions`
-- PR cannot be merged until all checks pass ✅
+- PR cannot be merged until all checks pass 
 
 **Step 5: Address Failures**
 
@@ -316,7 +316,7 @@ open index.html  # or start index.html on Windows
 
 ### 5.1 Common CI Failures
 
-#### ❌ Detekt Failures
+####  Detekt Failures
 
 **Error:**
 ```
@@ -333,7 +333,7 @@ Complexity - [ComplexMethod] at MainActivity.kt:45
 
 ---
 
-#### ❌ Ktlint Failures
+####  Ktlint Failures
 
 **Error:**
 ```
@@ -356,7 +356,7 @@ val habit = Habit(
 
 ---
 
-#### ❌ Unit Test Failures
+####  Unit Test Failures
 
 **Error:**
 ```
@@ -373,7 +373,7 @@ HabitsViewModelTest > load habits returns correct state FAILED
 
 ---
 
-#### ❌ Build Failures
+####  Build Failures
 
 **Error:**
 ```
@@ -396,7 +396,7 @@ import dagger.hilt.android.HiltAndroidApp
 
 ---
 
-#### ❌ Integration Test Timeout
+####  Integration Test Timeout
 
 **Error:**
 ```
@@ -467,8 +467,8 @@ act pull_request
 - Unlimited for public repos
 
 **Monthly usage estimate (private repo):**
-- 20 PRs × 40 min × 2 (push + PR events) = 1,600 min/month
-- **Fits within free tier** ✅
+- 20 PRs  40 min  2 (push + PR events) = 1,600 min/month
+- **Fits within free tier** 
 
 ---
 
@@ -522,9 +522,9 @@ act pull_request
 ### 9.1 Secrets Management
 
 **Never commit:**
-- ❌ Signing keystore files
-- ❌ API keys
-- ❌ Firebase `google-services.json` with sensitive data
+-  Signing keystore files
+-  API keys
+-  Firebase `google-services.json` with sensitive data
 
 **Use GitHub Secrets:**
 ```yaml

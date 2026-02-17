@@ -3,12 +3,17 @@ package com.habitao.feature.habits.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.Habit
+import com.habitao.domain.model.HabitLog
 import com.habitao.domain.repository.HabitRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
@@ -18,7 +23,8 @@ import javax.inject.Inject
  */
 data class HabitsState(
     val habits: List<Habit> = emptyList(),
-    val isLoading: Boolean = false,
+    val logs: Map<String, HabitLog> = emptyMap(), // habitId -> log for selected date
+    val isLoading: Boolean = true,
     val error: String? = null,
     val selectedDate: LocalDate = LocalDate.now()
 )
@@ -27,8 +33,7 @@ data class HabitsState(
  * Intents (User Actions) for Habits Screen
  */
 sealed class HabitsIntent {
-    data class LoadHabits(val date: LocalDate) : HabitsIntent()
-    data class RefreshHabits : HabitsIntent()
+    data class SelectDate(val date: LocalDate) : HabitsIntent()
     data class MarkHabitComplete(val habitId: String, val count: Int) : HabitsIntent()
     data class IncrementHabitProgress(val habitId: String) : HabitsIntent()
     data class DeleteHabit(val habitId: String) : HabitsIntent()
@@ -40,18 +45,47 @@ class HabitsViewModel @Inject constructor(
     private val habitRepository: HabitRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(HabitsState())
-    val state: StateFlow<HabitsState> = _state.asStateFlow()
+    private val _selectedDate = MutableStateFlow(LocalDate.now())
+    private val _error = MutableStateFlow<String?>(null)
 
-    init {
-        // Load today's habits on init
-        processIntent(HabitsIntent.LoadHabits(LocalDate.now()))
-    }
+    /**
+     * Observe habits reactively - auto-updates when database changes.
+     * This fixes the refresh bug where habits wouldn't appear after creation.
+     */
+    val state: StateFlow<HabitsState> = combine(
+        _selectedDate,
+        _selectedDate.flatMapLatest { date ->
+            habitRepository.observeHabitsForDate(date)
+                .map { result ->
+                    result.getOrElse { emptyList() }
+                }
+                .catch { emit(emptyList()) }
+        },
+        _selectedDate.flatMapLatest { date ->
+            habitRepository.observeLogsForDate(date)
+                .map { result ->
+                    result.getOrElse { emptyMap() }
+                }
+                .catch { emit(emptyMap()) }
+        },
+        _error
+    ) { date, habits, logs, error ->
+        HabitsState(
+            habits = habits,
+            logs = logs,
+            isLoading = false,
+            error = error,
+            selectedDate = date
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HabitsState()
+    )
 
     fun processIntent(intent: HabitsIntent) {
         when (intent) {
-            is HabitsIntent.LoadHabits -> loadHabits(intent.date)
-            is HabitsIntent.RefreshHabits -> refreshHabits()
+            is HabitsIntent.SelectDate -> selectDate(intent.date)
             is HabitsIntent.MarkHabitComplete -> markHabitComplete(intent.habitId, intent.count)
             is HabitsIntent.IncrementHabitProgress -> incrementHabitProgress(intent.habitId)
             is HabitsIntent.DeleteHabit -> deleteHabit(intent.habitId)
@@ -59,93 +93,55 @@ class HabitsViewModel @Inject constructor(
         }
     }
 
-    private fun loadHabits(date: LocalDate) {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null, selectedDate = date) }
-            
-            habitRepository.getHabitsForDate(date)
-                .onSuccess { habits ->
-                    _state.update { 
-                        it.copy(
-                            habits = habits,
-                            isLoading = false,
-                            error = null
-                        )
-                    }
-                }
-                .onFailure { error ->
-                    _state.update { 
-                        it.copy(
-                            isLoading = false,
-                            error = error.message ?: "Failed to load habits"
-                        )
-                    }
-                }
-        }
-    }
-
-    private fun refreshHabits() {
-        loadHabits(_state.value.selectedDate)
+    private fun selectDate(date: LocalDate) {
+        _selectedDate.value = date
     }
 
     private fun markHabitComplete(habitId: String, count: Int) {
         viewModelScope.launch {
-            val date = _state.value.selectedDate
+            val date = _selectedDate.value
             habitRepository.createOrUpdateLog(habitId, date, count)
-                .onSuccess {
-                    // Refresh the list to show updated progress
-                    refreshHabits()
-                }
                 .onFailure { error ->
-                    _state.update { 
-                        it.copy(error = error.message ?: "Failed to update habit")
-                    }
+                    _error.value = error.message ?: "Failed to update habit"
                 }
+            // No need to manually refresh - Flow observation handles it
         }
     }
 
     private fun incrementHabitProgress(habitId: String) {
         viewModelScope.launch {
-            val date = _state.value.selectedDate
-            
+            val date = _selectedDate.value
+
             // Get current log or create new
             val currentLog = habitRepository.getLogForHabitAndDate(habitId, date).getOrNull()
-            val currentCount = currentLog?.currentCount ?: 0
-            val newCount = currentCount + 1
-            
-            markHabitComplete(habitId, newCount)
+            val currentValue = currentLog?.currentValue ?: 0
+            val newValue = currentValue + 1
+
+            markHabitComplete(habitId, newValue)
         }
     }
 
     private fun deleteHabit(habitId: String) {
         viewModelScope.launch {
             habitRepository.deleteHabit(habitId)
-                .onSuccess {
-                    refreshHabits()
-                }
                 .onFailure { error ->
-                    _state.update { 
-                        it.copy(error = error.message ?: "Failed to delete habit")
-                    }
+                    _error.value = error.message ?: "Failed to delete habit"
                 }
+            // No need to manually refresh - Flow observation handles it
         }
     }
 
     private fun archiveHabit(habitId: String) {
         viewModelScope.launch {
             habitRepository.archiveHabit(habitId)
-                .onSuccess {
-                    refreshHabits()
-                }
                 .onFailure { error ->
-                    _state.update { 
-                        it.copy(error = error.message ?: "Failed to archive habit")
-                    }
+                    _error.value = error.message ?: "Failed to archive habit"
                 }
+            // No need to manually refresh - Flow observation handles it
         }
     }
 
     fun clearError() {
-        _state.update { it.copy(error = null) }
+        _error.value = null
     }
 }

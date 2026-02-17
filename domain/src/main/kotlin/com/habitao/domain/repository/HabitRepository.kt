@@ -47,6 +47,8 @@ interface HabitRepository {
     fun observeLogForHabitAndDate(habitId: String, date: LocalDate): Flow<Result<HabitLog?>>
     
     suspend fun getLogsForHabit(habitId: String): Result<List<HabitLog>>
+
+    fun observeLogsForDate(date: LocalDate): Flow<Result<Map<String, HabitLog>>>
     
     // ============== STATISTICS ==============
     

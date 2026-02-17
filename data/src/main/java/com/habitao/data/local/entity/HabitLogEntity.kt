@@ -6,8 +6,8 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Room entity representing a habit log (daily progress)
- * Based on data model defined in docs/02-DATA-MODEL-SCHEMA.md
+ * Room entity representing a habit log (daily progress).
+ * Tracks completion status and progress for a specific habit on a specific date.
  */
 @Entity(
     tableName = "habit_logs",
@@ -27,18 +27,22 @@ import androidx.room.PrimaryKey
 data class HabitLogEntity(
     @PrimaryKey
     val id: String,
-    
+
     val habitId: String,
-    val date: Long, // Epoch millis for the day
-    
+    val date: Long, // Epoch millis for start of day
+
     // Progress Tracking
-    val currentCount: Int = 0,
-    val goalCount: Int,
+    val currentValue: Int = 0,
+    val targetValue: Int = 1,
     val isCompleted: Boolean = false,
-    
-    // Duration tracking (if trackingType = DURATION)
-    val durationSeconds: Int? = null,
-    
+
+    // Checklist progress (JSON array of completed item IDs)
+    val completedChecklistItemsJson: String? = null,
+
+    // Legacy fields for backward compatibility
+    val currentCount: Int = 0,
+    val goalCount: Int = 1,
+
     // Metadata
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),

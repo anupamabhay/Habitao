@@ -1,0 +1,692 @@
+package com.habitao.feature.habits.ui
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.CheckCircleOutline
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.Numbers
+import androidx.compose.material.icons.outlined.Repeat
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.habitao.domain.model.DayOfWeek
+import com.habitao.domain.model.FrequencyType
+import com.habitao.domain.model.HabitType
+import com.habitao.feature.habits.viewmodel.CreateHabitIntent
+import com.habitao.feature.habits.viewmodel.CreateHabitState
+import com.habitao.feature.habits.viewmodel.CreateHabitViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CreateHabitScreen(
+    onNavigateBack: () -> Unit,
+    onHabitCreated: () -> Unit,
+    habitId: String? = null,
+    viewModel: CreateHabitViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    // Reset form or load habit when entering the screen
+    LaunchedEffect(habitId) {
+        if (habitId != null) {
+            viewModel.processIntent(CreateHabitIntent.LoadHabitForEdit(habitId))
+        } else {
+            viewModel.processIntent(CreateHabitIntent.ResetForm)
+        }
+    }
+
+    LaunchedEffect(state.isSaved) {
+        if (state.isSaved) {
+            onHabitCreated()
+        }
+    }
+
+    LaunchedEffect(state.error) {
+        state.error?.let { error ->
+            snackbarHostState.showSnackbar(error)
+            viewModel.processIntent(CreateHabitIntent.ClearError)
+        }
+    }
+
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            LargeTopAppBar(
+                title = {
+                    Text(
+                        text = if (state.isEditMode) "Edit Habit" else "New Habit",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.largeTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.surface
+    ) { paddingValues ->
+        if (state.isLoadingHabit) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            CreateHabitForm(
+                state = state,
+                onIntent = viewModel::processIntent,
+                modifier = Modifier.padding(paddingValues)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CreateHabitForm(
+    state: CreateHabitState,
+    onIntent: (CreateHabitIntent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val inputShape = RoundedCornerShape(12.dp)
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Basic Info Section
+        FormSection(title = "Basics") {
+            OutlinedTextField(
+                value = state.title,
+                onValueChange = { onIntent(CreateHabitIntent.UpdateTitle(it)) },
+                label = { Text("Habit name") },
+                placeholder = { Text("e.g., Morning run, Read 30 min") },
+                singleLine = true,
+                isError = state.titleError != null,
+                supportingText = state.titleError?.let { { Text(it) } },
+                shape = inputShape,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = state.description,
+                onValueChange = { onIntent(CreateHabitIntent.UpdateDescription(it)) },
+                label = { Text("Description (optional)") },
+                placeholder = { Text("Why is this habit important to you?") },
+                minLines = 2,
+                maxLines = 3,
+                shape = inputShape,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // Habit Type Section
+        FormSection(title = "Tracking style") {
+            HabitTypeSelector(
+                selectedType = state.habitType,
+                onTypeSelected = { onIntent(CreateHabitIntent.UpdateHabitType(it)) }
+            )
+
+            // Conditional fields for MEASURABLE type
+            AnimatedVisibility(
+                visible = state.habitType == HabitType.MEASURABLE,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = state.targetValue,
+                            onValueChange = { onIntent(CreateHabitIntent.UpdateTargetValue(it)) },
+                            label = { Text("Target") },
+                            placeholder = { Text("10") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            isError = state.targetValueError != null,
+                            supportingText = state.targetValueError?.let { { Text(it) } },
+                            shape = inputShape,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        OutlinedTextField(
+                            value = state.unit,
+                            onValueChange = { onIntent(CreateHabitIntent.UpdateUnit(it)) },
+                            label = { Text("Unit") },
+                            placeholder = { Text("glasses, pages") },
+                            singleLine = true,
+                            shape = inputShape,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+
+            // Conditional fields for CHECKLIST type
+            AnimatedVisibility(
+                visible = state.habitType == HabitType.CHECKLIST,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Existing checklist items
+                    state.checklistItems.forEachIndexed { index, item ->
+                        ChecklistItemRow(
+                            text = item,
+                            onRemove = { onIntent(CreateHabitIntent.RemoveChecklistItem(index)) }
+                        )
+                    }
+
+                    // Add new item input
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = state.newChecklistItem,
+                            onValueChange = { onIntent(CreateHabitIntent.UpdateNewChecklistItem(it)) },
+                            label = { Text("Add item") },
+                            placeholder = { Text("e.g., Brush teeth") },
+                            singleLine = true,
+                            isError = state.checklistError != null,
+                            supportingText = state.checklistError?.let { { Text(it) } },
+                            shape = inputShape,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        FilledTonalIconButton(
+                            onClick = { onIntent(CreateHabitIntent.AddChecklistItem) },
+                            enabled = state.newChecklistItem.isNotBlank()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add item"
+                            )
+                        }
+                    }
+
+                    if (state.checklistItems.isNotEmpty()) {
+                        Text(
+                            text = "${state.checklistItems.size} item${if (state.checklistItems.size != 1) "s" else ""} added",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
+        // Frequency Section
+        FormSection(title = "Schedule") {
+            FrequencyTypeSelector(
+                selectedType = state.frequencyType,
+                onTypeSelected = { onIntent(CreateHabitIntent.UpdateFrequencyType(it)) }
+            )
+
+            // Conditional: Day picker for SPECIFIC_DAYS
+            AnimatedVisibility(
+                visible = state.frequencyType == FrequencyType.SPECIFIC_DAYS,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    DaySelector(
+                        selectedDays = state.scheduledDays,
+                        onDayToggled = { onIntent(CreateHabitIntent.ToggleScheduledDay(it)) }
+                    )
+                }
+            }
+
+            // Conditional: Frequency value for TIMES_PER_WEEK
+            AnimatedVisibility(
+                visible = state.frequencyType == FrequencyType.TIMES_PER_WEEK,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FrequencyValueInput(
+                        value = state.frequencyValue,
+                        onValueChange = { onIntent(CreateHabitIntent.UpdateFrequencyValue(it)) },
+                        label = "Times per week",
+                        placeholder = "3",
+                        shape = inputShape
+                    )
+                }
+            }
+
+            // Conditional: Frequency value for EVERY_X_DAYS
+            AnimatedVisibility(
+                visible = state.frequencyType == FrequencyType.EVERY_X_DAYS,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FrequencyValueInput(
+                        value = state.frequencyValue,
+                        onValueChange = { onIntent(CreateHabitIntent.UpdateFrequencyValue(it)) },
+                        label = "Every X days",
+                        placeholder = "2",
+                        shape = inputShape
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Save Button
+        Button(
+            onClick = { onIntent(CreateHabitIntent.SaveHabit) },
+            enabled = !state.isSaving,
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        ) {
+            Text(
+                text = when {
+                    state.isSaving -> "Saving..."
+                    state.isEditMode -> "Save Changes"
+                    else -> "Create Habit"
+                },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun FormSection(
+    title: String,
+    content: @Composable () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        content()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HabitTypeSelector(
+    selectedType: HabitType,
+    onTypeSelected: (HabitType) -> Unit
+) {
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        HabitType.entries.forEachIndexed { index, habitType ->
+            SegmentedButton(
+                selected = selectedType == habitType,
+                onClick = { onTypeSelected(habitType) },
+                shape = SegmentedButtonDefaults.itemShape(
+                    index = index,
+                    count = HabitType.entries.size,
+                    baseShape = RoundedCornerShape(12.dp)
+                ),
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                icon = {
+                    SegmentedButtonDefaults.Icon(
+                        active = selectedType == habitType,
+                        activeContent = {
+                            Icon(
+                                imageVector = habitType.icon(),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        inactiveContent = {
+                            Icon(
+                                imageVector = habitType.icon(),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    )
+                }
+            ) {
+                Text(
+                    text = habitType.displayName(),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FrequencyTypeSelector(
+    selectedType: FrequencyType,
+    onTypeSelected: (FrequencyType) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // First row: DAILY and SPECIFIC_DAYS
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            val firstRowTypes = listOf(FrequencyType.DAILY, FrequencyType.SPECIFIC_DAYS)
+            firstRowTypes.forEachIndexed { index, frequencyType ->
+                SegmentedButton(
+                    selected = selectedType == frequencyType,
+                    onClick = { onTypeSelected(frequencyType) },
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = firstRowTypes.size,
+                        baseShape = RoundedCornerShape(12.dp)
+                    ),
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        activeContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = frequencyType.displayName(),
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+        }
+
+        // Second row: TIMES_PER_WEEK and EVERY_X_DAYS
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            val secondRowTypes = listOf(FrequencyType.TIMES_PER_WEEK, FrequencyType.EVERY_X_DAYS)
+            secondRowTypes.forEachIndexed { index, frequencyType ->
+                SegmentedButton(
+                    selected = selectedType == frequencyType,
+                    onClick = { onTypeSelected(frequencyType) },
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = secondRowTypes.size,
+                        baseShape = RoundedCornerShape(12.dp)
+                    ),
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        activeContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = frequencyType.displayName(),
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DaySelector(
+    selectedDays: Set<DayOfWeek>,
+    onDayToggled: (DayOfWeek) -> Unit
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            DayOfWeek.entries.forEach { day ->
+                val isSelected = selectedDays.contains(day)
+                FilterChip(
+                    selected = isSelected,
+                    onClick = { onDayToggled(day) },
+                    label = {
+                        Text(
+                            text = day.shortName,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = isSelected,
+                        borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                        selectedBorderColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FrequencyValueInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    shape: RoundedCornerShape
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.secondaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Repeat,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(label) },
+            placeholder = { Text(placeholder) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true,
+            shape = shape,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+            ),
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+private fun HabitType.displayName(): String = when (this) {
+    HabitType.SIMPLE -> "Yes/No"
+    HabitType.MEASURABLE -> "Number"
+    HabitType.CHECKLIST -> "Checklist"
+}
+
+private fun HabitType.icon(): ImageVector = when (this) {
+    HabitType.SIMPLE -> Icons.Outlined.CheckCircleOutline
+    HabitType.MEASURABLE -> Icons.Outlined.Numbers
+    HabitType.CHECKLIST -> Icons.Outlined.Checklist
+}
+
+@Composable
+private fun ChecklistItemRow(
+    text: String,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            
+            IconButton(
+                onClick = onRemove,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Remove item",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+private fun FrequencyType.displayName(): String = when (this) {
+    FrequencyType.DAILY -> "Daily"
+    FrequencyType.SPECIFIC_DAYS -> "Specific days"
+    FrequencyType.TIMES_PER_WEEK -> "X per week"
+    FrequencyType.EVERY_X_DAYS -> "Every X days"
+}

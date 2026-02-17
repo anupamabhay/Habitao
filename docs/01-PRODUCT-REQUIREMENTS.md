@@ -1,4 +1,4 @@
-# Product Requirements Document (PRD)
+﻿# Product Requirements Document (PRD)
 ## Habitao - Comprehensive Productivity App
 
 **Version:** 1.0  
@@ -56,14 +56,14 @@ Habitao is a comprehensive productivity application for Android that combines ha
 - Time allocation per step (optional)
 
 **Examples:**
-- "Morning Routine: Wake up → Stretch → Meditate → Shower → Breakfast"
-- "Evening Routine: Review day → Plan tomorrow → Read → Sleep"
+- "Morning Routine: Wake up  Stretch  Meditate  Shower  Breakfast"
+- "Evening Routine: Review day  Plan tomorrow  Read  Sleep"
 
 #### 2.1.3 Tasks
 **Definition:** TickTick/Todoist-style tasks with subtasks, deadlines, and priorities.
 
 **Characteristics:**
-- Hierarchical structure (tasks → subtasks)
+- Hierarchical structure (tasks  subtasks)
 - Due dates and times
 - Priority levels (High, Medium, Low)
 - Project/category organization
@@ -90,7 +90,7 @@ Habitao is a comprehensive productivity application for Android that combines ha
 
 ### 3.1 MVP Features (Version 1.0)
 
-#### 3.1.1 Habit Management ✅ CRITICAL
+#### 3.1.1 Habit Management  CRITICAL
 | Feature | Description | Priority |
 |---------|-------------|----------|
 | Add/Edit/Delete Habits | CRUD operations with title, description, goal count, repeat schedule | P0 |
@@ -100,7 +100,7 @@ Habitao is a comprehensive productivity application for Android that combines ha
 | Reminder Notifications | Scheduled notifications with exact timing (handle Doze mode) | P0 |
 | Streak Tracking | Visual display of current streak, longest streak | P1 |
 
-#### 3.1.2 Routine Management ✅ CRITICAL
+#### 3.1.2 Routine Management  CRITICAL
 | Feature | Description | Priority |
 |---------|-------------|----------|
 | Create Routine | Define routine with ordered steps | P0 |
@@ -108,7 +108,7 @@ Habitao is a comprehensive productivity application for Android that combines ha
 | Routine Scheduling | Set repeat pattern for routine | P0 |
 | Partial Completion | Track individual step completion | P1 |
 
-#### 3.1.3 Task Management ✅ CRITICAL
+#### 3.1.3 Task Management  CRITICAL
 | Feature | Description | Priority |
 |---------|-------------|----------|
 | Create Task | Title, description, due date, priority | P0 |
@@ -117,7 +117,7 @@ Habitao is a comprehensive productivity application for Android that combines ha
 | Task List View | Organized by due date, priority, or project | P0 |
 | Deadline Reminders | Notifications before task due time | P1 |
 
-#### 3.1.4 Pomodoro Timer ✅ CRITICAL
+#### 3.1.4 Pomodoro Timer  CRITICAL
 | Feature | Description | Priority |
 |---------|-------------|----------|
 | Start/Pause/Stop Timer | Basic timer controls | P0 |
@@ -126,7 +126,7 @@ Habitao is a comprehensive productivity application for Android that combines ha
 | Background Operation | Timer continues when app minimized | P0 |
 | Session History | Log completed Pomodoro sessions | P2 |
 
-#### 3.1.5 UI/UX Features ✅ CRITICAL
+#### 3.1.5 UI/UX Features  CRITICAL
 | Feature | Description | Priority |
 |---------|-------------|----------|
 | Material Design 3 Expressive | Latest MD3 with physics-based animations, expressive shapes | P0 |
@@ -135,7 +135,7 @@ Habitao is a comprehensive productivity application for Android that combines ha
 | Statistics Dashboard | Completion rates, charts, trends | P1 |
 | Calendar Integration | Month/Week/Day views for habits | P0 (Week/Day only) |
 
-#### 3.1.6 Data & System ✅ CRITICAL
+#### 3.1.6 Data & System  CRITICAL
 | Feature | Description | Priority |
 |---------|-------------|----------|
 | Local Storage | Offline-first with Proto DataStore + Room | P0 |
@@ -170,49 +170,49 @@ Habitao is a comprehensive productivity application for Android that combines ha
 ### 4.1 Habit Tracking
 
 **As a user, I want to:**
-1. ✅ Create a habit with a specific goal count (e.g., "Drink 8 glasses of water")
-2. ✅ Set a daily reminder at a specific time to prompt me
-3. ✅ Increment my progress throughout the day (e.g., tap to add 1 glass)
-4. ✅ See my current streak and longest streak to stay motivated
-5. ✅ View my week at a glance to spot patterns in my behavior
-6. 🔄 See a visual heatmap of my habit over the past months (v1.1)
+1.  Create a habit with a specific goal count (e.g., "Drink 8 glasses of water")
+2.  Set a daily reminder at a specific time to prompt me
+3.  Increment my progress throughout the day (e.g., tap to add 1 glass)
+4.  See my current streak and longest streak to stay motivated
+5.  View my week at a glance to spot patterns in my behavior
+6.  See a visual heatmap of my habit over the past months (v1.1)
 
 ### 4.2 Routine Management
 
 **As a user, I want to:**
-1. ✅ Create a morning routine with 5 ordered steps
-2. ✅ Check off each step as I complete it
-3. ✅ See the routine marked complete when all steps are done
-4. ✅ Have the routine reset automatically each morning
-5. 🔄 Set approximate time estimates for each step (v1.1)
+1.  Create a morning routine with 5 ordered steps
+2.  Check off each step as I complete it
+3.  See the routine marked complete when all steps are done
+4.  Have the routine reset automatically each morning
+5.  Set approximate time estimates for each step (v1.1)
 
 ### 4.3 Task Management
 
 **As a user, I want to:**
-1. ✅ Add a task with subtasks (e.g., "Prepare presentation" → "Research", "Slides", "Practice")
-2. ✅ Set a deadline and priority for the task
-3. ✅ Get reminded 1 hour before the deadline
-4. ✅ Mark subtasks complete independently
-5. ✅ See tasks organized by due date (Today, Tomorrow, This Week)
-6. 🔄 Assign tasks to projects (v1.1)
+1.  Add a task with subtasks (e.g., "Prepare presentation"  "Research", "Slides", "Practice")
+2.  Set a deadline and priority for the task
+3.  Get reminded 1 hour before the deadline
+4.  Mark subtasks complete independently
+5.  See tasks organized by due date (Today, Tomorrow, This Week)
+6.  Assign tasks to projects (v1.1)
 
 ### 4.4 Pomodoro Timer
 
 **As a user, I want to:**
-1. ✅ Start a 25-minute focus timer from the Pomodoro tab
-2. ✅ Have the timer continue running when I switch apps
-3. ✅ Get a notification when the work session ends
-4. ✅ Automatically start a 5-minute break timer
-5. 🔄 Associate the Pomodoro session with a specific task (v1.1)
-6. 🔄 See my total focus time for the day/week (v1.1)
+1.  Start a 25-minute focus timer from the Pomodoro tab
+2.  Have the timer continue running when I switch apps
+3.  Get a notification when the work session ends
+4.  Automatically start a 5-minute break timer
+5.  Associate the Pomodoro session with a specific task (v1.1)
+6.  See my total focus time for the day/week (v1.1)
 
 ### 4.5 Integration
 
 **As a user, I want to:**
-1. ✅ See today's habits, tasks, and active routines in a unified home view
-2. ✅ Access everything quickly via a home screen widget
-3. ✅ Mark items complete from the widget without opening the app
-4. 🔄 See my data synced across my tablet and phone (v2.0)
+1.  See today's habits, tasks, and active routines in a unified home view
+2.  Access everything quickly via a home screen widget
+3.  Mark items complete from the widget without opening the app
+4.  See my data synced across my tablet and phone (v2.0)
 
 ---
 
@@ -237,33 +237,33 @@ Habitao is a comprehensive productivity application for Android that combines ha
 | APK Size | < 15MB | Release build size |
 
 ### 5.3 Quality Gates
-- ✅ Zero P0 bugs before release
-- ✅ 90% unit test coverage on domain/data layers
-- ✅ All critical user flows covered by E2E tests (Maestro)
-- ✅ Accessibility score > 85% (Android Accessibility Scanner)
-- ✅ Material Design 3 compliance verified
+-  Zero P0 bugs before release
+-  90% unit test coverage on domain/data layers
+-  All critical user flows covered by E2E tests (Maestro)
+-  Accessibility score > 85% (Android Accessibility Scanner)
+-  Material Design 3 compliance verified
 
 ---
 
 ## 6. Out of Scope (MVP)
 
 ### 6.1 Explicitly Excluded from v1.0
-- ❌ Cloud sync (architecture supports, implementation deferred)
-- ❌ User accounts / authentication
-- ❌ Social features (sharing, friends, leaderboards)
-- ❌ Advanced statistics (heatmaps, detailed analytics)
-- ❌ Month calendar view (Day + Week only)
-- ❌ Habit templates library
-- ❌ Data import from other apps
-- ❌ Wearable (smartwatch) support
-- ❌ Voice commands
-- ❌ Integrations with third-party services
+-  Cloud sync (architecture supports, implementation deferred)
+-  User accounts / authentication
+-  Social features (sharing, friends, leaderboards)
+-  Advanced statistics (heatmaps, detailed analytics)
+-  Month calendar view (Day + Week only)
+-  Habit templates library
+-  Data import from other apps
+-  Wearable (smartwatch) support
+-  Voice commands
+-  Integrations with third-party services
 
 ### 6.2 Technical Debt Accepted for MVP
-- 🔧 Subtasks limited to 1 level (no nested subtasks)
-- 🔧 Manual conflict resolution if cloud sync added later
-- 🔧 Basic statistics only (completion %, simple charts)
-- 🔧 No backend infrastructure (all local)
+-  Subtasks limited to 1 level (no nested subtasks)
+-  Manual conflict resolution if cloud sync added later
+-  Basic statistics only (completion %, simple charts)
+-  No backend infrastructure (all local)
 
 ---
 
@@ -292,32 +292,32 @@ Habitao is a comprehensive productivity application for Android that combines ha
 ## 8. Dependencies
 
 ### 8.1 External Dependencies
-- ✅ Android 8.0+ (API 26+) for target users
-- ✅ Google Play Services (optional, for cloud sync in future)
-- ✅ Stable internet for initial library downloads (development only)
+-  Android 8.0+ (API 26+) for target users
+-  Google Play Services (optional, for cloud sync in future)
+-  Stable internet for initial library downloads (development only)
 
 ### 8.2 Internal Dependencies
-- ✅ Design system finalized (Material Design 3 Expressive tokens)
-- ✅ Database schema designed before development start
-- ✅ Notification permission strategy defined
-- ✅ Widget design approved
+-  Design system finalized (Material Design 3 Expressive tokens)
+-  Database schema designed before development start
+-  Notification permission strategy defined
+-  Widget design approved
 
 ---
 
 ## 9. Open Questions
 
 ### 9.1 Resolved
-- ✅ **Tech Stack:** KMP + Jetpack Compose (decided based on research)
-- ✅ **Calendar Views:** Day + Week for MVP (Month deferred)
-- ✅ **Completion Model:** Count-based (decided)
-- ✅ **Data Model:** Local-first with cloud-ready architecture (decided)
+-  **Tech Stack:** KMP + Jetpack Compose (decided based on research)
+-  **Calendar Views:** Day + Week for MVP (Month deferred)
+-  **Completion Model:** Count-based (decided)
+-  **Data Model:** Local-first with cloud-ready architecture (decided)
 
 ### 9.2 To Be Resolved
-- ⏳ **Onboarding Flow:** Step-by-step wizard vs. template gallery vs. blank slate?
-- ⏳ **Default Habit Goal:** Should new habits default to count=1 or force user to specify?
-- ⏳ **Routine Completion Logic:** All steps required, or percentage-based?
-- ⏳ **Pomodoro Session Association:** Link to task in MVP or defer to v1.1?
-- ⏳ **Widget Variants:** Single widget with all features, or separate widgets (Habits, Tasks, Timer)?
+-  **Onboarding Flow:** Step-by-step wizard vs. template gallery vs. blank slate?
+-  **Default Habit Goal:** Should new habits default to count=1 or force user to specify?
+-  **Routine Completion Logic:** All steps required, or percentage-based?
+-  **Pomodoro Session Association:** Link to task in MVP or defer to v1.1?
+-  **Widget Variants:** Single widget with all features, or separate widgets (Habits, Tasks, Timer)?
 
 ---
 
@@ -340,11 +340,11 @@ Habitao is a comprehensive productivity application for Android that combines ha
 
 | App | Habits | Routines | Tasks | Timer | Strength | Weakness |
 |-----|--------|----------|-------|-------|----------|----------|
-| **TickTick** | ✅ Basic | ❌ | ✅ Advanced | ✅ | All-in-one, powerful | Complex UI, overwhelming |
-| **Todoist** | ❌ | ❌ | ✅ Best-in-class | ❌ | Simplicity, reliability | No habit tracking |
-| **Loop Habit Tracker** | ✅ Excellent | ❌ | ❌ | ❌ | Open source, private | Habits only |
-| **Habitica** | ✅ Gamified | ✅ Dailies | ✅ To-Dos | ❌ | Gamification | RPG theme not for everyone |
-| **Forest** | ❌ | ❌ | ❌ | ✅ Unique | Beautiful, motivating | Timer only |
+| **TickTick** |  Basic |  |  Advanced |  | All-in-one, powerful | Complex UI, overwhelming |
+| **Todoist** |  |  |  Best-in-class |  | Simplicity, reliability | No habit tracking |
+| **Loop Habit Tracker** |  Excellent |  |  |  | Open source, private | Habits only |
+| **Habitica** |  Gamified |  Dailies |  To-Dos |  | Gamification | RPG theme not for everyone |
+| **Forest** |  |  |  |  Unique | Beautiful, motivating | Timer only |
 
 **Habitao's Position:** Combines best aspects of TickTick (all-in-one) + Loop (excellent habits) + Forest (focus timer) with superior UX via Material Design 3 Expressive.
 

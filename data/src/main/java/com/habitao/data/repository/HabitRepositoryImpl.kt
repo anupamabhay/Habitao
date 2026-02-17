@@ -2,6 +2,7 @@ package com.habitao.data.repository
 
 import com.habitao.data.local.dao.HabitDao
 import com.habitao.data.local.dao.HabitLogDao
+import com.habitao.data.local.entity.HabitLogEntity
 import com.habitao.domain.model.Habit
 import com.habitao.domain.model.HabitLog
 import com.habitao.domain.model.StreakInfo
@@ -131,20 +132,21 @@ class HabitRepositoryImpl @Inject constructor(
             // Get the habit to check goal
             val habit = habitDao.getHabitById(habitId)
                 ?: return@withContext Result.failure(Exception("Habit not found"))
-            
+
             // Get or create log
             val dateMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
             val existingLog = habitLogDao.getLogForHabitAndDate(habitId, dateMillis)
-            
-            val isCompleted = count >= habit.goalCount
+
+            val isCompleted = count >= habit.targetValue
             val completedAt = if (isCompleted && existingLog?.isCompleted != true) {
                 System.currentTimeMillis()
             } else {
                 existingLog?.completedAt
             }
-            
+
             val logEntity = existingLog?.copy(
-                currentCount = count,
+                currentValue = count,
+                currentCount = count, // Legacy field
                 isCompleted = isCompleted,
                 completedAt = completedAt,
                 updatedAt = System.currentTimeMillis()
@@ -152,12 +154,14 @@ class HabitRepositoryImpl @Inject constructor(
                 id = java.util.UUID.randomUUID().toString(),
                 habitId = habitId,
                 date = dateMillis,
-                currentCount = count,
-                goalCount = habit.goalCount,
+                currentValue = count,
+                targetValue = habit.targetValue,
+                currentCount = count, // Legacy field
+                goalCount = habit.targetValue, // Legacy field
                 isCompleted = isCompleted,
                 completedAt = completedAt
             )
-            
+
             habitLogDao.insertLog(logEntity)
             Result.success(Unit)
         } catch (e: Exception) {
@@ -182,14 +186,11 @@ class HabitRepositoryImpl @Inject constructor(
         habitId: String,
         date: LocalDate
     ): Flow<Result<HabitLog?>> {
-        return habitDao.observeHabitById(habitId) // This is wrong, should use habitLogDao
-            .map { Result.success(it?.let { /* TODO: Fix this */ HabitLog(
-                id = "",
-                habitId = habitId,
-                date = date,
-                currentCount = 0,
-                goalCount = 1
-            ) }) }
+        val dateMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        return habitLogDao.observeLogForHabitAndDate(habitId, dateMillis)
+            .map { entity ->
+                Result.success(entity?.toDomainModel())
+            }
             .flowOn(dispatcher)
     }
 
@@ -200,6 +201,15 @@ class HabitRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override fun observeLogsForDate(date: LocalDate): Flow<Result<Map<String, HabitLog>>> {
+        val dateMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        return habitLogDao.observeLogsForDate(dateMillis)
+            .map { entities ->
+                Result.success(entities.associate { it.habitId to it.toDomainModel() })
+            }
+            .flowOn(dispatcher)
     }
 
     // ============== STATISTICS ==============

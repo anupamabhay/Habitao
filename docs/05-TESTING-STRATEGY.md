@@ -1,4 +1,4 @@
-# Testing Strategy
+﻿# Testing Strategy
 ## Habitao - Comprehensive Test Plan
 
 **Version:** 1.0  
@@ -13,26 +13,26 @@
 1. **Test Behavior, Not Implementation:** Focus on what code does, not how
 2. **Fast Feedback:** Unit tests must run in < 1 second total
 3. **Maintainable:** Tests should be as clean as production code
-4. **Confidence:** High test coverage ≠ bug-free; test critical paths thoroughly
+4. **Confidence:** High test coverage  bug-free; test critical paths thoroughly
 5. **Shift Left:** Catch bugs early (unit tests) rather than late (E2E)
 
 ### 1.2 Test Pyramid
 
 ```
-           ┌──────────────┐
-           │     E2E      │  10% (~15 tests)
-           │  (Maestro)   │  Critical user flows only
-           └──────────────┘  Slow, brittle, expensive
-        ┌────────────────────┐
-        │   Integration      │  20% (~50 tests)
-        │ (Repository+Room,  │  Verify layers work together
-        │  ViewModel+UseCase)│  Medium speed
-        └────────────────────┘
-     ┌────────────────────────┐
-     │      Unit Tests        │  70% (~200 tests)
-     │  (Use Cases, ViewModels│  Isolated, mocked dependencies
-     │   Utilities, Mappers)  │  Fast, reliable
-     └────────────────────────┘
+           
+                E2E        10% (~15 tests)
+             (Maestro)     Critical user flows only
+             Slow, brittle, expensive
+        
+           Integration        20% (~50 tests)
+         (Repository+Room,    Verify layers work together
+          ViewModel+UseCase)  Medium speed
+        
+     
+           Unit Tests          70% (~200 tests)
+       (Use Cases, ViewModels  Isolated, mocked dependencies
+        Utilities, Mappers)    Fast, reliable
+     
 ```
 
 **Rationale:**
@@ -45,11 +45,11 @@
 ## 2. Unit Testing
 
 ### 2.1 Scope
-- ✅ Use Cases (domain/usecase/*)
-- ✅ ViewModels (feature/*/viewmodel/*)
-- ✅ Repositories (data/repository/* - mocked DAO)
-- ✅ Mappers (entity ↔ domain model converters)
-- ✅ Utilities (DateTimeUtils, StringUtils)
+-  Use Cases (domain/usecase/*)
+-  ViewModels (feature/*/viewmodel/*)
+-  Repositories (data/repository/* - mocked DAO)
+-  Mappers (entity  domain model converters)
+-  Utilities (DateTimeUtils, StringUtils)
 
 ### 2.2 Framework
 
@@ -246,9 +246,9 @@ class HabitsViewModelTest {
 ## 3. Integration Testing
 
 ### 3.1 Scope
-- ✅ Repository + Room DAO (verify SQL queries work)
-- ✅ ViewModel + Use Case (verify layers integrate correctly)
-- ✅ DataStore + Serialization (verify proto serialization)
+-  Repository + Room DAO (verify SQL queries work)
+-  ViewModel + Use Case (verify layers integrate correctly)
+-  DataStore + Serialization (verify proto serialization)
 
 ### 3.2 Framework
 
@@ -408,10 +408,10 @@ class HabitsViewModelIntegrationTest {
 ## 4. UI Testing (Compose)
 
 ### 4.1 Scope
-- ✅ Individual Composables (HabitCard, TaskItem)
-- ✅ Screen-level UI (HabitsScreen rendering)
-- ✅ User interactions (click, swipe, input)
-- ✅ State changes (loading → loaded → error)
+-  Individual Composables (HabitCard, TaskItem)
+-  Screen-level UI (HabitsScreen rendering)
+-  User interactions (click, swipe, input)
+-  State changes (loading  loaded  error)
 
 ### 4.2 Framework
 
@@ -443,7 +443,7 @@ class HabitCardTest {
             id = "1",
             title = "Drink Water",
             goalCount = 8,
-            icon = "💧"
+            icon = ""
         )
         
         // When
@@ -457,7 +457,7 @@ class HabitCardTest {
         
         // Then
         composeTestRule.onNodeWithText("Drink Water").assertExists()
-        composeTestRule.onNodeWithText("💧").assertExists()
+        composeTestRule.onNodeWithText("").assertExists()
         composeTestRule.onNodeWithText("5/8").assertExists()
     }
     
@@ -581,11 +581,11 @@ class HabitsScreenTest {
 ### 5.1 Scope
 
 **ONLY Critical User Flows (Happy Paths):**
-- ✅ Create habit → Mark complete → Verify streak
-- ✅ Create task with subtask → Mark subtask complete
-- ✅ Create routine → Complete all steps → Verify routine done
-- ✅ Start Pomodoro timer → Wait completion → Verify notification
-- ✅ Widget interaction → Mark habit complete from widget
+-  Create habit  Mark complete  Verify streak
+-  Create task with subtask  Mark subtask complete
+-  Create routine  Complete all steps  Verify routine done
+-  Start Pomodoro timer  Wait completion  Verify notification
+-  Widget interaction  Mark habit complete from widget
 
 ### 5.2 Framework: Maestro
 
@@ -661,7 +661,7 @@ appId: com.habitao.app
 
 # Tap checkbox on widget habit item
 - tapOn: "Drink Water"  # Widget item
-- assertVisible: "✓"  # Checkmark appears
+- assertVisible: ""  # Checkmark appears
 
 # Reopen app to verify state persisted
 - launchApp
@@ -730,39 +730,39 @@ jobs:
 
 ```
 habitao/
-├── domain/
-│   └── src/
-│       └── test/                    # Unit tests
-│           └── kotlin/
-│               └── usecase/
-│                   ├── CalculateStreakUseCaseTest.kt
-│                   └── CreateHabitUseCaseTest.kt
-│
-├── data/
-│   └── src/
-│       ├── test/                    # Unit tests (mocked DAO)
-│       │   └── repository/
-│       │       └── HabitRepositoryImplTest.kt
-│       └── androidTest/             # Integration tests (real Room)
-│           └── repository/
-│               └── HabitRepositoryIntegrationTest.kt
-│
-├── feature/habits/
-│   └── src/
-│       ├── test/                    # Unit tests (ViewModel)
-│       │   └── viewmodel/
-│       │       └── HabitsViewModelTest.kt
-│       └── androidTest/             # UI tests (Compose)
-│           └── ui/
-│               ├── HabitsScreenTest.kt
-│               └── components/
-│                   └── HabitCardTest.kt
-│
-└── .maestro/                        # E2E tests
-    ├── create-and-complete-habit.yaml
-    ├── task-with-subtasks.yaml
-    ├── routine-completion.yaml
-    └── pomodoro-timer.yaml
+ domain/
+    src/
+        test/                    # Unit tests
+            kotlin/
+                usecase/
+                    CalculateStreakUseCaseTest.kt
+                    CreateHabitUseCaseTest.kt
+
+ data/
+    src/
+        test/                    # Unit tests (mocked DAO)
+           repository/
+               HabitRepositoryImplTest.kt
+        androidTest/             # Integration tests (real Room)
+            repository/
+                HabitRepositoryIntegrationTest.kt
+
+ feature/habits/
+    src/
+        test/                    # Unit tests (ViewModel)
+           viewmodel/
+               HabitsViewModelTest.kt
+        androidTest/             # UI tests (Compose)
+            ui/
+                HabitsScreenTest.kt
+                components/
+                    HabitCardTest.kt
+
+ .maestro/                        # E2E tests
+     create-and-complete-habit.yaml
+     task-with-subtasks.yaml
+     routine-completion.yaml
+     pomodoro-timer.yaml
 ```
 
 ### 6.2 Naming Conventions

@@ -4,10 +4,10 @@ kotlin = "2.0.0"
 kotlinx-coroutines = "1.8.1"
 kotlinx-serialization = "1.7.1"
 kotlinx-datetime = "0.6.0"
-ksp = "2.0.0-1.0.22"
+ksp = "2.0.0-1.0.21"
 
 # Android
-agp = "8.5.0"
+agp = "8.13.2"
 compileSdk = "35"
 minSdk = "26"
 targetSdk = "35"
@@ -63,6 +63,9 @@ glance = "1.1.0"
 
 # Accompanist
 accompanist = "0.34.0"
+
+# Material Components (for XML themes)
+material-components = "1.12.0"
 
 # Testing
 junit5 = "5.10.3"
@@ -182,6 +185,9 @@ glance-material3 = { group = "androidx.glance", name = "glance-material3", versi
 # Accompanist
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
 accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }
+
+# Material Components (for XML themes)
+material-components = { group = "com.google.android.material", name = "material", version.ref = "material-components" }
 
 # Testing - JUnit 5
 junit5-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit5" }
