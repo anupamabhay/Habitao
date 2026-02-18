@@ -43,7 +43,6 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +55,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.habitao.domain.model.ChecklistItem
@@ -94,39 +94,19 @@ fun HabitCard(
     val currentValue = log?.currentValue ?: 0
     val targetValue = log?.targetValue ?: habit.targetValue
 
-    var hasTriggeredAction by remember { mutableStateOf(false) }
-
     val dismissState =
         rememberSwipeToDismissBoxState(
             confirmValueChange = { dismissValue ->
                 when (dismissValue) {
-                    SwipeToDismissBoxValue.StartToEnd -> {
-                        if (!hasTriggeredAction && !isCompleted) {
-                            hasTriggeredAction = true
-                            onComplete()
-                        }
-                        false
-                    }
+                    SwipeToDismissBoxValue.StartToEnd -> false
                     SwipeToDismissBoxValue.EndToStart -> {
-                        if (!hasTriggeredAction) {
-                            hasTriggeredAction = true
-                            onDelete()
-                        }
+                        onDelete()
                         true
                     }
-                    SwipeToDismissBoxValue.Settled -> {
-                        hasTriggeredAction = false
-                        false
-                    }
+                    SwipeToDismissBoxValue.Settled -> false
                 }
             },
         )
-
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.Settled) {
-            hasTriggeredAction = false
-        }
-    }
 
     SwipeToDismissBox(
         state = dismissState,
@@ -137,7 +117,7 @@ fun HabitCard(
                 progress = dismissState.progress,
             )
         },
-        enableDismissFromStartToEnd = !isCompleted,
+        enableDismissFromStartToEnd = false,
         enableDismissFromEndToStart = true,
     ) {
         HabitCardContent(
@@ -166,7 +146,7 @@ private fun SwipeBackground(
     val backgroundColor by animateColorAsState(
         targetValue =
             when (dismissValue) {
-                SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
+                SwipeToDismissBoxValue.StartToEnd -> Color.Transparent
                 SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
                 SwipeToDismissBoxValue.Settled -> Color.Transparent
             },
@@ -195,17 +175,7 @@ private fun SwipeBackground(
             },
     ) {
         when (dismissValue) {
-            SwipeToDismissBoxValue.StartToEnd -> {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Complete habit",
-                    modifier =
-                        Modifier
-                            .scale(iconScale)
-                            .size(28.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
+            SwipeToDismissBoxValue.StartToEnd -> { }
             SwipeToDismissBoxValue.EndToStart -> {
                 Icon(
                     imageVector = Icons.Default.Delete,
@@ -284,9 +254,15 @@ private fun HabitCardContent(
                         text = habit.title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color =
+                            if (isCompleted) {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
                     )
 
                     val description = habit.description
@@ -295,7 +271,12 @@ private fun HabitCardContent(
                         Text(
                             text = description,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color =
+                                if (isCompleted) {
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )

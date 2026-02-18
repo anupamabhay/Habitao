@@ -35,7 +35,6 @@ import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
@@ -150,23 +149,14 @@ fun CreateHabitScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.surface,
     ) { paddingValues ->
-        if (state.isLoadingHabit) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            CreateHabitForm(
-                state = state,
-                onIntent = viewModel::processIntent,
-                modifier = Modifier.padding(paddingValues),
-            )
-        }
+        // Always show form immediately - local DB reads are fast enough
+        // that showing a loading spinner causes a visual flicker.
+        // Form fields populate reactively as the state updates.
+        CreateHabitForm(
+            state = state,
+            onIntent = viewModel::processIntent,
+            modifier = Modifier.padding(paddingValues),
+        )
     }
 }
 
