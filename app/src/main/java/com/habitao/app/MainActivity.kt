@@ -3,6 +3,7 @@ package com.habitao.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
@@ -55,12 +56,14 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     Screen.CreateHabit -> {
+                        BackHandler { currentScreen = Screen.HabitsList }
                         CreateHabitScreen(
                             onNavigateBack = { currentScreen = Screen.HabitsList },
                             onHabitCreated = { currentScreen = Screen.HabitsList },
                         )
                     }
                     is Screen.EditHabit -> {
+                        BackHandler { currentScreen = Screen.HabitsList }
                         CreateHabitScreen(
                             onNavigateBack = { currentScreen = Screen.HabitsList },
                             onHabitCreated = { currentScreen = Screen.HabitsList },

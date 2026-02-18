@@ -1,9 +1,9 @@
-﻿# Habitao - Project Overview & Master Plan
+# Habitao - Project Overview & Master Plan
 
 **Project Name:** Habitao  
 **Type:** Native Android Productivity App  
 **Tech Stack:** Kotlin Multiplatform + Jetpack Compose  
-**Status:** Planning Phase Complete  
+**Status:** Active Development - Core Habits MVP Functional  
 **Target Release:** MVP in 8-12 weeks
 
 ---
@@ -211,19 +211,22 @@ habitao/
 
 ##  Development Roadmap
 
-### Phase 1: Foundation (Weeks 1-2)
+### Phase 1: Foundation (Weeks 1-2) -- COMPLETE
 -  Project setup (multi-module Gradle structure)
 -  Database schema implementation (Room)
 -  Design system setup (MD3 tokens, theme)
--  Navigation infrastructure (Voyager)
--  CI/CD pipeline (GitHub Actions)
+- [ ] Navigation infrastructure (Voyager) -- using simple state-based nav for now
+- [ ] CI/CD pipeline (GitHub Actions) -- deferred
 
-### Phase 2: Core Features - Habits (Weeks 3-4)
-- Habit CRUD operations
-- Day view + Week view calendar
-- Count-based progress tracking
-- Reminder notifications (AlarmManager)
-- Streak calculation
+### Phase 2: Core Features - Habits (Weeks 3-4) -- IN PROGRESS
+-  Habit CRUD operations (create, edit, delete with swipe)
+- [ ] Day view + Week view calendar
+-  Three habit types: Simple, Measurable, Checklist
+-  Reminder notifications (AlarmManager + exact alarms)
+-  Checklist expand/collapse with item toggling
+-  Undo support (toggle done/undone, undo delete via snackbar)
+-  Home header with greeting, date, progress bar
+- [ ] Streak calculation (logic exists, UI pending)
 
 ### Phase 3: Tasks & Routines (Weeks 5-6)
 - Task management with subtasks
@@ -453,8 +456,8 @@ All planning documents are in the `docs/` directory:
 
 ---
 
-**Last Updated:** February 13, 2026  
-**Document Status:**  APPROVED - Ready for implementation
+**Last Updated:** February 18, 2026  
+**Document Status:** Active Development - Habits MVP functional, test coverage and UI redesign next
 
 ---
 
