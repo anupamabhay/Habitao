@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -81,6 +82,7 @@ fun HabitCard(
     log: HabitLog?,
     streakCount: Int,
     onComplete: () -> Unit,
+    onUncomplete: () -> Unit,
     onIncrement: () -> Unit,
     onTap: () -> Unit,
     onDelete: () -> Unit,
@@ -147,6 +149,7 @@ fun HabitCard(
             targetValue = targetValue,
             streakCount = streakCount,
             onComplete = onComplete,
+            onUncomplete = onUncomplete,
             onIncrement = onIncrement,
             onTap = onTap,
             onToggleChecklistItem = onToggleChecklistItem,
@@ -229,11 +232,14 @@ private fun HabitCardContent(
     targetValue: Int,
     streakCount: Int,
     onComplete: () -> Unit,
+    onUncomplete: () -> Unit,
     onIncrement: () -> Unit,
     onTap: () -> Unit,
     onToggleChecklistItem: (itemId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+
     val cardContainerColor by animateColorAsState(
         targetValue =
             if (isCompleted) {
@@ -301,8 +307,12 @@ private fun HabitCardContent(
                 HabitActionButton(
                     habit = habit,
                     isCompleted = isCompleted,
+                    currentValue = currentValue,
+                    isExpanded = isExpanded,
                     onComplete = onComplete,
+                    onUncomplete = onUncomplete,
                     onIncrement = onIncrement,
+                    onToggleExpand = { isExpanded = !isExpanded },
                 )
             }
 
@@ -331,6 +341,8 @@ private fun HabitCardContent(
                         completedItemIds = log?.completedChecklistItems ?: emptySet(),
                         progress = progress,
                         streakCount = streakCount,
+                        isExpanded = isExpanded,
+                        onToggleExpand = { isExpanded = !isExpanded },
                         onToggleItem = onToggleChecklistItem,
                     )
                 }
@@ -343,15 +355,21 @@ private fun HabitCardContent(
 private fun HabitActionButton(
     habit: Habit,
     isCompleted: Boolean,
+    currentValue: Int,
+    isExpanded: Boolean,
     onComplete: () -> Unit,
+    onUncomplete: () -> Unit,
     onIncrement: () -> Unit,
+    onToggleExpand: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when (habit.habitType) {
         HabitType.SIMPLE -> {
             FilledIconToggleButton(
                 checked = isCompleted,
-                onCheckedChange = { if (!isCompleted) onComplete() },
+                onCheckedChange = { checked ->
+                    if (checked) onComplete() else onUncomplete()
+                },
                 modifier = modifier.size(40.dp),
                 colors =
                     IconButtonDefaults.filledIconToggleButtonColors(
@@ -363,28 +381,78 @@ private fun HabitActionButton(
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = if (isCompleted) "Completed" else "Mark complete",
+                    contentDescription = if (isCompleted) "Mark incomplete" else "Mark complete",
                     modifier = Modifier.size(20.dp),
                 )
             }
         }
-        HabitType.MEASURABLE, HabitType.CHECKLIST -> {
+        HabitType.MEASURABLE -> {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (currentValue > 0) {
+                    FilledIconToggleButton(
+                        checked = false,
+                        onCheckedChange = { onUncomplete() },
+                        modifier = Modifier.size(34.dp),
+                        colors =
+                            IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                checkedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                checkedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Remove,
+                            contentDescription = "Decrease progress",
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+                FilledIconToggleButton(
+                    checked = isCompleted,
+                    onCheckedChange = { onIncrement() },
+                    modifier = Modifier.size(40.dp),
+                    colors =
+                        IconButtonDefaults.filledIconToggleButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            checkedContainerColor = MaterialTheme.colorScheme.primary,
+                            checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
+                ) {
+                    Icon(
+                        imageVector = if (isCompleted) Icons.Default.Check else Icons.Default.Add,
+                        contentDescription = if (isCompleted) "Completed" else "Add progress",
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+        }
+        HabitType.CHECKLIST -> {
             FilledIconToggleButton(
-                checked = isCompleted,
-                onCheckedChange = { onIncrement() },
+                checked = isExpanded,
+                onCheckedChange = { onToggleExpand() },
                 modifier = modifier.size(40.dp),
                 colors =
                     IconButtonDefaults.filledIconToggleButtonColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        checkedContainerColor = MaterialTheme.colorScheme.primary,
-                        checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        checkedContainerColor = MaterialTheme.colorScheme.tertiary,
+                        checkedContentColor = MaterialTheme.colorScheme.onTertiary,
                     ),
             ) {
                 Icon(
-                    imageVector = if (isCompleted) Icons.Default.Check else Icons.Default.Add,
-                    contentDescription = if (isCompleted) "Completed" else "Add progress",
-                    modifier = Modifier.size(20.dp),
+                    imageVector = Icons.Default.ExpandMore,
+                    contentDescription = if (isExpanded) "Collapse checklist" else "Expand checklist",
+                    modifier =
+                        Modifier
+                            .size(20.dp)
+                            .graphicsLayer {
+                                rotationZ = if (isExpanded) 180f else 0f
+                            },
                 )
             }
         }
@@ -469,10 +537,11 @@ private fun ChecklistHabitProgress(
     completedItemIds: Set<String>,
     progress: Float,
     streakCount: Int,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
     onToggleItem: (itemId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
     val completedCount = completedItemIds.size
     val totalItems = checklist.size
 
@@ -506,7 +575,7 @@ private fun ChecklistHabitProgress(
                 modifier =
                     Modifier
                         .clip(RoundedCornerShape(4.dp))
-                        .clickable { isExpanded = !isExpanded }
+                        .clickable { onToggleExpand() }
                         .padding(vertical = 4.dp, horizontal = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),

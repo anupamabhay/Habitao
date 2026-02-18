@@ -77,6 +77,9 @@ fun HabitsScreen(
             onIncrementHabit = { habitId ->
                 viewModel.processIntent(HabitsIntent.IncrementHabitProgress(habitId))
             },
+            onDecrementHabit = { habitId ->
+                viewModel.processIntent(HabitsIntent.DecrementHabitProgress(habitId))
+            },
             onDeleteHabit = { habitId ->
                 viewModel.processIntent(HabitsIntent.DeleteHabit(habitId))
             },
@@ -94,6 +97,7 @@ private fun HabitsContent(
     state: HabitsState,
     onCompleteHabit: (String) -> Unit,
     onIncrementHabit: (String) -> Unit,
+    onDecrementHabit: (String) -> Unit,
     onDeleteHabit: (String) -> Unit,
     onToggleChecklistItem: (habitId: String, itemId: String) -> Unit,
     onEditHabit: (String) -> Unit,
@@ -128,6 +132,7 @@ private fun HabitsContent(
                             log = state.logs[habit.id],
                             streakCount = 0, // TODO: Calculate streak
                             onComplete = { onCompleteHabit(habit.id) },
+                            onUncomplete = { onDecrementHabit(habit.id) },
                             onIncrement = { onIncrementHabit(habit.id) },
                             onTap = { onEditHabit(habit.id) },
                             onDelete = { onDeleteHabit(habit.id) },
