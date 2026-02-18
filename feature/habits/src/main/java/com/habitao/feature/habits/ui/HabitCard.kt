@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.ChecklistItem
 import com.habitao.domain.model.Habit
 import com.habitao.domain.model.HabitLog
@@ -164,7 +165,7 @@ private fun SwipeBackground(
         modifier =
             modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(16.dp))
+                .clip(MaterialTheme.shapes.large)
                 .background(backgroundColor)
                 .padding(horizontal = 24.dp),
         contentAlignment =
@@ -226,14 +227,19 @@ private fun HabitCardContent(
             modifier
                 .fillMaxWidth()
                 .clickable(onClick = onTap),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         colors =
             CardDefaults.elevatedCardColors(
                 containerColor = cardContainerColor,
             ),
         elevation =
             CardDefaults.elevatedCardElevation(
-                defaultElevation = if (isCompleted) 1.dp else 2.dp,
+                defaultElevation =
+                    if (isCompleted) {
+                        Dimensions.cardElevationCompleted
+                    } else {
+                        Dimensions.cardElevation
+                    },
             ),
     ) {
         Column(
@@ -272,11 +278,9 @@ private fun HabitCardContent(
                             text = description,
                             style = MaterialTheme.typography.bodySmall,
                             color =
-                                if (isCompleted) {
-                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                },
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                    alpha = if (isCompleted) 0.5f else 1f,
+                                ),
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -485,14 +489,14 @@ private fun MeasurableHabitProgress(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(6.dp)
+                    .height(Dimensions.progressBarHeight)
                     .clip(RoundedCornerShape(3.dp)),
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.secondary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
             strokeCap = StrokeCap.Round,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -538,14 +542,14 @@ private fun ChecklistHabitProgress(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(6.dp)
+                    .height(Dimensions.progressBarHeight)
                     .clip(RoundedCornerShape(3.dp)),
             color = MaterialTheme.colorScheme.tertiary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
             strokeCap = StrokeCap.Round,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
