@@ -133,9 +133,11 @@ class CreateHabitViewModel
          * Load an existing habit for editing.
          */
         private fun loadHabitForEdit(habitId: String) {
+            // Reset isSaved synchronously BEFORE the coroutine launch.
+            // This prevents LaunchedEffect(state.isSaved) from firing with stale true
+            // when re-entering edit mode for a previously saved habit.
+            _state.update { it.copy(isLoadingHabit = true, editingHabitId = habitId, isSaved = false) }
             viewModelScope.launch {
-                _state.update { it.copy(isLoadingHabit = true, editingHabitId = habitId) }
-
                 habitRepository.getHabitById(habitId)
                     .onSuccess { habit ->
                         _state.update {
