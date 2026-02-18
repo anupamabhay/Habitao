@@ -10,9 +10,11 @@ import com.habitao.domain.model.HabitType
 import com.habitao.domain.repository.HabitRepository
 import com.habitao.system.notifications.HabitReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalTime
@@ -46,7 +48,6 @@ data class CreateHabitState(
     val checklistError: String? = null,
     // UI state
     val isSaving: Boolean = false,
-    val isSaved: Boolean = false,
     val error: String? = null,
 ) {
     val isEditMode: Boolean get() = editingHabitId != null
@@ -100,6 +101,8 @@ class CreateHabitViewModel
     ) : ViewModel() {
         private val _state = MutableStateFlow(CreateHabitState())
         val state: StateFlow<CreateHabitState> = _state.asStateFlow()
+        private val _savedEvent = Channel<Unit>(Channel.BUFFERED)
+        val savedEvent = _savedEvent.receiveAsFlow()
 
         fun processIntent(intent: CreateHabitIntent) {
             when (intent) {
@@ -135,10 +138,7 @@ class CreateHabitViewModel
          * Load an existing habit for editing.
          */
         private fun loadHabitForEdit(habitId: String) {
-            // Reset isSaved synchronously BEFORE the coroutine launch.
-            // This prevents LaunchedEffect(state.isSaved) from firing with stale true
-            // when re-entering edit mode for a previously saved habit.
-            _state.update { it.copy(isLoadingHabit = true, editingHabitId = habitId, isSaved = false) }
+            _state.update { it.copy(isLoadingHabit = true, editingHabitId = habitId) }
             viewModelScope.launch {
                 habitRepository.getHabitById(habitId)
                     .onSuccess { habit ->
@@ -343,7 +343,8 @@ class CreateHabitViewModel
                         } else {
                             reminderScheduler.cancelReminder(habit.id)
                         }
-                        _state.update { it.copy(isSaving = false, isSaved = true) }
+                        _state.update { it.copy(isSaving = false) }
+                        _savedEvent.send(Unit)
                     }
                     .onFailure { error ->
                         _state.update {

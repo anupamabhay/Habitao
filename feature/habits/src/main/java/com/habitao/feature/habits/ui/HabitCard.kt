@@ -213,7 +213,7 @@ private fun HabitCardContent(
     val cardContainerColor by animateColorAsState(
         targetValue =
             if (isCompleted) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                MaterialTheme.colorScheme.secondaryContainer
             } else {
                 MaterialTheme.colorScheme.surfaceContainerLow
             },
