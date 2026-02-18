@@ -8,6 +8,7 @@ import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.Habit
 import com.habitao.domain.model.HabitType
 import com.habitao.domain.repository.HabitRepository
+import com.habitao.system.notifications.HabitReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -95,6 +96,7 @@ class CreateHabitViewModel
     @Inject
     constructor(
         private val habitRepository: HabitRepository,
+        private val reminderScheduler: HabitReminderScheduler,
     ) : ViewModel() {
         private val _state = MutableStateFlow(CreateHabitState())
         val state: StateFlow<CreateHabitState> = _state.asStateFlow()
@@ -331,6 +333,16 @@ class CreateHabitViewModel
 
                 result
                     .onSuccess {
+                        val reminderTime = habit.reminderTime
+                        if (habit.reminderEnabled && reminderTime != null) {
+                            reminderScheduler.scheduleReminder(
+                                habitId = habit.id,
+                                habitTitle = habit.title,
+                                time = reminderTime,
+                            )
+                        } else {
+                            reminderScheduler.cancelReminder(habit.id)
+                        }
                         _state.update { it.copy(isSaving = false, isSaved = true) }
                     }
                     .onFailure { error ->
