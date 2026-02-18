@@ -2,10 +2,12 @@ package com.habitao.data.repository
 
 import com.habitao.data.local.dao.HabitDao
 import com.habitao.data.local.dao.HabitLogDao
+import com.habitao.data.local.entity.FrequencyTypeEntity
 import com.habitao.data.local.entity.HabitEntity
+import com.habitao.data.local.entity.HabitTypeEntity
+import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.Habit
-import com.habitao.domain.model.RepeatPattern
-import com.habitao.domain.model.TrackingType
+import com.habitao.domain.model.HabitType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -84,11 +86,10 @@ class HabitRepositoryImplTest {
         return Habit(
             id = "test-id",
             title = "Test Habit",
-            goalCount = 5,
-            trackingType = TrackingType.COUNT,
-            repeatPattern = RepeatPattern.DAILY,
+            targetValue = 5,
+            habitType = HabitType.MEASURABLE,
+            frequencyType = FrequencyType.DAILY,
             startDate = LocalDate.now(),
-            nextScheduledDate = LocalDate.now(),
         )
     }
 
@@ -96,11 +97,10 @@ class HabitRepositoryImplTest {
         return HabitEntity(
             id = id,
             title = "Test Habit",
-            goalCount = 5,
-            trackingType = TrackingType.COUNT.name,
-            repeatPattern = RepeatPattern.DAILY.name,
+            targetValue = 5,
+            habitType = HabitTypeEntity.MEASURABLE.name,
+            frequencyType = FrequencyTypeEntity.DAILY.name,
             startDate = System.currentTimeMillis(),
-            nextScheduledDate = System.currentTimeMillis(),
         )
     }
 }
