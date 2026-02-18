@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.CheckCircleOutline
 import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.Repeat
@@ -56,6 +57,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimeInput
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.TopAppBarDefaults
@@ -107,8 +109,8 @@ fun CreateHabitScreen(
         }
     }
 
-    LaunchedEffect(state.isSaved) {
-        if (state.isSaved) {
+    LaunchedEffect(Unit) {
+        viewModel.savedEvent.collect {
             onHabitCreated()
         }
     }
@@ -877,6 +879,8 @@ private fun TimePickerDialog(
             is24Hour = false,
         )
 
+    var showKeyboardInput by remember { mutableStateOf(false) }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(28.dp),
@@ -887,29 +891,59 @@ private fun TimePickerDialog(
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = "Select time",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 20.dp),
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Select time",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    IconButton(onClick = { showKeyboardInput = !showKeyboardInput }) {
+                        Icon(
+                            imageVector =
+                                if (showKeyboardInput) {
+                                    Icons.Outlined.Schedule
+                                } else {
+                                    Icons.Outlined.Keyboard
+                                },
+                            contentDescription =
+                                if (showKeyboardInput) {
+                                    "Switch to dial input"
+                                } else {
+                                    "Switch to keyboard input"
+                                },
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
 
-                TimePicker(
-                    state = timePickerState,
-                    colors =
-                        TimePickerDefaults.colors(
-                            clockDialColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            selectorColor = MaterialTheme.colorScheme.primary,
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            periodSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            periodSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        ),
-                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val timePickerColors =
+                    TimePickerDefaults.colors(
+                        clockDialColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        selectorColor = MaterialTheme.colorScheme.primary,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        periodSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        periodSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+
+                if (showKeyboardInput) {
+                    TimeInput(
+                        state = timePickerState,
+                        colors = timePickerColors,
+                    )
+                } else {
+                    TimePicker(
+                        state = timePickerState,
+                        colors = timePickerColors,
+                    )
+                }
 
                 Row(
                     modifier =
