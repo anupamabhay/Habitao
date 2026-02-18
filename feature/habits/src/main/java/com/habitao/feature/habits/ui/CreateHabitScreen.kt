@@ -72,6 +72,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
@@ -314,6 +315,9 @@ private fun CreateHabitForm(
                     state.checklistItems.forEachIndexed { index, item ->
                         ChecklistItemRow(
                             text = item,
+                            onTextChange = { newText ->
+                                onIntent(CreateHabitIntent.UpdateChecklistItemText(index, newText))
+                            },
                             onRemove = { onIntent(CreateHabitIntent.RemoveChecklistItem(index)) },
                         )
                     }
@@ -688,6 +692,7 @@ private fun HabitType.icon(): ImageVector =
 @Composable
 private fun ChecklistItemRow(
     text: String,
+    onTextChange: (String) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -700,15 +705,26 @@ private fun ChecklistItemRow(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
+            OutlinedTextField(
+                value = text,
+                onValueChange = onTextChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium,
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                    ),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .height(48.dp),
             )
 
             IconButton(
