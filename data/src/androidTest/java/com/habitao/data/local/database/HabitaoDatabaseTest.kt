@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.habitao.data.local.entity.FrequencyTypeEntity
 import com.habitao.data.local.entity.HabitEntity
-import com.habitao.data.local.entity.RepeatPattern
-import com.habitao.data.local.entity.TrackingType
+import com.habitao.data.local.entity.HabitTypeEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -45,11 +45,10 @@ class HabitaoDatabaseTest {
                 HabitEntity(
                     id = "test-id",
                     title = "Test Habit",
-                    goalCount = 5,
-                    trackingType = TrackingType.COUNT.name,
-                    repeatPattern = RepeatPattern.DAILY.name,
+                    targetValue = 5,
+                    habitType = HabitTypeEntity.MEASURABLE.name,
+                    frequencyType = FrequencyTypeEntity.DAILY.name,
                     startDate = System.currentTimeMillis(),
-                    nextScheduledDate = System.currentTimeMillis(),
                 )
 
             // When
@@ -59,7 +58,7 @@ class HabitaoDatabaseTest {
             // Then
             assertNotNull(retrieved)
             assertEquals("Test Habit", retrieved?.title)
-            assertEquals(5, retrieved?.goalCount)
+            assertEquals(5, retrieved?.targetValue)
         }
 
     @Test
@@ -85,11 +84,10 @@ class HabitaoDatabaseTest {
         return HabitEntity(
             id = id,
             title = title,
-            goalCount = 1,
-            trackingType = TrackingType.COUNT.name,
-            repeatPattern = RepeatPattern.DAILY.name,
+            targetValue = 1,
+            habitType = HabitTypeEntity.SIMPLE.name,
+            frequencyType = FrequencyTypeEntity.DAILY.name,
             startDate = System.currentTimeMillis(),
-            nextScheduledDate = System.currentTimeMillis(),
         )
     }
 }

@@ -5,6 +5,8 @@ import com.habitao.domain.model.Habit
 import com.habitao.domain.model.HabitLog
 import com.habitao.domain.model.HabitType
 import com.habitao.domain.repository.HabitRepository
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -141,6 +143,256 @@ class HabitsViewModelTest {
             val state = viewModel.state.value
             assertEquals(1, state.logs.size)
             assertEquals(3, state.logs[habit.id]?.currentValue)
+        }
+
+    @Test
+    fun `incrementHabitProgress should increase current value by 1`() =
+        runTest {
+            // Given
+            val habitId = "habit-id"
+            val date = LocalDate.now()
+            val log =
+                HabitLog(
+                    id = "log-id",
+                    habitId = habitId,
+                    date = date,
+                    currentValue = 3,
+                    targetValue = 5,
+                    isCompleted = false,
+                )
+
+            coEvery { habitRepository.getLogForHabitAndDate(habitId, date) } returns Result.success(log)
+            coEvery { habitRepository.createOrUpdateLog(any(), any(), any()) } returns Result.success(Unit)
+
+            viewModel = HabitsViewModel(habitRepository)
+            advanceUntilIdle()
+
+            // When
+            viewModel.processIntent(HabitsIntent.IncrementHabitProgress(habitId))
+            advanceUntilIdle()
+
+            // Then
+            coVerify { habitRepository.createOrUpdateLog(habitId, date, 4) }
+        }
+
+    @Test
+    fun `incrementHabitProgress should start from 0 when no log exists`() =
+        runTest {
+            // Given
+            val habitId = "habit-id"
+            val date = LocalDate.now()
+
+            coEvery { habitRepository.getLogForHabitAndDate(habitId, date) } returns Result.success(null)
+            coEvery { habitRepository.createOrUpdateLog(any(), any(), any()) } returns Result.success(Unit)
+
+            viewModel = HabitsViewModel(habitRepository)
+            advanceUntilIdle()
+
+            // When
+            viewModel.processIntent(HabitsIntent.IncrementHabitProgress(habitId))
+            advanceUntilIdle()
+
+            // Then
+            coVerify { habitRepository.createOrUpdateLog(habitId, date, 1) }
+        }
+
+    @Test
+    fun `decrementHabitProgress should decrease current value by 1`() =
+        runTest {
+            // Given
+            val habitId = "habit-id"
+            val date = LocalDate.now()
+            val log =
+                HabitLog(
+                    id = "log-id",
+                    habitId = habitId,
+                    date = date,
+                    currentValue = 3,
+                    targetValue = 5,
+                    isCompleted = false,
+                )
+
+            coEvery { habitRepository.getLogForHabitAndDate(habitId, date) } returns Result.success(log)
+            coEvery { habitRepository.createOrUpdateLog(any(), any(), any()) } returns Result.success(Unit)
+
+            viewModel = HabitsViewModel(habitRepository)
+            advanceUntilIdle()
+
+            // When
+            viewModel.processIntent(HabitsIntent.DecrementHabitProgress(habitId))
+            advanceUntilIdle()
+
+            // Then
+            coVerify { habitRepository.createOrUpdateLog(habitId, date, 2) }
+        }
+
+    @Test
+    fun `decrementHabitProgress should not go below 0`() =
+        runTest {
+            // Given
+            val habitId = "habit-id"
+            val date = LocalDate.now()
+            val log =
+                HabitLog(
+                    id = "log-id",
+                    habitId = habitId,
+                    date = date,
+                    currentValue = 0,
+                    targetValue = 5,
+                    isCompleted = false,
+                )
+
+            coEvery { habitRepository.getLogForHabitAndDate(habitId, date) } returns Result.success(log)
+            coEvery { habitRepository.createOrUpdateLog(any(), any(), any()) } returns Result.success(Unit)
+
+            viewModel = HabitsViewModel(habitRepository)
+            advanceUntilIdle()
+
+            // When
+            viewModel.processIntent(HabitsIntent.DecrementHabitProgress(habitId))
+            advanceUntilIdle()
+
+            // Then
+            coVerify { habitRepository.createOrUpdateLog(habitId, date, 0) }
+        }
+
+    @Test
+    fun `markHabitComplete should call createOrUpdateLog with correct params`() =
+        runTest {
+            // Given
+            val habitId = "habit-id"
+            val date = LocalDate.now()
+
+            coEvery { habitRepository.createOrUpdateLog(any(), any(), any()) } returns Result.success(Unit)
+
+            viewModel = HabitsViewModel(habitRepository)
+            advanceUntilIdle()
+
+            // When
+            viewModel.processIntent(HabitsIntent.MarkHabitComplete(habitId, 4))
+            advanceUntilIdle()
+
+            // Then
+            coVerify { habitRepository.createOrUpdateLog(habitId, date, 4) }
+        }
+
+    @Test
+    fun `markHabitComplete failure should set error in state`() =
+        runTest {
+            // Given
+            val habitId = "habit-id"
+
+            coEvery { habitRepository.createOrUpdateLog(any(), any(), any()) } returns
+                Result.failure(Exception("error"))
+
+            viewModel = HabitsViewModel(habitRepository)
+            advanceUntilIdle()
+
+            // When
+            viewModel.processIntent(HabitsIntent.MarkHabitComplete(habitId, 4))
+            advanceUntilIdle()
+
+            // Then
+            assertTrue(viewModel.state.value.error != null)
+        }
+
+    @Test
+    fun `deleteHabit should call repository deleteHabit`() =
+        runTest {
+            // Given
+            val habitId = "habit-id"
+
+            coEvery { habitRepository.deleteHabit(habitId) } returns Result.success(Unit)
+
+            viewModel = HabitsViewModel(habitRepository)
+            advanceUntilIdle()
+
+            // When
+            viewModel.processIntent(HabitsIntent.DeleteHabit(habitId))
+            advanceUntilIdle()
+
+            // Then
+            coVerify { habitRepository.deleteHabit(habitId) }
+        }
+
+    @Test
+    fun `deleteHabit failure should set error in state`() =
+        runTest {
+            // Given
+            val habitId = "habit-id"
+
+            coEvery { habitRepository.deleteHabit(habitId) } returns Result.failure(Exception("error"))
+
+            viewModel = HabitsViewModel(habitRepository)
+            advanceUntilIdle()
+
+            // When
+            viewModel.processIntent(HabitsIntent.DeleteHabit(habitId))
+            advanceUntilIdle()
+
+            // Then
+            assertTrue(viewModel.state.value.error != null)
+        }
+
+    @Test
+    fun `archiveHabit should call repository archiveHabit`() =
+        runTest {
+            // Given
+            val habitId = "habit-id"
+
+            coEvery { habitRepository.archiveHabit(habitId) } returns Result.success(Unit)
+
+            viewModel = HabitsViewModel(habitRepository)
+            advanceUntilIdle()
+
+            // When
+            viewModel.processIntent(HabitsIntent.ArchiveHabit(habitId))
+            advanceUntilIdle()
+
+            // Then
+            coVerify { habitRepository.archiveHabit(habitId) }
+        }
+
+    @Test
+    fun `toggleChecklistItem should call repository toggleChecklistItem`() =
+        runTest {
+            // Given
+            val habitId = "habit-id"
+            val itemId = "item-id"
+            val date = LocalDate.now()
+
+            coEvery { habitRepository.toggleChecklistItem(habitId, date, itemId) } returns Result.success(Unit)
+
+            viewModel = HabitsViewModel(habitRepository)
+            advanceUntilIdle()
+
+            // When
+            viewModel.processIntent(HabitsIntent.ToggleChecklistItem(habitId, itemId))
+            advanceUntilIdle()
+
+            // Then
+            coVerify { habitRepository.toggleChecklistItem(habitId, date, itemId) }
+        }
+
+    @Test
+    fun `toggleChecklistItem failure should set error in state`() =
+        runTest {
+            // Given
+            val habitId = "habit-id"
+            val itemId = "item-id"
+
+            coEvery { habitRepository.toggleChecklistItem(any(), any(), any()) } returns
+                Result.failure(Exception("error"))
+
+            viewModel = HabitsViewModel(habitRepository)
+            advanceUntilIdle()
+
+            // When
+            viewModel.processIntent(HabitsIntent.ToggleChecklistItem(habitId, itemId))
+            advanceUntilIdle()
+
+            // Then
+            assertTrue(viewModel.state.value.error != null)
         }
 
     private fun createTestHabit(
