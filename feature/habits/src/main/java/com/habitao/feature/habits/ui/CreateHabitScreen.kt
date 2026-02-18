@@ -150,10 +150,39 @@ fun CreateHabitScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.surface,
+        bottomBar = {
+            Surface(
+                tonalElevation = 3.dp,
+                shadowElevation = 8.dp,
+            ) {
+                Button(
+                    onClick = { viewModel.processIntent(CreateHabitIntent.SaveHabit) },
+                    enabled = !state.isSaving,
+                    shape = MaterialTheme.shapes.large,
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                        ),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 12.dp)
+                            .height(56.dp),
+                ) {
+                    Text(
+                        text =
+                            when {
+                                state.isSaving -> "Saving..."
+                                state.isEditMode -> "Save Changes"
+                                else -> "Create Habit"
+                            },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+        },
     ) { paddingValues ->
-        // Always show form immediately - local DB reads are fast enough
-        // that showing a loading spinner causes a visual flicker.
-        // Form fields populate reactively as the state updates.
         CreateHabitForm(
             state = state,
             onIntent = viewModel::processIntent,
@@ -405,35 +434,7 @@ private fun CreateHabitForm(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Save Button
-        Button(
-            onClick = { onIntent(CreateHabitIntent.SaveHabit) },
-            enabled = !state.isSaving,
-            shape = RoundedCornerShape(16.dp),
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                ),
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-        ) {
-            Text(
-                text =
-                    when {
-                        state.isSaving -> "Saving..."
-                        state.isEditMode -> "Save Changes"
-                        else -> "Create Habit"
-                    },
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -445,9 +446,9 @@ private fun FormSection(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = title,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.primary,
         )
         content()
     }
