@@ -3,7 +3,6 @@ package com.habitao.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
@@ -24,46 +23,54 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.habitao.core.ui.theme.HabitaoTheme
 import com.habitao.feature.habits.ui.CreateHabitScreen
 import com.habitao.feature.habits.ui.HabitsScreen
 import com.habitao.feature.habits.ui.StatsScreen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.serialization.Serializable
+
+// -- Type-safe route definitions --
+
+@Serializable
+object HabitsRoute
+
+@Serializable
+object StatsRoute
+
+@Serializable
+object SettingsRoute
+
+@Serializable
+object CreateHabitRoute
+
+@Serializable
+data class EditHabitRoute(val habitId: String)
 
 /**
- * Navigation destinations within the app.
- */
-private sealed class Screen {
-    data object HabitsList : Screen()
-
-    data object CreateHabit : Screen()
-
-    data class EditHabit(val habitId: String) : Screen()
-
-    data object Stats : Screen()
-
-    data object Settings : Screen()
-}
-
-/**
- * Bottom navigation tab definition.
+ * Bottom navigation tab definition tied to route types.
  */
 private enum class Tab(
     val label: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
+    val route: Any,
 ) {
-    HABITS("Habits", Icons.Filled.CheckCircle, Icons.Outlined.CheckCircleOutline),
-    STATS("Stats", Icons.Filled.BarChart, Icons.Outlined.BarChart),
-    SETTINGS("Settings", Icons.Filled.Settings, Icons.Outlined.Settings),
+    HABITS("Habits", Icons.Filled.CheckCircle, Icons.Outlined.CheckCircleOutline, HabitsRoute),
+    STATS("Stats", Icons.Filled.BarChart, Icons.Outlined.BarChart, StatsRoute),
+    SETTINGS("Settings", Icons.Filled.Settings, Icons.Outlined.Settings, SettingsRoute),
 }
 
 @AndroidEntryPoint
@@ -93,71 +100,79 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun HabitaoApp() {
-    var currentScreen by remember { mutableStateOf<Screen>(Screen.HabitsList) }
-    var selectedTab by rememberSaveable { mutableStateOf(Tab.HABITS.ordinal) }
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
 
-    // Full-screen destinations without bottom bar
-    when (val screen = currentScreen) {
-        Screen.CreateHabit -> {
-            BackHandler { currentScreen = Screen.HabitsList }
-            CreateHabitScreen(
-                onNavigateBack = { currentScreen = Screen.HabitsList },
-                onHabitCreated = { currentScreen = Screen.HabitsList },
-            )
-            return
-        }
-        is Screen.EditHabit -> {
-            BackHandler { currentScreen = Screen.HabitsList }
-            CreateHabitScreen(
-                onNavigateBack = { currentScreen = Screen.HabitsList },
-                onHabitCreated = { currentScreen = Screen.HabitsList },
-                habitId = screen.habitId,
-            )
-            return
-        }
-        else -> { /* Tab destinations handled below */ }
-    }
+    // Hide bottom bar on full-screen destinations (create/edit)
+    val showBottomBar =
+        currentDestination?.let { dest ->
+            Tab.entries.any { tab -> dest.hasRoute(tab.route::class) }
+        } ?: true
 
-    // Tab destinations with bottom bar
     Scaffold(
         bottomBar = {
-            HabitaoNavigationBar(
-                selectedTab = Tab.entries[selectedTab],
-                onTabSelected = { tab ->
-                    selectedTab = tab.ordinal
-                    currentScreen =
-                        when (tab) {
-                            Tab.HABITS -> Screen.HabitsList
-                            Tab.STATS -> Screen.Stats
-                            Tab.SETTINGS -> Screen.Settings
+            if (showBottomBar) {
+                HabitaoNavigationBar(
+                    currentDestination = currentDestination,
+                    onTabSelected = { tab ->
+                        navController.navigate(tab.route) {
+                            // Pop up to the start destination to avoid building up a large stack
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                },
-            )
+                    },
+                )
+            }
         },
     ) { paddingValues ->
-        // Only apply bottom padding from the outer Scaffold.
-        // Inner screens have their own Scaffolds that handle top bar / status bar insets.
         val bottomPad = Modifier.padding(bottom = paddingValues.calculateBottomPadding())
 
-        when (Tab.entries[selectedTab]) {
-            Tab.HABITS -> {
+        NavHost(
+            navController = navController,
+            startDestination = HabitsRoute,
+        ) {
+            // -- Tab destinations --
+            composable<HabitsRoute> {
                 Box(modifier = bottomPad) {
                     HabitsScreen(
-                        onAddHabit = { currentScreen = Screen.CreateHabit },
+                        onAddHabit = { navController.navigate(CreateHabitRoute) },
                         onEditHabit = { habitId ->
-                            currentScreen = Screen.EditHabit(habitId)
+                            navController.navigate(EditHabitRoute(habitId))
                         },
                     )
                 }
             }
-            Tab.STATS -> {
+
+            composable<StatsRoute> {
                 Box(modifier = bottomPad) {
                     StatsScreen()
                 }
             }
-            Tab.SETTINGS -> {
+
+            composable<SettingsRoute> {
                 SettingsPlaceholder(
                     modifier = Modifier.padding(paddingValues),
+                )
+            }
+
+            // -- Full-screen destinations (no bottom bar) --
+            composable<CreateHabitRoute> {
+                CreateHabitScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onHabitCreated = { navController.popBackStack() },
+                )
+            }
+
+            composable<EditHabitRoute> { backStackEntry ->
+                val route = backStackEntry.toRoute<EditHabitRoute>()
+                CreateHabitScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onHabitCreated = { navController.popBackStack() },
+                    habitId = route.habitId,
                 )
             }
         }
@@ -166,13 +181,17 @@ private fun HabitaoApp() {
 
 @Composable
 private fun HabitaoNavigationBar(
-    selectedTab: Tab,
+    currentDestination: androidx.navigation.NavDestination?,
     onTabSelected: (Tab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     NavigationBar(modifier = modifier) {
         Tab.entries.forEach { tab ->
-            val isSelected = selectedTab == tab
+            val isSelected =
+                currentDestination?.hierarchy?.any {
+                    it.hasRoute(tab.route::class)
+                } == true
+
             NavigationBarItem(
                 selected = isSelected,
                 onClick = { onTabSelected(tab) },
