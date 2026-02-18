@@ -19,7 +19,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -28,6 +31,7 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -58,6 +62,7 @@ import com.habitao.core.ui.theme.Dimensions
 import com.habitao.feature.habits.viewmodel.HabitsIntent
 import com.habitao.feature.habits.viewmodel.HabitsState
 import com.habitao.feature.habits.viewmodel.HabitsViewModel
+import com.habitao.feature.habits.viewmodel.SortOption
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -94,12 +99,31 @@ fun HabitsScreen(
             }
         }
 
+    var showSortMenu by remember { mutableStateOf(false) }
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeTopAppBar(
                 title = { Text(greeting) },
                 actions = {
+                    Box {
+                        IconButton(onClick = { showSortMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Sort,
+                                contentDescription = "Sort habits",
+                            )
+                        }
+                        SortDropdownMenu(
+                            expanded = showSortMenu,
+                            currentSort = state.sortOption,
+                            onSortSelected = { option ->
+                                viewModel.processIntent(HabitsIntent.SetSortOption(option))
+                                showSortMenu = false
+                            },
+                            onDismiss = { showSortMenu = false },
+                        )
+                    }
                     IconButton(onClick = { /* Settings placeholder */ }) {
                         Icon(
                             imageVector = Icons.Outlined.Settings,
@@ -243,7 +267,7 @@ private fun HabitsContent(
                         HabitCard(
                             habit = habit,
                             log = state.logs[habit.id],
-                            streakCount = 0,
+                            streakCount = state.streaks[habit.id] ?: 0,
                             onComplete = { onCompleteHabit(habit.id) },
                             onUncomplete = { onDecrementHabit(habit.id) },
                             onIncrement = { onIncrementHabit(habit.id) },
@@ -408,6 +432,50 @@ private fun DateChip(
         }
     }
 }
+
+@Composable
+private fun SortDropdownMenu(
+    expanded: Boolean,
+    currentSort: SortOption,
+    onSortSelected: (SortOption) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+    ) {
+        SortOption.entries.forEach { option ->
+            DropdownMenuItem(
+                text = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement =
+                            Arrangement.spacedBy(Dimensions.elementSpacing),
+                    ) {
+                        RadioButton(
+                            selected = currentSort == option,
+                            onClick = null,
+                        )
+                        Text(
+                            text = option.displayName(),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                },
+                onClick = { onSortSelected(option) },
+            )
+        }
+    }
+}
+
+private fun SortOption.displayName(): String =
+    when (this) {
+        SortOption.MANUAL -> "Manual"
+        SortOption.ALPHABETICAL -> "A - Z"
+        SortOption.NEWEST_FIRST -> "Newest first"
+        SortOption.OLDEST_FIRST -> "Oldest first"
+        SortOption.BY_COMPLETION -> "Incomplete first"
+    }
 
 @Composable
 private fun EmptyState(
