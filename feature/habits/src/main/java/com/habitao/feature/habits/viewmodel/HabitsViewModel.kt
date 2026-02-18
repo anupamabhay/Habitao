@@ -19,14 +19,27 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 /**
+ * Available sorting options for the habits list.
+ */
+enum class SortOption {
+    MANUAL,
+    ALPHABETICAL,
+    NEWEST_FIRST,
+    OLDEST_FIRST,
+    BY_COMPLETION,
+}
+
+/**
  * State for Habits Screen (MVI Pattern)
  */
 data class HabitsState(
     val habits: List<Habit> = emptyList(),
     val logs: Map<String, HabitLog> = emptyMap(), // habitId -> log for selected date
+    val streaks: Map<String, Int> = emptyMap(), // habitId -> current streak
     val isLoading: Boolean = true,
     val error: String? = null,
     val selectedDate: LocalDate = LocalDate.now(),
+    val sortOption: SortOption = SortOption.MANUAL,
 )
 
 /**
@@ -46,6 +59,8 @@ sealed class HabitsIntent {
     data class ArchiveHabit(val habitId: String) : HabitsIntent()
 
     data class ToggleChecklistItem(val habitId: String, val itemId: String) : HabitsIntent()
+
+    data class SetSortOption(val sortOption: SortOption) : HabitsIntent()
 }
 
 @HiltViewModel
@@ -56,6 +71,8 @@ class HabitsViewModel
     ) : ViewModel() {
         private val selectedDateFlow = MutableStateFlow(LocalDate.now())
         private val errorFlow = MutableStateFlow<String?>(null)
+        private val sortOptionFlow = MutableStateFlow(SortOption.MANUAL)
+        private val streaksFlow = MutableStateFlow<Map<String, Int>>(emptyMap())
 
         /**
          * Observe habits reactively - auto-updates when database changes.
@@ -79,19 +96,43 @@ class HabitsViewModel
                         .catch { emit(emptyMap()) }
                 },
                 errorFlow,
-            ) { date, habits, logs, error ->
+                sortOptionFlow,
+                streaksFlow,
+            ) { values ->
+                val date = values[0] as LocalDate
+
+                @Suppress("UNCHECKED_CAST")
+                val habits = values[1] as List<Habit>
+
+                @Suppress("UNCHECKED_CAST")
+                val logs = values[2] as Map<String, HabitLog>
+
+                val error = values[3] as String?
+                val sortOption = values[4] as SortOption
+
+                @Suppress("UNCHECKED_CAST")
+                val streaks = values[5] as Map<String, Int>
+
+                val sortedHabits = applySorting(habits, logs, sortOption)
+
                 HabitsState(
-                    habits = habits,
+                    habits = sortedHabits,
                     logs = logs,
+                    streaks = streaks,
                     isLoading = false,
                     error = error,
                     selectedDate = date,
+                    sortOption = sortOption,
                 )
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = HabitsState(),
             )
+
+        init {
+            loadStreaks()
+        }
 
         fun processIntent(intent: HabitsIntent) {
             when (intent) {
@@ -102,6 +143,50 @@ class HabitsViewModel
                 is HabitsIntent.DeleteHabit -> deleteHabit(intent.habitId)
                 is HabitsIntent.ArchiveHabit -> archiveHabit(intent.habitId)
                 is HabitsIntent.ToggleChecklistItem -> toggleChecklistItem(intent.habitId, intent.itemId)
+                is HabitsIntent.SetSortOption -> setSortOption(intent.sortOption)
+            }
+        }
+
+        private fun setSortOption(option: SortOption) {
+            sortOptionFlow.value = option
+        }
+
+        private fun applySorting(
+            habits: List<Habit>,
+            logs: Map<String, HabitLog>,
+            sortOption: SortOption,
+        ): List<Habit> {
+            return when (sortOption) {
+                SortOption.MANUAL -> habits // Already sorted by sortOrder ASC, createdAt DESC from DAO
+                SortOption.ALPHABETICAL -> habits.sortedBy { it.title.lowercase() }
+                SortOption.NEWEST_FIRST -> habits.sortedByDescending { it.createdAt }
+                SortOption.OLDEST_FIRST -> habits.sortedBy { it.createdAt }
+                SortOption.BY_COMPLETION -> habits.sortedBy { logs[it.id]?.isCompleted == true }
+            }
+        }
+
+        private fun loadStreaks() {
+            viewModelScope.launch {
+                // Observe habits from DB directly to avoid circular dependency with state
+                selectedDateFlow.flatMapLatest { date ->
+                    habitRepository.observeHabitsForDate(date)
+                        .map { result -> result.getOrElse { emptyList() } }
+                        .catch { emit(emptyList()) }
+                }.collect { habits ->
+                    if (habits.isNotEmpty()) {
+                        val newStreaks = mutableMapOf<String, Int>()
+                        for (habit in habits) {
+                            habitRepository.calculateStreak(habit.id).onSuccess { info ->
+                                if (info.currentStreak > 0) {
+                                    newStreaks[habit.id] = info.currentStreak
+                                }
+                            }
+                        }
+                        streaksFlow.value = newStreaks
+                    } else {
+                        streaksFlow.value = emptyMap()
+                    }
+                }
             }
         }
 
