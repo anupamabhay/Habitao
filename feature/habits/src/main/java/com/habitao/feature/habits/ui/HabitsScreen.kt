@@ -74,7 +74,7 @@ fun HabitsScreen(
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    var pendingDeleteHabitId by remember { mutableStateOf<String?>(null) }
+    var pendingDeleteIds by remember { mutableStateOf(emptySet<String>()) }
 
     LaunchedEffect(state.error) {
         state.error?.let { error ->
@@ -125,7 +125,7 @@ fun HabitsScreen(
     ) { paddingValues ->
         HabitsContent(
             state = state,
-            pendingDeleteHabitId = pendingDeleteHabitId,
+            pendingDeleteIds = pendingDeleteIds,
             onCompleteHabit = { habitId ->
                 viewModel.processIntent(HabitsIntent.IncrementHabitProgress(habitId))
             },
@@ -136,7 +136,7 @@ fun HabitsScreen(
                 viewModel.processIntent(HabitsIntent.DecrementHabitProgress(habitId))
             },
             onDeleteHabit = { habitId ->
-                pendingDeleteHabitId = habitId
+                pendingDeleteIds = pendingDeleteIds + habitId
                 scope.launch {
                     val result =
                         snackbarHostState.showSnackbar(
@@ -146,13 +146,11 @@ fun HabitsScreen(
                         )
                     when (result) {
                         SnackbarResult.ActionPerformed -> {
-                            pendingDeleteHabitId = null
+                            pendingDeleteIds = pendingDeleteIds - habitId
                         }
                         SnackbarResult.Dismissed -> {
-                            pendingDeleteHabitId?.let { id ->
-                                viewModel.processIntent(HabitsIntent.DeleteHabit(id))
-                            }
-                            pendingDeleteHabitId = null
+                            viewModel.processIntent(HabitsIntent.DeleteHabit(habitId))
+                            pendingDeleteIds = pendingDeleteIds - habitId
                         }
                     }
                 }
@@ -173,7 +171,7 @@ fun HabitsScreen(
 @Composable
 private fun HabitsContent(
     state: HabitsState,
-    pendingDeleteHabitId: String? = null,
+    pendingDeleteIds: Set<String> = emptySet(),
     onCompleteHabit: (String) -> Unit,
     onIncrementHabit: (String) -> Unit,
     onDecrementHabit: (String) -> Unit,
@@ -209,9 +207,9 @@ private fun HabitsContent(
             }
             else -> {
                 val displayedHabits =
-                    remember(state.habits, pendingDeleteHabitId) {
-                        if (pendingDeleteHabitId != null) {
-                            state.habits.filter { it.id != pendingDeleteHabitId }
+                    remember(state.habits, pendingDeleteIds) {
+                        if (pendingDeleteIds.isNotEmpty()) {
+                            state.habits.filter { it.id !in pendingDeleteIds }
                         } else {
                             state.habits
                         }
