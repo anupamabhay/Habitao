@@ -113,7 +113,7 @@ class HabitRepositoryImpl
                 try {
                     val dateMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
                     val entities = habitDao.getHabitsForDate(dateMillis)
-                    Result.success(entities.map { it.toDomainModel() }.filter { it.isScheduledFor(date) })
+                    Result.success(entities.map { it.toDomainModel() })
                 } catch (e: Exception) {
                     Result.failure(e)
                 }
@@ -124,7 +124,7 @@ class HabitRepositoryImpl
                 date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli(),
             )
                 .map { entities ->
-                    Result.success(entities.map { it.toDomainModel() }.filter { it.isScheduledFor(date) })
+                    Result.success(entities.map { it.toDomainModel() })
                 }
                 .flowOn(dispatcher)
         }

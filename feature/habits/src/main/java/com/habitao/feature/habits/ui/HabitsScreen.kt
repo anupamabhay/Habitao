@@ -207,7 +207,12 @@ private fun HabitsContent(
                 )
             }
             state.habits.isEmpty() -> {
-                Column(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = Dimensions.screenPaddingHorizontal),
+                ) {
                     HabitsListHeader(
                         selectedDate = state.selectedDate,
                         onSelectDate = onSelectDate,
@@ -277,9 +282,7 @@ private fun HabitsContent(
                         )
                     }
 
-                    item {
-                        Spacer(modifier = Modifier.height(Dimensions.fabClearance))
-                    }
+                    // FAB clearance is handled by LazyColumn's contentPadding.bottom
                 }
             }
         }
