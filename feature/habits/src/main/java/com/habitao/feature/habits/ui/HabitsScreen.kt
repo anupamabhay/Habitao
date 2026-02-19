@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Checklist
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -122,12 +121,6 @@ fun HabitsScreen(
                                 showSortMenu = false
                             },
                             onDismiss = { showSortMenu = false },
-                        )
-                    }
-                    IconButton(onClick = { /* Settings placeholder */ }) {
-                        Icon(
-                            imageVector = Icons.Outlined.Settings,
-                            contentDescription = "Settings",
                         )
                     }
                 },
@@ -247,7 +240,10 @@ private fun HabitsContent(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding =
-                        PaddingValues(horizontal = Dimensions.screenPaddingHorizontal),
+                        PaddingValues(
+                            horizontal = Dimensions.screenPaddingHorizontal,
+                            top = Dimensions.elementSpacing,
+                        ),
                     verticalArrangement =
                         Arrangement.spacedBy(Dimensions.cardSpacing),
                 ) {
@@ -406,13 +402,13 @@ private fun DateChip(
         contentColor = contentColor,
         modifier =
             Modifier
-                .width(48.dp)
-                .height(64.dp),
+                .width(52.dp)
+                .height(68.dp),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(4.dp),
+            modifier = Modifier.padding(Dimensions.elementSpacingSmall),
         ) {
             Text(
                 text =
@@ -483,7 +479,7 @@ private fun EmptyState(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.padding(32.dp),
+        modifier = modifier.padding(Dimensions.sectionSpacing),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(

@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.habitao.core.ui.theme.AppShapes
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.ChecklistItem
 import com.habitao.domain.model.Habit
@@ -167,7 +168,7 @@ private fun SwipeBackground(
                 .fillMaxSize()
                 .clip(MaterialTheme.shapes.large)
                 .background(backgroundColor)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = Dimensions.sectionSpacing),
         contentAlignment =
             when (dismissValue) {
                 SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
@@ -246,7 +247,7 @@ private fun HabitCardContent(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(Dimensions.cardPadding),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -287,7 +288,7 @@ private fun HabitCardContent(
                     }
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(Dimensions.elementSpacingLarge))
 
                 HabitActionButton(
                     habit = habit,
@@ -301,7 +302,7 @@ private fun HabitCardContent(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Dimensions.elementSpacingLarge))
 
             when (habit.habitType) {
                 HabitType.SIMPLE -> {
@@ -490,7 +491,7 @@ private fun MeasurableHabitProgress(
                 Modifier
                     .fillMaxWidth()
                     .height(Dimensions.progressBarHeight)
-                    .clip(RoundedCornerShape(3.dp)),
+                    .clip(AppShapes.progressBar),
             color = MaterialTheme.colorScheme.secondary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
             strokeCap = StrokeCap.Round,
@@ -543,7 +544,7 @@ private fun ChecklistHabitProgress(
                 Modifier
                     .fillMaxWidth()
                     .height(Dimensions.progressBarHeight)
-                    .clip(RoundedCornerShape(3.dp)),
+                    .clip(AppShapes.progressBar),
             color = MaterialTheme.colorScheme.tertiary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
             strokeCap = StrokeCap.Round,
@@ -561,7 +562,10 @@ private fun ChecklistHabitProgress(
                     Modifier
                         .clip(RoundedCornerShape(4.dp))
                         .clickable { onToggleExpand() }
-                        .padding(vertical = 4.dp, horizontal = 2.dp),
+                        .padding(
+                            vertical = Dimensions.elementSpacingSmall,
+                            horizontal = Dimensions.elementSpacingSmall,
+                        ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
@@ -595,8 +599,8 @@ private fun ChecklistHabitProgress(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                        .padding(top = Dimensions.elementSpacing),
+                verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
             ) {
                 checklist.forEach { item ->
                     val isItemCompleted = completedItemIds.contains(item.id)
@@ -646,9 +650,9 @@ private fun ChecklistItemRow(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
                 .clickable(onClick = onToggle)
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                .padding(horizontal = Dimensions.elementSpacing, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
     ) {
         Icon(
             imageVector =
@@ -684,9 +688,12 @@ private fun StreakBadge(
                     color = MaterialTheme.colorScheme.tertiaryContainer,
                     shape = CircleShape,
                 )
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(
+                    horizontal = Dimensions.elementSpacing,
+                    vertical = Dimensions.elementSpacingSmall,
+                ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
     ) {
         Icon(
             imageVector = Icons.Outlined.LocalFireDepartment,
