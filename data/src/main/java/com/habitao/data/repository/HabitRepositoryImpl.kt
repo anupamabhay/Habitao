@@ -83,7 +83,7 @@ class HabitRepositoryImpl
         override fun observeAllHabits(): Flow<Result<List<Habit>>> {
             return habitDao.observeAllHabits()
                 .map { entities ->
-                    Result.success(entities.map { it.toDomainModel() })
+                    Result.success(entities.map { it.toDomainModel() }.filter { it.isScheduledFor(date) })
                 }
                 .flowOn(dispatcher)
         }
@@ -92,7 +92,7 @@ class HabitRepositoryImpl
             withContext(dispatcher) {
                 try {
                     val entities = habitDao.getAllHabits()
-                    Result.success(entities.map { it.toDomainModel() })
+                    Result.success(entities.map { it.toDomainModel() }.filter { it.isScheduledFor(date) })
                 } catch (e: Exception) {
                     Result.failure(e)
                 }
@@ -113,7 +113,7 @@ class HabitRepositoryImpl
                 try {
                     val dateMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
                     val entities = habitDao.getHabitsForDate(dateMillis)
-                    Result.success(entities.map { it.toDomainModel() })
+                    Result.success(entities.map { it.toDomainModel() }.filter { it.isScheduledFor(date) })
                 } catch (e: Exception) {
                     Result.failure(e)
                 }
@@ -124,7 +124,7 @@ class HabitRepositoryImpl
                 date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli(),
             )
                 .map { entities ->
-                    Result.success(entities.map { it.toDomainModel() })
+                    Result.success(entities.map { it.toDomainModel() }.filter { it.isScheduledFor(date) })
                 }
                 .flowOn(dispatcher)
         }
