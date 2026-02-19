@@ -241,8 +241,10 @@ private fun HabitsContent(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding =
                         PaddingValues(
-                            horizontal = Dimensions.screenPaddingHorizontal,
+                            start = Dimensions.screenPaddingHorizontal,
                             top = Dimensions.elementSpacing,
+                            end = Dimensions.screenPaddingHorizontal,
+                            bottom = Dimensions.fabClearance,
                         ),
                     verticalArrangement =
                         Arrangement.spacedBy(Dimensions.cardSpacing),
