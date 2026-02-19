@@ -1,22 +1,37 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
 }
 
-// Domain module is a pure Kotlin library with NO Android dependencies
-// This makes it KMP-ready for future iOS support
+// Domain module: pure Kotlin business logic, no Android framework dependencies in source.
+// Uses android-library plugin for proper AAR packaging with AGP 8.13+.
+// Source remains Android-free for future KMP migration.
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+android {
+    namespace = "com.habitao.domain"
+    compileSdk = 35
+
+    defaultConfig {
+        minSdk = 26
     }
-}
 
-kotlin {
-    jvmToolchain(17)
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 
-    compilerOptions {
-        freeCompilerArgs.add("-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi")
+    kotlinOptions {
+        jvmTarget = "17"
+        freeCompilerArgs += listOf(
+            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+        )
+    }
+
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("src/main/kotlin")
+        }
     }
 }
 

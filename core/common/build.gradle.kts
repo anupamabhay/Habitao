@@ -1,22 +1,37 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
 }
 
-// Core Common module is a pure Kotlin library with NO Android dependencies
-// Contains: Result wrapper, DateTimeUtils, StringUtils, extensions
+// Core Common module: shared utilities, Result wrapper, extensions.
+// Uses android-library plugin for proper AAR packaging with AGP 8.13+.
+// Source remains Android-free for future KMP migration.
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+android {
+    namespace = "com.habitao.core.common"
+    compileSdk = 35
+
+    defaultConfig {
+        minSdk = 26
     }
-}
 
-kotlin {
-    jvmToolchain(17)
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 
-    compilerOptions {
-        freeCompilerArgs.add("-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi")
+    kotlinOptions {
+        jvmTarget = "17"
+        freeCompilerArgs += listOf(
+            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+        )
+    }
+
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("src/main/kotlin")
+        }
     }
 }
 
