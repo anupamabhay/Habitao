@@ -83,7 +83,7 @@ class HabitRepositoryImpl
         override fun observeAllHabits(): Flow<Result<List<Habit>>> {
             return habitDao.observeAllHabits()
                 .map { entities ->
-                    Result.success(entities.map { it.toDomainModel() }.filter { it.isScheduledFor(date) })
+                    Result.success(entities.map { it.toDomainModel() })
                 }
                 .flowOn(dispatcher)
         }
@@ -92,7 +92,7 @@ class HabitRepositoryImpl
             withContext(dispatcher) {
                 try {
                     val entities = habitDao.getAllHabits()
-                    Result.success(entities.map { it.toDomainModel() }.filter { it.isScheduledFor(date) })
+                    Result.success(entities.map { it.toDomainModel() })
                 } catch (e: Exception) {
                     Result.failure(e)
                 }
