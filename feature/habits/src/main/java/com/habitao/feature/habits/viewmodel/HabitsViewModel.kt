@@ -69,10 +69,11 @@ class HabitsViewModel
     constructor(
         private val habitRepository: HabitRepository,
     ) : ViewModel() {
-        private val selectedDateFlow = MutableStateFlow(LocalDate.now())
-        private val errorFlow = MutableStateFlow<String?>(null)
-        private val sortOptionFlow = MutableStateFlow(SortOption.MANUAL)
-        private val streaksFlow = MutableStateFlow<Map<String, Int>>(emptyMap())
+    private val selectedDateFlow = MutableStateFlow(LocalDate.now())
+    private val errorFlow = MutableStateFlow<String?>(null)
+    private val sortOptionFlow = MutableStateFlow(SortOption.MANUAL)
+    private val streaksFlow = MutableStateFlow<Map<String, Int>>(emptyMap())
+    private val streakRefreshTrigger = MutableStateFlow(0L)
 
         /**
          * Observe habits reactively - auto-updates when database changes.
@@ -168,7 +169,8 @@ class HabitsViewModel
         private fun loadStreaks() {
             viewModelScope.launch {
                 // Observe habits from DB directly to avoid circular dependency with state
-                selectedDateFlow.flatMapLatest { date ->
+            combine(selectedDateFlow, streakRefreshTrigger) { date, _ -> date }
+                .flatMapLatest { date ->
                     habitRepository.observeHabitsForDate(date)
                         .map { result -> result.getOrElse { emptyList() } }
                         .catch { emit(emptyList()) }
@@ -204,6 +206,7 @@ class HabitsViewModel
                     .onFailure { error ->
                         errorFlow.value = error.message ?: "Failed to update habit"
                     }
+                streakRefreshTrigger.value = System.currentTimeMillis()
                 // No need to manually refresh - Flow observation handles it
             }
         }
@@ -217,7 +220,11 @@ class HabitsViewModel
                 val currentValue = currentLog?.currentValue ?: 0
                 val newValue = currentValue + 1
 
-                markHabitComplete(habitId, newValue)
+                habitRepository.createOrUpdateLog(habitId, date, newValue)
+                    .onFailure { error ->
+                        errorFlow.value = error.message ?: "Failed to update habit"
+                    }
+                streakRefreshTrigger.value = System.currentTimeMillis()
             }
         }
 
@@ -230,7 +237,11 @@ class HabitsViewModel
                 val currentValue = currentLog?.currentValue ?: 0
                 val newValue = maxOf(0, currentValue - 1)
 
-                markHabitComplete(habitId, newValue)
+                habitRepository.createOrUpdateLog(habitId, date, newValue)
+                    .onFailure { error ->
+                        errorFlow.value = error.message ?: "Failed to update habit"
+                    }
+                streakRefreshTrigger.value = System.currentTimeMillis()
             }
         }
 
@@ -264,6 +275,7 @@ class HabitsViewModel
                     .onFailure { error ->
                         errorFlow.value = error.message ?: "Failed to update checklist item"
                     }
+                streakRefreshTrigger.value = System.currentTimeMillis()
             }
         }
 

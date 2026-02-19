@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -72,10 +73,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -308,6 +312,11 @@ private fun CreateHabitForm(
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
             ) {
+                val checklistFocusRequester = remember { FocusRequester() }
+                val addChecklistItem = {
+                    onIntent(CreateHabitIntent.AddChecklistItem)
+                    checklistFocusRequester.requestFocus()
+                }
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -334,6 +343,8 @@ private fun CreateHabitForm(
                             label = { Text("Add item") },
                             placeholder = { Text("e.g., Brush teeth") },
                             singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { addChecklistItem() }),
                             isError = state.checklistError != null,
                             supportingText = state.checklistError?.let { { Text(it) } },
                             shape = inputShape,
@@ -342,11 +353,11 @@ private fun CreateHabitForm(
                                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                                     unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
                                 ),
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).focusRequester(checklistFocusRequester),
                         )
 
                         FilledTonalIconButton(
-                            onClick = { onIntent(CreateHabitIntent.AddChecklistItem) },
+                            onClick = { addChecklistItem() },
                             enabled = state.newChecklistItem.isNotBlank(),
                         ) {
                             Icon(
