@@ -1,6 +1,7 @@
 package com.habitao.feature.habits.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -61,12 +62,15 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
         },
     ) { paddingValues ->
         if (state.isLoading) {
-            CircularProgressIndicator(
+            Box(
                 modifier =
                     Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-            )
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
         } else {
             StatsContent(
                 state = state,

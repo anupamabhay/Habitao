@@ -238,8 +238,16 @@ class HabitRepositoryImpl
                     val weekStart = weekContainingDate.with(java.time.DayOfWeek.MONDAY)
                     val weekEnd = weekStart.plusDays(6)
 
-                    val startMillis = weekStart.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-                    val endMillis = weekEnd.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    val startMillis =
+                        weekStart
+                            .atStartOfDay(java.time.ZoneId.systemDefault())
+                            .toInstant()
+                            .toEpochMilli()
+                    val endMillis =
+                        weekEnd
+                            .atStartOfDay(java.time.ZoneId.systemDefault())
+                            .toInstant()
+                            .toEpochMilli()
 
                     val logs = habitLogDao.getLogsForHabitBetweenDates(habitId, startMillis, endMillis)
 

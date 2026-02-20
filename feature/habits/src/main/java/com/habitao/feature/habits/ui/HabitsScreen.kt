@@ -30,7 +30,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -225,9 +224,10 @@ private fun HabitsContent(
                         completedHabits = 0,
                     )
                     Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth(),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
                         contentAlignment = Alignment.Center,
                     ) {
                         EmptyState(
@@ -489,9 +489,7 @@ private fun SortOption.displayName(): String =
     }
 
 @Composable
-private fun EmptyState(
-    modifier: Modifier = Modifier,
-) {
+private fun EmptyState(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
