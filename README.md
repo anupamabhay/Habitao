@@ -31,7 +31,7 @@ cd Habitao
 | Architecture | Clean Architecture + MVI |
 | Database | Room 2.7 |
 | DI | Hilt 2.51 |
-| Navigation | Voyager 1.1 |
+| Navigation | Jetpack Navigation Compose |
 | Async | Kotlin Coroutines + Flow |
 
 ## Project Structure
