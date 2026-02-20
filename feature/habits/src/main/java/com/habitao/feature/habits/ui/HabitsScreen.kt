@@ -224,10 +224,12 @@ private fun HabitsContent(
                         completedHabits = 0,
                     )
                     Box(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        EmptyState(onAddHabit = onAddHabit)
+                        EmptyState()
                     }
                 }
             }
@@ -485,12 +487,12 @@ private fun SortOption.displayName(): String =
 
 @Composable
 private fun EmptyState(
-    onAddHabit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             imageVector = Icons.Outlined.Checklist,
@@ -507,20 +509,5 @@ private fun EmptyState(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-
-        Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
-
-        Text(
-            text = "Start building better routines",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-
-        Spacer(modifier = Modifier.height(Dimensions.sectionSpacing))
-
-        OutlinedButton(onClick = onAddHabit) {
-            Text("Create your first habit")
-        }
     }
 }
