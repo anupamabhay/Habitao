@@ -64,7 +64,7 @@ data class Habit(
     fun getDaysUntilDue(date: LocalDate): Int {
         if (frequencyType != FrequencyType.EVERY_X_DAYS) return 0
         if (date < startDate) return java.time.temporal.ChronoUnit.DAYS.between(date, startDate).toInt()
-        
+
         val daysSinceStart = java.time.temporal.ChronoUnit.DAYS.between(startDate, date)
         val daysIntoCycle = (daysSinceStart % frequencyValue).toInt()
         return if (daysIntoCycle == 0) 0 else frequencyValue - daysIntoCycle

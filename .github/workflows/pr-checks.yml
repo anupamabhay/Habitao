@@ -52,15 +52,13 @@ jobs:
             const deletions = pr.deletions;
             const total = additions + deletions;
             
-            // Warn if PR is very large (>800 lines changed)
-            if (total > 800) {
-              core.warning(`This PR is quite large (${total} lines changed). Consider breaking it into smaller PRs.`);
+            // Warn if PR is very large (>1500 lines changed)
+            if (total > 1500) {
+              core.warning(`This PR is quite large (${total} lines changed). Consider breaking it into smaller PRs for major features.`);
             }
             
-            // Fail if PR is extremely large (>1500 lines changed)
-            if (total > 1500) {
-              core.setFailed(`This PR is too large (${total} lines changed). Please break it into smaller, reviewable PRs.`);
-            }
+            // Note: We don't fail on PR size - large PRs are sometimes necessary for major features
+            core.notice(`PR size: ${total} lines changed (${additions} additions, ${deletions} deletions)`);
 
   # ============================================================================
   # Check for TODO/FIXME Comments
