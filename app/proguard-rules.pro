@@ -58,9 +58,12 @@
 }
 
 # =============================================================================
-# Voyager Navigation
+# Jetpack Navigation
 # =============================================================================
--keep class cafe.adriel.voyager.** { *; }
+-keep class androidx.navigation.** { *; }
+# Keep serializable route classes for type-safe navigation
+-keep class com.habitao.app.*Route { *; }
+-keep class com.habitao.app.*Route$Companion { *; }
 
 # =============================================================================
 # Compose

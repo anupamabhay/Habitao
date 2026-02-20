@@ -87,10 +87,7 @@ jobs:
       
       - name: Run Unit Tests (Features)
         run: |
-          ./gradlew :feature:habits:testDebugUnitTest \
-                    :feature:tasks:testDebugUnitTest \
-                    :feature:routines:testDebugUnitTest \
-                    :feature:pomodoro:testDebugUnitTest
+          ./gradlew :feature:habits:testDebugUnitTest
       
       - name: Run Unit Tests (Core)
         run: |

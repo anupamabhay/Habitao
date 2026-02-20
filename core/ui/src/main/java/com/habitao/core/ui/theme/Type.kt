@@ -7,11 +7,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 // Material Design 3 Typography
-// Using default font family (can be customized later)
+// Refined scale for productivity app hierarchy
+// System font (Roboto) for cross-platform consistency
 
 val Typography =
     Typography(
-        // Display Large - Hero headlines
+        // Display - rarely used, kept as M3 defaults
         displayLarge =
             TextStyle(
                 fontFamily = FontFamily.Default,
@@ -20,7 +21,6 @@ val Typography =
                 lineHeight = 64.sp,
                 letterSpacing = (-0.25).sp,
             ),
-        // Display Medium
         displayMedium =
             TextStyle(
                 fontFamily = FontFamily.Default,
@@ -29,7 +29,6 @@ val Typography =
                 lineHeight = 52.sp,
                 letterSpacing = 0.sp,
             ),
-        // Display Small
         displaySmall =
             TextStyle(
                 fontFamily = FontFamily.Default,
@@ -38,34 +37,34 @@ val Typography =
                 lineHeight = 44.sp,
                 letterSpacing = 0.sp,
             ),
-        // Headline Large - Main headlines
+        // Headline Large - home greeting
         headlineLarge =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Normal,
-                fontSize = 32.sp,
-                lineHeight = 40.sp,
-                letterSpacing = 0.sp,
-            ),
-        // Headline Medium
-        headlineMedium =
-            TextStyle(
-                fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Normal,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 28.sp,
                 lineHeight = 36.sp,
                 letterSpacing = 0.sp,
             ),
-        // Headline Small
-        headlineSmall =
+        // Headline Medium - section headers
+        headlineMedium =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Normal,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 24.sp,
                 lineHeight = 32.sp,
                 letterSpacing = 0.sp,
             ),
-        // Title Large - Section titles
+        // Headline Small - sub-headers, empty state
+        headlineSmall =
+            TextStyle(
+                fontFamily = FontFamily.Default,
+                fontWeight = FontWeight.Medium,
+                fontSize = 20.sp,
+                lineHeight = 28.sp,
+                letterSpacing = 0.sp,
+            ),
+        // Title Large - top app bar title
         titleLarge =
             TextStyle(
                 fontFamily = FontFamily.Default,
@@ -74,16 +73,16 @@ val Typography =
                 lineHeight = 28.sp,
                 letterSpacing = 0.sp,
             ),
-        // Title Medium
+        // Title Medium - card titles
         titleMedium =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 lineHeight = 24.sp,
-                letterSpacing = 0.15.sp,
+                letterSpacing = 0.1.sp,
             ),
-        // Title Small
+        // Title Small - form section titles
         titleSmall =
             TextStyle(
                 fontFamily = FontFamily.Default,
@@ -92,16 +91,16 @@ val Typography =
                 lineHeight = 20.sp,
                 letterSpacing = 0.1.sp,
             ),
-        // Body Large - Primary body text
+        // Body Large - date, descriptions
         bodyLarge =
             TextStyle(
                 fontFamily = FontFamily.Default,
                 fontWeight = FontWeight.Normal,
                 fontSize = 16.sp,
                 lineHeight = 24.sp,
-                letterSpacing = 0.5.sp,
+                letterSpacing = 0.15.sp,
             ),
-        // Body Medium
+        // Body Medium - card descriptions, checklist items
         bodyMedium =
             TextStyle(
                 fontFamily = FontFamily.Default,
@@ -110,7 +109,7 @@ val Typography =
                 lineHeight = 20.sp,
                 letterSpacing = 0.25.sp,
             ),
-        // Body Small
+        // Body Small - secondary info
         bodySmall =
             TextStyle(
                 fontFamily = FontFamily.Default,
@@ -119,16 +118,16 @@ val Typography =
                 lineHeight = 16.sp,
                 letterSpacing = 0.4.sp,
             ),
-        // Label Large - Buttons, tabs
+        // Label Large - buttons, progress counters
         labelLarge =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 letterSpacing = 0.1.sp,
             ),
-        // Label Medium
+        // Label Medium - status text, counters
         labelMedium =
             TextStyle(
                 fontFamily = FontFamily.Default,
@@ -137,11 +136,11 @@ val Typography =
                 lineHeight = 16.sp,
                 letterSpacing = 0.5.sp,
             ),
-        // Label Small - Captions, overlines
+        // Label Small - badges, captions
         labelSmall =
             TextStyle(
                 fontFamily = FontFamily.Default,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 11.sp,
                 lineHeight = 16.sp,
                 letterSpacing = 0.5.sp,

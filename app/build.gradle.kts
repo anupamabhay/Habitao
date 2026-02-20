@@ -123,7 +123,7 @@ dependencies {
     debugImplementation(libs.bundles.compose.debug)
 
     // Navigation
-    implementation(libs.bundles.voyager)
+    implementation(libs.navigation.compose)
 
     // Dependency Injection
     implementation(libs.hilt.android)

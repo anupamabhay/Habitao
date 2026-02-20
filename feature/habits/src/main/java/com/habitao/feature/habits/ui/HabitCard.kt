@@ -58,7 +58,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.habitao.core.ui.theme.AppShapes
+import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.ChecklistItem
+import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.Habit
 import com.habitao.domain.model.HabitLog
 import com.habitao.domain.model.HabitType
@@ -81,6 +84,7 @@ fun HabitCard(
     habit: Habit,
     log: HabitLog?,
     streakCount: Int,
+    weeklyProgress: Int? = null,
     onComplete: () -> Unit,
     onUncomplete: () -> Unit,
     onIncrement: () -> Unit,
@@ -90,9 +94,22 @@ fun HabitCard(
     modifier: Modifier = Modifier,
 ) {
     val isCompleted = log?.isCompleted == true
-    val progress = log?.progress ?: 0f
+    // For period-based habits (TIMES_PER_WEEK, EVERY_X_DAYS), use aggregated progress
+    val isPeriodBased =
+        habit.frequencyType == FrequencyType.TIMES_PER_WEEK ||
+            habit.frequencyType == FrequencyType.EVERY_X_DAYS
+    val displayValue = if (isPeriodBased && weeklyProgress != null) weeklyProgress else (log?.currentValue ?: 0)
+    val targetValue = if (isPeriodBased) habit.frequencyValue else (log?.targetValue ?: habit.targetValue)
+    val progress =
+        if (targetValue > 0) {
+            (displayValue.toFloat() / targetValue).coerceIn(
+                0f,
+                1f,
+            )
+        } else {
+            (log?.progress ?: 0f)
+        }
     val currentValue = log?.currentValue ?: 0
-    val targetValue = log?.targetValue ?: habit.targetValue
 
     val dismissState =
         rememberSwipeToDismissBoxState(
@@ -128,6 +145,7 @@ fun HabitCard(
             currentValue = currentValue,
             targetValue = targetValue,
             streakCount = streakCount,
+            weeklyProgress = weeklyProgress,
             onComplete = onComplete,
             onUncomplete = onUncomplete,
             onIncrement = onIncrement,
@@ -164,9 +182,9 @@ private fun SwipeBackground(
         modifier =
             modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(16.dp))
+                .clip(MaterialTheme.shapes.large)
                 .background(backgroundColor)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = Dimensions.sectionSpacing),
         contentAlignment =
             when (dismissValue) {
                 SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
@@ -201,6 +219,7 @@ private fun HabitCardContent(
     currentValue: Int,
     targetValue: Int,
     streakCount: Int,
+    weeklyProgress: Int?,
     onComplete: () -> Unit,
     onUncomplete: () -> Unit,
     onIncrement: () -> Unit,
@@ -226,21 +245,26 @@ private fun HabitCardContent(
             modifier
                 .fillMaxWidth()
                 .clickable(onClick = onTap),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         colors =
             CardDefaults.elevatedCardColors(
                 containerColor = cardContainerColor,
             ),
         elevation =
             CardDefaults.elevatedCardElevation(
-                defaultElevation = if (isCompleted) 1.dp else 2.dp,
+                defaultElevation =
+                    if (isCompleted) {
+                        Dimensions.cardElevationCompleted
+                    } else {
+                        Dimensions.cardElevation
+                    },
             ),
     ) {
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(Dimensions.cardPadding),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -272,18 +296,16 @@ private fun HabitCardContent(
                             text = description,
                             style = MaterialTheme.typography.bodySmall,
                             color =
-                                if (isCompleted) {
-                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                },
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                    alpha = if (isCompleted) 0.5f else 1f,
+                                ),
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(Dimensions.elementSpacingLarge))
 
                 HabitActionButton(
                     habit = habit,
@@ -297,7 +319,7 @@ private fun HabitCardContent(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(Dimensions.elementSpacingLarge))
 
             when (habit.habitType) {
                 HabitType.SIMPLE -> {
@@ -308,11 +330,34 @@ private fun HabitCardContent(
                     )
                 }
                 HabitType.MEASURABLE -> {
+                    val isPeriodBased =
+                        habit.frequencyType == FrequencyType.TIMES_PER_WEEK ||
+                            habit.frequencyType == FrequencyType.EVERY_X_DAYS
+                    val displayCurrentValue =
+                        if (isPeriodBased && weeklyProgress != null) {
+                            weeklyProgress
+                        } else {
+                            currentValue
+                        }
+                    val displayTargetValue = if (isPeriodBased) habit.frequencyValue else targetValue
+                    val displayUnit =
+                        when {
+                            habit.frequencyType == FrequencyType.TIMES_PER_WEEK -> "this week"
+                            habit.frequencyType == FrequencyType.EVERY_X_DAYS -> "this cycle"
+                            else -> habit.unit ?: "times"
+                        }
+                    val displayProgress =
+                        if (displayTargetValue > 0) {
+                            (displayCurrentValue.toFloat() / displayTargetValue).coerceIn(0f, 1f)
+                        } else {
+                            progress
+                        }
+
                     MeasurableHabitProgress(
-                        currentValue = currentValue,
-                        targetValue = targetValue,
-                        unit = habit.unit ?: "times",
-                        progress = progress,
+                        currentValue = displayCurrentValue,
+                        targetValue = displayTargetValue,
+                        unit = displayUnit,
+                        progress = displayProgress,
                         streakCount = streakCount,
                     )
                 }
@@ -485,14 +530,14 @@ private fun MeasurableHabitProgress(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
-            color = MaterialTheme.colorScheme.primary,
+                    .height(Dimensions.progressBarHeight)
+                    .clip(AppShapes.progressBar),
+            color = MaterialTheme.colorScheme.secondary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
             strokeCap = StrokeCap.Round,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -538,14 +583,14 @@ private fun ChecklistHabitProgress(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
+                    .height(Dimensions.progressBarHeight)
+                    .clip(AppShapes.progressBar),
             color = MaterialTheme.colorScheme.tertiary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
             strokeCap = StrokeCap.Round,
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -557,7 +602,10 @@ private fun ChecklistHabitProgress(
                     Modifier
                         .clip(RoundedCornerShape(4.dp))
                         .clickable { onToggleExpand() }
-                        .padding(vertical = 4.dp, horizontal = 2.dp),
+                        .padding(
+                            vertical = Dimensions.elementSpacingSmall,
+                            horizontal = Dimensions.elementSpacingSmall,
+                        ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
@@ -591,8 +639,8 @@ private fun ChecklistHabitProgress(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                        .padding(top = Dimensions.elementSpacing),
+                verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
             ) {
                 checklist.forEach { item ->
                     val isItemCompleted = completedItemIds.contains(item.id)
@@ -642,9 +690,9 @@ private fun ChecklistItemRow(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
                 .clickable(onClick = onToggle)
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                .padding(horizontal = Dimensions.elementSpacing, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
     ) {
         Icon(
             imageVector =
@@ -680,9 +728,12 @@ private fun StreakBadge(
                     color = MaterialTheme.colorScheme.tertiaryContainer,
                     shape = CircleShape,
                 )
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(
+                    horizontal = Dimensions.elementSpacing,
+                    vertical = Dimensions.elementSpacingSmall,
+                ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
     ) {
         Icon(
             imageVector = Icons.Outlined.LocalFireDepartment,
