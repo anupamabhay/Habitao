@@ -211,7 +211,11 @@ private fun HabitsContent(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(horizontal = Dimensions.screenPaddingHorizontal),
+                            .padding(
+                                start = Dimensions.screenPaddingHorizontal,
+                                top = Dimensions.elementSpacing,
+                                end = Dimensions.screenPaddingHorizontal,
+                            ),
                 ) {
                     HabitsListHeader(
                         selectedDate = state.selectedDate,
@@ -219,11 +223,11 @@ private fun HabitsContent(
                         totalHabits = 0,
                         completedHabits = 0,
                     )
-                    Box(modifier = Modifier.weight(1f)) {
-                        EmptyState(
-                            onAddHabit = onAddHabit,
-                            modifier = Modifier.align(Alignment.Center),
-                        )
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        EmptyState(onAddHabit = onAddHabit)
                     }
                 }
             }
@@ -271,6 +275,7 @@ private fun HabitsContent(
                             habit = habit,
                             log = state.logs[habit.id],
                             streakCount = state.streaks[habit.id] ?: 0,
+                            weeklyProgress = state.weeklyProgress[habit.id],
                             onComplete = { onCompleteHabit(habit.id) },
                             onUncomplete = { onDecrementHabit(habit.id) },
                             onIncrement = { onIncrementHabit(habit.id) },
@@ -484,7 +489,7 @@ private fun EmptyState(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.padding(Dimensions.sectionSpacing),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
