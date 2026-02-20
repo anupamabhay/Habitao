@@ -76,44 +76,46 @@ class PomodoroViewModel
                 }
             }
 
-        val state: StateFlow<PomodoroState> =
+        private val timerCombinedFlow =
             combine(
                 timerStateHolder.timerState,
                 timerStateHolder.remainingSeconds,
                 timerStateHolder.totalSeconds,
                 timerStateHolder.currentSessionType,
                 timerStateHolder.completedWorkSessions,
+            ) { timerState, remainingSeconds, totalSeconds, currentSessionType, completedWorkSessions ->
+                TimerSnapshot(
+                    timerState = timerState,
+                    remainingSeconds = remainingSeconds,
+                    totalSeconds = totalSeconds,
+                    currentSessionType = currentSessionType,
+                    completedWorkSessions = completedWorkSessions,
+                )
+            }
+
+        val state: StateFlow<PomodoroState> =
+            combine(
+                timerCombinedFlow,
                 todaysFocusMinutesFlow,
                 todaysSessionsFlow,
-            ) {
-                    timerState,
-                    remainingSeconds,
-                    totalSeconds,
-                    currentSessionType,
-                    completedWorkSessions,
-                    todaysFocusMinutes,
-                    todaysSessions,
-                ->
+            ) { timer, todaysFocusMinutes, todaysSessions ->
                 val defaultTotalSeconds =
-                    when (currentSessionType) {
+                    when (timer.currentSessionType) {
                         PomodoroType.WORK -> TimerService.DEFAULT_WORK_SECONDS
                         PomodoroType.SHORT_BREAK -> TimerService.DEFAULT_SHORT_BREAK_SECONDS
                         PomodoroType.LONG_BREAK -> TimerService.DEFAULT_LONG_BREAK_SECONDS
                     }
-                val safeTotalSeconds = if (totalSeconds > 0L) totalSeconds else defaultTotalSeconds
+                val safeTotalSeconds =
+                    if (timer.totalSeconds > 0L) timer.totalSeconds else defaultTotalSeconds
                 val safeRemainingSeconds =
-                    if (remainingSeconds > 0L) {
-                        remainingSeconds
-                    } else {
-                        safeTotalSeconds
-                    }
+                    if (timer.remainingSeconds > 0L) timer.remainingSeconds else safeTotalSeconds
 
                 PomodoroState(
-                    timerState = timerState,
+                    timerState = timer.timerState,
                     remainingSeconds = safeRemainingSeconds,
                     totalSeconds = safeTotalSeconds,
-                    currentSessionType = currentSessionType,
-                    completedWorkSessions = completedWorkSessions,
+                    currentSessionType = timer.currentSessionType,
+                    completedWorkSessions = timer.completedWorkSessions,
                     sessionsBeforeLongBreak = TimerService.SESSIONS_BEFORE_LONG_BREAK,
                     todaysFocusMinutes = todaysFocusMinutes,
                     todaysSessions = todaysSessions,
@@ -123,6 +125,14 @@ class PomodoroViewModel
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = PomodoroState(),
             )
+
+        private data class TimerSnapshot(
+            val timerState: TimerState,
+            val remainingSeconds: Long,
+            val totalSeconds: Long,
+            val currentSessionType: PomodoroType,
+            val completedWorkSessions: Int,
+        )
 
         fun processIntent(intent: PomodoroIntent) {
             when (intent) {
