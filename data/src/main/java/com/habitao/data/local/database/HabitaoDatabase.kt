@@ -6,8 +6,10 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.habitao.data.local.dao.HabitDao
 import com.habitao.data.local.dao.HabitLogDao
+import com.habitao.data.local.dao.PomodoroSessionDao
 import com.habitao.data.local.entity.HabitEntity
 import com.habitao.data.local.entity.HabitLogEntity
+import com.habitao.data.local.entity.PomodoroSessionEntity
 
 /**
  * Room Database for Habitao
@@ -17,16 +19,19 @@ import com.habitao.data.local.entity.HabitLogEntity
     entities = [
         HabitEntity::class,
         HabitLogEntity::class,
+        PomodoroSessionEntity::class,
         // TODO: Add RoutineEntity, RoutineStepEntity, RoutineLogEntity
-        // TODO: Add TaskEntity, PomodoroSessionEntity
+        // TODO: Add TaskEntity
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class HabitaoDatabase : RoomDatabase() {
     abstract fun habitDao(): HabitDao
 
     abstract fun habitLogDao(): HabitLogDao
+
+    abstract fun pomodoroSessionDao(): PomodoroSessionDao
 
     companion object {
         const val DATABASE_NAME = "habitao.db"
