@@ -94,8 +94,8 @@ class HabitTest {
         }
 
         @Test
-        fun `returns true on interval days and false off interval for every x days`() {
-            // Given
+        fun `returns true for every x days regardless of interval position`() {
+            // Given: EVERY_X_DAYS habits are always shown (user tracks progress manually)
             val habit =
                 createBaseHabit().copy(
                     frequencyType = FrequencyType.EVERY_X_DAYS,
@@ -106,9 +106,9 @@ class HabitTest {
             val onInterval = habit.isScheduledFor(startDate.plusDays(2))
             val offInterval = habit.isScheduledFor(startDate.plusDays(1))
 
-            // Then
+            // Then: Both should return true since EVERY_X_DAYS always shows
             assertTrue(onInterval)
-            assertFalse(offInterval)
+            assertTrue(offInterval)
         }
     }
 

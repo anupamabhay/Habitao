@@ -2,6 +2,7 @@ package com.habitao.feature.habits.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.Habit
 import com.habitao.domain.model.HabitLog
 import com.habitao.domain.repository.HabitRepository
@@ -19,14 +20,28 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 /**
+ * Available sorting options for the habits list.
+ */
+enum class SortOption {
+    MANUAL,
+    ALPHABETICAL,
+    NEWEST_FIRST,
+    OLDEST_FIRST,
+    BY_COMPLETION,
+}
+
+/**
  * State for Habits Screen (MVI Pattern)
  */
 data class HabitsState(
     val habits: List<Habit> = emptyList(),
     val logs: Map<String, HabitLog> = emptyMap(), // habitId -> log for selected date
+    val streaks: Map<String, Int> = emptyMap(), // habitId -> current streak
+    val weeklyProgress: Map<String, Int> = emptyMap(), // habitId -> weekly progress for period-based habits
     val isLoading: Boolean = true,
     val error: String? = null,
     val selectedDate: LocalDate = LocalDate.now(),
+    val sortOption: SortOption = SortOption.MANUAL,
 )
 
 /**
@@ -46,6 +61,8 @@ sealed class HabitsIntent {
     data class ArchiveHabit(val habitId: String) : HabitsIntent()
 
     data class ToggleChecklistItem(val habitId: String, val itemId: String) : HabitsIntent()
+
+    data class SetSortOption(val sortOption: SortOption) : HabitsIntent()
 }
 
 @HiltViewModel
@@ -56,6 +73,10 @@ class HabitsViewModel
     ) : ViewModel() {
         private val selectedDateFlow = MutableStateFlow(LocalDate.now())
         private val errorFlow = MutableStateFlow<String?>(null)
+        private val sortOptionFlow = MutableStateFlow(SortOption.MANUAL)
+        private val streaksFlow = MutableStateFlow<Map<String, Int>>(emptyMap())
+        private val weeklyProgressFlow = MutableStateFlow<Map<String, Int>>(emptyMap())
+        private val streakRefreshTrigger = MutableStateFlow(0L)
 
         /**
          * Observe habits reactively - auto-updates when database changes.
@@ -79,19 +100,64 @@ class HabitsViewModel
                         .catch { emit(emptyMap()) }
                 },
                 errorFlow,
-            ) { date, habits, logs, error ->
+                sortOptionFlow,
+                streaksFlow,
+                weeklyProgressFlow,
+            ) { values ->
+                val date = values[0] as LocalDate
+
+                @Suppress("UNCHECKED_CAST")
+                val habits = values[1] as List<Habit>
+
+                @Suppress("UNCHECKED_CAST")
+                val logs = values[2] as Map<String, HabitLog>
+
+                val error = values[3] as String?
+                val sortOption = values[4] as SortOption
+
+                @Suppress("UNCHECKED_CAST")
+                val streaks = values[5] as Map<String, Int>
+
+                @Suppress("UNCHECKED_CAST")
+                val weeklyProgress = values[6] as Map<String, Int>
+
+                // Filter out TIMES_PER_WEEK habits that have met their weekly target
+                // (unless they were completed today, so user can see their progress)
+                val filteredHabits =
+                    habits.filter { habit ->
+                        if (habit.frequencyType == FrequencyType.TIMES_PER_WEEK) {
+                            val progress = weeklyProgress[habit.id] ?: 0
+                            val target = habit.frequencyValue
+                            val isCompletedToday = logs[habit.id]?.isCompleted == true
+                            // Show if: target not reached OR completed today
+                            progress < target || isCompletedToday
+                        } else {
+                            true
+                        }
+                    }
+
+                val sortedHabits = applySorting(filteredHabits, logs, sortOption)
+
                 HabitsState(
-                    habits = habits,
+                    habits = sortedHabits,
                     logs = logs,
+                    streaks = streaks,
+                    weeklyProgress = weeklyProgress,
                     isLoading = false,
                     error = error,
                     selectedDate = date,
+                    sortOption = sortOption,
                 )
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = HabitsState(),
             )
+
+        init {
+            loadStreaks()
+            loadWeeklyProgress()
+        }
 
         fun processIntent(intent: HabitsIntent) {
             when (intent) {
@@ -102,6 +168,80 @@ class HabitsViewModel
                 is HabitsIntent.DeleteHabit -> deleteHabit(intent.habitId)
                 is HabitsIntent.ArchiveHabit -> archiveHabit(intent.habitId)
                 is HabitsIntent.ToggleChecklistItem -> toggleChecklistItem(intent.habitId, intent.itemId)
+                is HabitsIntent.SetSortOption -> setSortOption(intent.sortOption)
+            }
+        }
+
+        private fun setSortOption(option: SortOption) {
+            sortOptionFlow.value = option
+        }
+
+        private fun applySorting(
+            habits: List<Habit>,
+            logs: Map<String, HabitLog>,
+            sortOption: SortOption,
+        ): List<Habit> {
+            return when (sortOption) {
+                SortOption.MANUAL -> habits // Already sorted by sortOrder ASC, createdAt DESC from DAO
+                SortOption.ALPHABETICAL -> habits.sortedBy { it.title.lowercase() }
+                SortOption.NEWEST_FIRST -> habits.sortedByDescending { it.createdAt }
+                SortOption.OLDEST_FIRST -> habits.sortedBy { it.createdAt }
+                SortOption.BY_COMPLETION -> habits.sortedBy { logs[it.id]?.isCompleted ?: false }
+            }
+        }
+
+        private fun loadStreaks() {
+            viewModelScope.launch {
+                // Observe habits from DB directly to avoid circular dependency with state
+                combine(selectedDateFlow, streakRefreshTrigger) { date, _ -> date }
+                    .flatMapLatest { date ->
+                        habitRepository.observeHabitsForDate(date)
+                            .map { result -> result.getOrElse { emptyList() } }
+                            .catch { emit(emptyList()) }
+                    }.collect { habits ->
+                        if (habits.isNotEmpty()) {
+                            val newStreaks = mutableMapOf<String, Int>()
+                            for (habit in habits) {
+                                habitRepository.calculateStreak(habit.id).onSuccess { info ->
+                                    if (info.currentStreak > 0) {
+                                        newStreaks[habit.id] = info.currentStreak
+                                    }
+                                }
+                            }
+                            streaksFlow.value = newStreaks
+                        } else {
+                            streaksFlow.value = emptyMap()
+                        }
+                    }
+            }
+        }
+
+        private fun loadWeeklyProgress() {
+            viewModelScope.launch {
+                combine(selectedDateFlow, streakRefreshTrigger) { date, _ -> date }
+                    .flatMapLatest { date ->
+                        habitRepository.observeHabitsForDate(date)
+                            .map { result -> result.getOrElse { emptyList() } to date }
+                            .catch { emit(emptyList<Habit>() to date) }
+                    }.collect { (habits, date) ->
+                        if (habits.isNotEmpty()) {
+                            val newWeeklyProgress = mutableMapOf<String, Int>()
+                            for (habit in habits) {
+                                // Fetch progress for period-based habits (weekly or cycle-based)
+                                if (habit.frequencyType == FrequencyType.TIMES_PER_WEEK ||
+                                    habit.frequencyType == FrequencyType.EVERY_X_DAYS
+                                ) {
+                                    habitRepository.getWeeklyProgressForHabit(habit.id, date)
+                                        .onSuccess { progress ->
+                                            newWeeklyProgress[habit.id] = progress
+                                        }
+                                }
+                            }
+                            weeklyProgressFlow.value = newWeeklyProgress
+                        } else {
+                            weeklyProgressFlow.value = emptyMap()
+                        }
+                    }
             }
         }
 
@@ -119,6 +259,7 @@ class HabitsViewModel
                     .onFailure { error ->
                         errorFlow.value = error.message ?: "Failed to update habit"
                     }
+                streakRefreshTrigger.value = System.currentTimeMillis()
                 // No need to manually refresh - Flow observation handles it
             }
         }
@@ -132,7 +273,11 @@ class HabitsViewModel
                 val currentValue = currentLog?.currentValue ?: 0
                 val newValue = currentValue + 1
 
-                markHabitComplete(habitId, newValue)
+                habitRepository.createOrUpdateLog(habitId, date, newValue)
+                    .onFailure { error ->
+                        errorFlow.value = error.message ?: "Failed to update habit"
+                    }
+                streakRefreshTrigger.value = System.currentTimeMillis()
             }
         }
 
@@ -145,7 +290,11 @@ class HabitsViewModel
                 val currentValue = currentLog?.currentValue ?: 0
                 val newValue = maxOf(0, currentValue - 1)
 
-                markHabitComplete(habitId, newValue)
+                habitRepository.createOrUpdateLog(habitId, date, newValue)
+                    .onFailure { error ->
+                        errorFlow.value = error.message ?: "Failed to update habit"
+                    }
+                streakRefreshTrigger.value = System.currentTimeMillis()
             }
         }
 
@@ -179,6 +328,7 @@ class HabitsViewModel
                     .onFailure { error ->
                         errorFlow.value = error.message ?: "Failed to update checklist item"
                     }
+                streakRefreshTrigger.value = System.currentTimeMillis()
             }
         }
 

@@ -76,7 +76,7 @@ dependencies {
     debugImplementation(libs.bundles.compose.debug)
 
     // Navigation
-    implementation(libs.bundles.voyager)
+    implementation(libs.navigation.compose)
 
     // Hilt
     implementation(libs.hilt.android)

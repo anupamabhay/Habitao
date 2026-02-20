@@ -9,6 +9,7 @@ import com.habitao.domain.model.StreakInfo
 import com.habitao.domain.repository.HabitRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -113,7 +114,7 @@ class HabitRepositoryImpl
                 try {
                     val dateMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
                     val entities = habitDao.getHabitsForDate(dateMillis)
-                    Result.success(entities.map { it.toDomainModel() })
+                    Result.success(entities.map { it.toDomainModel() }.filter { it.isScheduledFor(date) })
                 } catch (e: Exception) {
                     Result.failure(e)
                 }
@@ -124,8 +125,9 @@ class HabitRepositoryImpl
                 date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli(),
             )
                 .map { entities ->
-                    Result.success(entities.map { it.toDomainModel() })
+                    Result.success(entities.map { it.toDomainModel() }.filter { it.isScheduledFor(date) })
                 }
+                .catch { e -> emit(Result.failure(e)) }
                 .flowOn(dispatcher)
         }
 
@@ -225,6 +227,36 @@ class HabitRepositoryImpl
                 }
                 .flowOn(dispatcher)
         }
+
+        override suspend fun getWeeklyProgressForHabit(
+            habitId: String,
+            weekContainingDate: LocalDate,
+        ): Result<Int> =
+            withContext(dispatcher) {
+                try {
+                    // Get Monday of the week containing the date (ISO 8601 week)
+                    val weekStart = weekContainingDate.with(java.time.DayOfWeek.MONDAY)
+                    val weekEnd = weekStart.plusDays(6)
+
+                    val startMillis =
+                        weekStart
+                            .atStartOfDay(java.time.ZoneId.systemDefault())
+                            .toInstant()
+                            .toEpochMilli()
+                    val endMillis =
+                        weekEnd
+                            .atStartOfDay(java.time.ZoneId.systemDefault())
+                            .toInstant()
+                            .toEpochMilli()
+
+                    val logs = habitLogDao.getLogsForHabitBetweenDates(habitId, startMillis, endMillis)
+
+                    val totalProgress = logs.sumOf { it.currentValue }
+                    Result.success(totalProgress)
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
 
         // ============== STATISTICS ==============
 

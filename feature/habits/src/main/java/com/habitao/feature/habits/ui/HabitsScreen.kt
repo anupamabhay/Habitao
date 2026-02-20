@@ -9,25 +9,36 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,16 +51,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.habitao.core.ui.theme.AppShapes
+import com.habitao.core.ui.theme.Dimensions
 import com.habitao.feature.habits.viewmodel.HabitsIntent
 import com.habitao.feature.habits.viewmodel.HabitsState
 import com.habitao.feature.habits.viewmodel.HabitsViewModel
+import com.habitao.feature.habits.viewmodel.SortOption
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +78,7 @@ fun HabitsScreen(
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    var pendingDeleteHabitId by remember { mutableStateOf<String?>(null) }
+    var pendingDeleteIds by remember { mutableStateOf(emptySet<String>()) }
 
     LaunchedEffect(state.error) {
         state.error?.let { error ->
@@ -70,22 +87,62 @@ fun HabitsScreen(
         }
     }
 
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val greeting =
+        remember {
+            val hour = java.time.LocalTime.now().hour
+            when {
+                hour < 12 -> "Good morning"
+                hour < 17 -> "Good afternoon"
+                else -> "Good evening"
+            }
+        }
+
+    var showSortMenu by remember { mutableStateOf(false) }
+
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
-                title = { },
+            LargeTopAppBar(
+                title = { Text(greeting) },
+                actions = {
+                    Box {
+                        IconButton(onClick = { showSortMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Outlined.Sort,
+                                contentDescription = "Sort habits",
+                            )
+                        }
+                        SortDropdownMenu(
+                            expanded = showSortMenu,
+                            currentSort = state.sortOption,
+                            onSortSelected = { option ->
+                                viewModel.processIntent(HabitsIntent.SetSortOption(option))
+                                showSortMenu = false
+                            },
+                            onDismiss = { showSortMenu = false },
+                        )
+                    }
+                },
+                scrollBehavior = scrollBehavior,
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddHabit) {
-                Icon(Icons.Default.Add, contentDescription = "Add Habit")
+            ExtendedFloatingActionButton(
+                onClick = onAddHabit,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(Dimensions.elementSpacing))
+                Text("New Habit")
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
         HabitsContent(
             state = state,
-            pendingDeleteHabitId = pendingDeleteHabitId,
+            pendingDeleteIds = pendingDeleteIds,
             onCompleteHabit = { habitId ->
                 viewModel.processIntent(HabitsIntent.IncrementHabitProgress(habitId))
             },
@@ -96,7 +153,7 @@ fun HabitsScreen(
                 viewModel.processIntent(HabitsIntent.DecrementHabitProgress(habitId))
             },
             onDeleteHabit = { habitId ->
-                pendingDeleteHabitId = habitId
+                pendingDeleteIds = pendingDeleteIds + habitId
                 scope.launch {
                     val result =
                         snackbarHostState.showSnackbar(
@@ -106,13 +163,11 @@ fun HabitsScreen(
                         )
                     when (result) {
                         SnackbarResult.ActionPerformed -> {
-                            pendingDeleteHabitId = null
+                            pendingDeleteIds = pendingDeleteIds - habitId
                         }
                         SnackbarResult.Dismissed -> {
-                            pendingDeleteHabitId?.let { id ->
-                                viewModel.processIntent(HabitsIntent.DeleteHabit(id))
-                            }
-                            pendingDeleteHabitId = null
+                            viewModel.processIntent(HabitsIntent.DeleteHabit(habitId))
+                            pendingDeleteIds = pendingDeleteIds - habitId
                         }
                     }
                 }
@@ -121,6 +176,10 @@ fun HabitsScreen(
                 viewModel.processIntent(HabitsIntent.ToggleChecklistItem(habitId, itemId))
             },
             onEditHabit = onEditHabit,
+            onSelectDate = { date ->
+                viewModel.processIntent(HabitsIntent.SelectDate(date))
+            },
+            onAddHabit = onAddHabit,
             modifier = Modifier.padding(paddingValues),
         )
     }
@@ -129,13 +188,15 @@ fun HabitsScreen(
 @Composable
 private fun HabitsContent(
     state: HabitsState,
-    pendingDeleteHabitId: String? = null,
+    pendingDeleteIds: Set<String> = emptySet(),
     onCompleteHabit: (String) -> Unit,
     onIncrementHabit: (String) -> Unit,
     onDecrementHabit: (String) -> Unit,
     onDeleteHabit: (String) -> Unit,
     onToggleChecklistItem: (habitId: String, itemId: String) -> Unit,
     onEditHabit: (String) -> Unit,
+    onSelectDate: (LocalDate) -> Unit,
+    onAddHabit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -146,13 +207,40 @@ private fun HabitsContent(
                 )
             }
             state.habits.isEmpty() -> {
-                EmptyState(modifier = Modifier.align(Alignment.Center))
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(
+                                start = Dimensions.screenPaddingHorizontal,
+                                top = Dimensions.elementSpacing,
+                                end = Dimensions.screenPaddingHorizontal,
+                            ),
+                ) {
+                    HabitsListHeader(
+                        selectedDate = state.selectedDate,
+                        onSelectDate = onSelectDate,
+                        totalHabits = 0,
+                        completedHabits = 0,
+                    )
+                    Box(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        EmptyState(
+                            modifier = Modifier.offset(y = (-48).dp),
+                        )
+                    }
+                }
             }
             else -> {
                 val displayedHabits =
-                    remember(state.habits, pendingDeleteHabitId) {
-                        if (pendingDeleteHabitId != null) {
-                            state.habits.filter { it.id != pendingDeleteHabitId }
+                    remember(state.habits, pendingDeleteIds) {
+                        if (pendingDeleteIds.isNotEmpty()) {
+                            state.habits.filter { it.id !in pendingDeleteIds }
                         } else {
                             state.habits
                         }
@@ -165,12 +253,20 @@ private fun HabitsContent(
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding =
+                        PaddingValues(
+                            start = Dimensions.screenPaddingHorizontal,
+                            top = Dimensions.elementSpacing,
+                            end = Dimensions.screenPaddingHorizontal,
+                            bottom = Dimensions.fabClearance,
+                        ),
+                    verticalArrangement =
+                        Arrangement.spacedBy(Dimensions.cardSpacing),
                 ) {
                     item {
-                        HomeHeader(
-                            date = state.selectedDate,
+                        HabitsListHeader(
+                            selectedDate = state.selectedDate,
+                            onSelectDate = onSelectDate,
                             totalHabits = state.habits.size,
                             completedHabits = completedCount,
                         )
@@ -183,7 +279,8 @@ private fun HabitsContent(
                         HabitCard(
                             habit = habit,
                             log = state.logs[habit.id],
-                            streakCount = 0, // TODO: Calculate streak
+                            streakCount = state.streaks[habit.id] ?: 0,
+                            weeklyProgress = state.weeklyProgress[habit.id],
                             onComplete = { onCompleteHabit(habit.id) },
                             onUncomplete = { onDecrementHabit(habit.id) },
                             onIncrement = { onIncrementHabit(habit.id) },
@@ -195,9 +292,7 @@ private fun HabitsContent(
                         )
                     }
 
-                    item {
-                        Spacer(modifier = Modifier.height(80.dp))
-                    }
+                    // FAB clearance is handled by LazyColumn's contentPadding.bottom
                 }
             }
         }
@@ -205,63 +300,49 @@ private fun HabitsContent(
 }
 
 @Composable
-private fun HomeHeader(
-    date: LocalDate,
+private fun HabitsListHeader(
+    selectedDate: LocalDate,
+    onSelectDate: (LocalDate) -> Unit,
     totalHabits: Int,
     completedHabits: Int,
     modifier: Modifier = Modifier,
 ) {
-    val greeting =
-        remember {
-            val hour = java.time.LocalTime.now().hour
-            when {
-                hour < 12 -> "Good morning"
-                hour < 17 -> "Good afternoon"
-                else -> "Good evening"
-            }
-        }
-
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = greeting,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(vertical = Dimensions.screenPaddingVertical),
+    ) {
         Text(
             text =
-                date.format(
-                    java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d"),
+                selectedDate.format(
+                    DateTimeFormatter.ofPattern("EEEE, MMMM d"),
                 ),
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(bottom = Dimensions.elementSpacing),
+        )
+
+        DateSelector(
+            selectedDate = selectedDate,
+            onDateSelected = onSelectDate,
+            modifier = Modifier.padding(bottom = Dimensions.sectionSpacing),
         )
 
         if (totalHabits > 0) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Progress row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement =
+                    Arrangement.spacedBy(Dimensions.elementSpacingLarge),
             ) {
                 LinearProgressIndicator(
-                    progress = {
-                        if (totalHabits > 0) {
-                            completedHabits.toFloat() / totalHabits
-                        } else {
-                            0f
-                        }
-                    },
+                    progress = { completedHabits.toFloat() / totalHabits },
                     modifier =
                         Modifier
                             .weight(1f)
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp)),
+                            .height(Dimensions.progressBarHeightLarge)
+                            .clip(AppShapes.progressBar),
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
                     strokeCap = StrokeCap.Round,
@@ -271,7 +352,7 @@ private fun HomeHeader(
                     text = "$completedHabits of $totalHabits",
                     style = MaterialTheme.typography.labelLarge,
                     color =
-                        if (completedHabits == totalHabits && totalHabits > 0) {
+                        if (completedHabits == totalHabits) {
                             MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant
@@ -284,23 +365,148 @@ private fun HomeHeader(
 }
 
 @Composable
+private fun DateSelector(
+    selectedDate: LocalDate,
+    onDateSelected: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val today = remember { LocalDate.now() }
+    val dates =
+        remember(today) {
+            (-3..3).map { today.plusDays(it.toLong()) }
+        }
+
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement =
+            Arrangement.spacedBy(Dimensions.elementSpacing),
+    ) {
+        items(dates) { date ->
+            DateChip(
+                date = date,
+                isSelected = date == selectedDate,
+                onClick = { onDateSelected(date) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun DateChip(
+    date: LocalDate,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    val backgroundColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        }
+    val contentColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        }
+
+    Surface(
+        onClick = onClick,
+        shape = AppShapes.dateChip,
+        color = backgroundColor,
+        contentColor = contentColor,
+        modifier =
+            Modifier
+                .width(52.dp)
+                .height(68.dp),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(Dimensions.elementSpacingSmall),
+        ) {
+            Text(
+                text =
+                    date.dayOfWeek.getDisplayName(
+                        TextStyle.SHORT,
+                        Locale.getDefault(),
+                    ),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = date.dayOfMonth.toString(),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SortDropdownMenu(
+    expanded: Boolean,
+    currentSort: SortOption,
+    onSortSelected: (SortOption) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+    ) {
+        SortOption.entries.forEach { option ->
+            DropdownMenuItem(
+                text = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement =
+                            Arrangement.spacedBy(Dimensions.elementSpacing),
+                    ) {
+                        RadioButton(
+                            selected = currentSort == option,
+                            onClick = null,
+                        )
+                        Text(
+                            text = option.displayName(),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                },
+                onClick = { onSortSelected(option) },
+            )
+        }
+    }
+}
+
+private fun SortOption.displayName(): String =
+    when (this) {
+        SortOption.MANUAL -> "Manual"
+        SortOption.ALPHABETICAL -> "A - Z"
+        SortOption.NEWEST_FIRST -> "Newest first"
+        SortOption.OLDEST_FIRST -> "Oldest first"
+        SortOption.BY_COMPLETION -> "Incomplete first"
+    }
+
+@Composable
 private fun EmptyState(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.padding(32.dp),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
+        Icon(
+            imageVector = Icons.Outlined.Checklist,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+        )
+
+        Spacer(modifier = Modifier.height(Dimensions.sectionSpacing))
+
         Text(
             text = "No habits yet",
             style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Tap the + button to create your first habit",
-            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )

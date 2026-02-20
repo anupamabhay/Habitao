@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -72,9 +73,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -150,10 +155,39 @@ fun CreateHabitScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.surface,
+        bottomBar = {
+            Surface(
+                tonalElevation = 3.dp,
+                shadowElevation = 8.dp,
+            ) {
+                Button(
+                    onClick = { viewModel.processIntent(CreateHabitIntent.SaveHabit) },
+                    enabled = !state.isSaving,
+                    shape = MaterialTheme.shapes.large,
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                        ),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 12.dp)
+                            .height(56.dp),
+                ) {
+                    Text(
+                        text =
+                            when {
+                                state.isSaving -> "Saving..."
+                                state.isEditMode -> "Save Changes"
+                                else -> "Create Habit"
+                            },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+        },
     ) { paddingValues ->
-        // Always show form immediately - local DB reads are fast enough
-        // that showing a loading spinner causes a visual flicker.
-        // Form fields populate reactively as the state updates.
         CreateHabitForm(
             state = state,
             onIntent = viewModel::processIntent,
@@ -278,6 +312,11 @@ private fun CreateHabitForm(
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
             ) {
+                val checklistFocusRequester = remember { FocusRequester() }
+                val addChecklistItem = {
+                    onIntent(CreateHabitIntent.AddChecklistItem)
+                    checklistFocusRequester.requestFocus()
+                }
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -285,6 +324,9 @@ private fun CreateHabitForm(
                     state.checklistItems.forEachIndexed { index, item ->
                         ChecklistItemRow(
                             text = item,
+                            onTextChange = { newText ->
+                                onIntent(CreateHabitIntent.UpdateChecklistItemText(index, newText))
+                            },
                             onRemove = { onIntent(CreateHabitIntent.RemoveChecklistItem(index)) },
                         )
                     }
@@ -301,6 +343,8 @@ private fun CreateHabitForm(
                             label = { Text("Add item") },
                             placeholder = { Text("e.g., Brush teeth") },
                             singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { addChecklistItem() }),
                             isError = state.checklistError != null,
                             supportingText = state.checklistError?.let { { Text(it) } },
                             shape = inputShape,
@@ -309,11 +353,11 @@ private fun CreateHabitForm(
                                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                                     unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
                                 ),
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).focusRequester(checklistFocusRequester),
                         )
 
                         FilledTonalIconButton(
-                            onClick = { onIntent(CreateHabitIntent.AddChecklistItem) },
+                            onClick = { addChecklistItem() },
                             enabled = state.newChecklistItem.isNotBlank(),
                         ) {
                             Icon(
@@ -405,35 +449,7 @@ private fun CreateHabitForm(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Save Button
-        Button(
-            onClick = { onIntent(CreateHabitIntent.SaveHabit) },
-            enabled = !state.isSaving,
-            shape = RoundedCornerShape(16.dp),
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                ),
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-        ) {
-            Text(
-                text =
-                    when {
-                        state.isSaving -> "Saving..."
-                        state.isEditMode -> "Save Changes"
-                        else -> "Create Habit"
-                    },
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -445,9 +461,9 @@ private fun FormSection(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = title,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.primary,
         )
         content()
     }
@@ -687,6 +703,7 @@ private fun HabitType.icon(): ImageVector =
 @Composable
 private fun ChecklistItemRow(
     text: String,
+    onTextChange: (String) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -699,15 +716,26 @@ private fun ChecklistItemRow(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
+            OutlinedTextField(
+                value = text,
+                onValueChange = onTextChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyMedium,
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                    ),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .height(48.dp),
             )
 
             IconButton(
@@ -780,13 +808,13 @@ private fun ReminderSection(
 
                     Column {
                         Text(
-                            text = "Daily reminder",
+                            text = "Remind me",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            text = "Get notified to complete this habit",
+                            text = "Get notified based on schedule",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

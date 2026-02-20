@@ -68,7 +68,7 @@ Based on comprehensive research of industry leaders (TickTick, Todoist, Microsof
 | **DI** | Hilt | 2.51+ | Compile-time dependency injection |
 | **Database** | Room | 2.7+ (KMP) | Type-safe local persistence |
 | **Preferences** | Proto DataStore + Tink | 1.1+ | Encrypted settings storage |
-| **Navigation** | Voyager | 1.1+ | Type-safe Compose navigation |
+| **Navigation** | Jetpack Navigation Compose | 2.8+ | Type-safe Compose navigation |
 | **Async** | Coroutines + Flow | 1.8+ | Structured concurrency, reactive streams |
 
 ### Android System

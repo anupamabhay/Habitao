@@ -79,6 +79,8 @@ sealed class CreateHabitIntent {
 
     data class RemoveChecklistItem(val index: Int) : CreateHabitIntent()
 
+    data class UpdateChecklistItemText(val index: Int, val newText: String) : CreateHabitIntent()
+
     data class UpdateReminderEnabled(val enabled: Boolean) : CreateHabitIntent()
 
     data class UpdateReminderTime(val time: LocalTime) : CreateHabitIntent()
@@ -117,6 +119,8 @@ class CreateHabitViewModel
                 is CreateHabitIntent.UpdateNewChecklistItem -> updateNewChecklistItem(intent.text)
                 is CreateHabitIntent.AddChecklistItem -> addChecklistItem()
                 is CreateHabitIntent.RemoveChecklistItem -> removeChecklistItem(intent.index)
+                is CreateHabitIntent.UpdateChecklistItemText ->
+                    updateChecklistItemText(intent.index, intent.newText)
                 is CreateHabitIntent.UpdateReminderEnabled -> updateReminderEnabled(intent.enabled)
                 is CreateHabitIntent.UpdateReminderTime -> updateReminderTime(intent.time)
                 is CreateHabitIntent.SaveHabit -> saveHabit()
@@ -249,6 +253,19 @@ class CreateHabitViewModel
                     checklistItems = it.checklistItems.filterIndexed { i, _ -> i != index },
                     checklistError = null,
                 )
+            }
+        }
+
+        private fun updateChecklistItemText(
+            index: Int,
+            newText: String,
+        ) {
+            _state.update {
+                val updated = it.checklistItems.toMutableList()
+                if (index in updated.indices) {
+                    updated[index] = newText
+                }
+                it.copy(checklistItems = updated)
             }
         }
 
