@@ -88,36 +88,36 @@ class StatsViewModel
             loadHabitStats()
         }
 
-        private fun loadHabitStats() {
-            viewModelScope.launch {
-                isLoadingFlow.value = true
-                try {
-                    val habits = habitRepository.getAllHabits().getOrElse { emptyList() }
-                    val todayLogs =
-                        habitRepository.observeLogsForDate(today)
-                            .map { it.getOrElse { emptyMap() } }
-
-                    todayLogs.collect { logs ->
-                        val items =
-                            habits.map { habit ->
-                                val streak = loadStreakSafe(habit.id)
-                                HabitStatItem(
-                                    habitId = habit.id,
-                                    title = habit.title,
-                                    currentStreak = streak.currentStreak,
-                                    longestStreak = streak.longestStreak,
-                                    totalCompletions = streak.totalCompletions,
-                                    isCompletedToday = logs[habit.id]?.isCompleted == true,
-                                )
-                            }
-                        statsDataFlow.value = items
-                        isLoadingFlow.value = false
+    private fun loadHabitStats() {
+        viewModelScope.launch {
+            isLoadingFlow.value = true
+            combine(
+                habitRepository.observeAllHabits()
+                    .map { result -> result.getOrElse { emptyList() } }
+                    .catch { emit(emptyList()) },
+                habitRepository.observeLogsForDate(today)
+                    .map { result -> result.getOrElse { emptyMap() } }
+                    .catch { emit(emptyMap()) },
+            ) { habits, logs ->
+                habits to logs
+            }.collect { (habits, logs) ->
+                val items =
+                    habits.map { habit ->
+                        val streak = loadStreakSafe(habit.id)
+                        HabitStatItem(
+                            habitId = habit.id,
+                            title = habit.title,
+                            currentStreak = streak.currentStreak,
+                            longestStreak = streak.longestStreak,
+                            totalCompletions = streak.totalCompletions,
+                            isCompletedToday = logs[habit.id]?.isCompleted == true,
+                        )
                     }
-                } catch (e: Exception) {
-                    isLoadingFlow.value = false
-                }
+                statsDataFlow.value = items
+                isLoadingFlow.value = false
             }
         }
+    }
 
         private suspend fun loadStreakSafe(habitId: String): StreakInfo {
             return habitRepository.calculateStreak(habitId)

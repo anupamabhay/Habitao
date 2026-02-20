@@ -121,7 +121,21 @@ class HabitsViewModel
                 @Suppress("UNCHECKED_CAST")
                 val weeklyProgress = values[6] as Map<String, Int>
 
-                val sortedHabits = applySorting(habits, logs, sortOption)
+                // Filter out TIMES_PER_WEEK habits that have met their weekly target
+                // (unless they were completed today, so user can see their progress)
+                val filteredHabits = habits.filter { habit ->
+                    if (habit.frequencyType == FrequencyType.TIMES_PER_WEEK) {
+                        val progress = weeklyProgress[habit.id] ?: 0
+                        val target = habit.frequencyValue
+                        val isCompletedToday = logs[habit.id]?.isCompleted == true
+                        // Show if: target not reached OR completed today
+                        progress < target || isCompletedToday
+                    } else {
+                        true
+                    }
+                }
+
+                val sortedHabits = applySorting(filteredHabits, logs, sortOption)
 
                 HabitsState(
                     habits = sortedHabits,

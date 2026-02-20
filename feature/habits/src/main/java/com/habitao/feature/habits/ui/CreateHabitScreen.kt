@@ -808,13 +808,13 @@ private fun ReminderSection(
 
                     Column {
                         Text(
-                            text = "Daily reminder",
+                            text = "Remind me",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            text = "Get notified to complete this habit",
+                            text = "Get notified based on schedule",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
