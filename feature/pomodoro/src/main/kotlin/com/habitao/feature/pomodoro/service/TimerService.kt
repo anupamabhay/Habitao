@@ -212,7 +212,7 @@ class TimerService : LifecycleService() {
             NOTIFICATION_ID,
             notification,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                ServiceCompat.FOREGROUND_SERVICE_TYPE_SHORT_SERVICE
+                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SHORT_SERVICE
             } else {
                 0
             },
