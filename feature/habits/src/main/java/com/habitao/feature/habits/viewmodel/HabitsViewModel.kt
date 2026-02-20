@@ -2,6 +2,7 @@ package com.habitao.feature.habits.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.Habit
 import com.habitao.domain.model.HabitLog
 import com.habitao.domain.repository.HabitRepository
@@ -36,6 +37,7 @@ data class HabitsState(
     val habits: List<Habit> = emptyList(),
     val logs: Map<String, HabitLog> = emptyMap(), // habitId -> log for selected date
     val streaks: Map<String, Int> = emptyMap(), // habitId -> current streak
+    val weeklyProgress: Map<String, Int> = emptyMap(), // habitId -> weekly progress for period-based habits
     val isLoading: Boolean = true,
     val error: String? = null,
     val selectedDate: LocalDate = LocalDate.now(),
@@ -73,6 +75,7 @@ class HabitsViewModel
     private val errorFlow = MutableStateFlow<String?>(null)
     private val sortOptionFlow = MutableStateFlow(SortOption.MANUAL)
     private val streaksFlow = MutableStateFlow<Map<String, Int>>(emptyMap())
+    private val weeklyProgressFlow = MutableStateFlow<Map<String, Int>>(emptyMap())
     private val streakRefreshTrigger = MutableStateFlow(0L)
 
         /**
@@ -99,6 +102,7 @@ class HabitsViewModel
                 errorFlow,
                 sortOptionFlow,
                 streaksFlow,
+                weeklyProgressFlow,
             ) { values ->
                 val date = values[0] as LocalDate
 
@@ -114,12 +118,16 @@ class HabitsViewModel
                 @Suppress("UNCHECKED_CAST")
                 val streaks = values[5] as Map<String, Int>
 
+                @Suppress("UNCHECKED_CAST")
+                val weeklyProgress = values[6] as Map<String, Int>
+
                 val sortedHabits = applySorting(habits, logs, sortOption)
 
                 HabitsState(
                     habits = sortedHabits,
                     logs = logs,
                     streaks = streaks,
+                    weeklyProgress = weeklyProgress,
                     isLoading = false,
                     error = error,
                     selectedDate = date,
@@ -133,6 +141,7 @@ class HabitsViewModel
 
         init {
             loadStreaks()
+            loadWeeklyProgress()
         }
 
         fun processIntent(intent: HabitsIntent) {
@@ -189,6 +198,34 @@ class HabitsViewModel
                         streaksFlow.value = emptyMap()
                     }
                 }
+            }
+        }
+
+        private fun loadWeeklyProgress() {
+            viewModelScope.launch {
+                combine(selectedDateFlow, streakRefreshTrigger) { date, _ -> date }
+                    .flatMapLatest { date ->
+                        habitRepository.observeHabitsForDate(date)
+                            .map { result -> result.getOrElse { emptyList() } to date }
+                            .catch { emit(emptyList<Habit>() to date) }
+                    }.collect { (habits, date) ->
+                        if (habits.isNotEmpty()) {
+                            val newWeeklyProgress = mutableMapOf<String, Int>()
+                            for (habit in habits) {
+                                // Fetch progress for period-based habits (weekly or cycle-based)
+                                if (habit.frequencyType == FrequencyType.TIMES_PER_WEEK ||
+                                    habit.frequencyType == FrequencyType.EVERY_X_DAYS) {
+                                    habitRepository.getWeeklyProgressForHabit(habit.id, date)
+                                        .onSuccess { progress ->
+                                            newWeeklyProgress[habit.id] = progress
+                                        }
+                                }
+                            }
+                            weeklyProgressFlow.value = newWeeklyProgress
+                        } else {
+                            weeklyProgressFlow.value = emptyMap()
+                        }
+                    }
             }
         }
 

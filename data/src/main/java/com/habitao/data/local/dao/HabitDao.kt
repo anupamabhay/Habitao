@@ -115,6 +115,13 @@ interface HabitLogDao {
         endDate: Long,
     ): List<HabitLogEntity>
 
+    @Query("SELECT * FROM habit_logs WHERE habitId = :habitId AND date BETWEEN :startDate AND :endDate ORDER BY date DESC")
+    suspend fun getLogsForHabitBetweenDates(
+        habitId: String,
+        startDate: Long,
+        endDate: Long,
+    ): List<HabitLogEntity>
+
     // ============== SPECIFIC DATE ==============
 
     @Query("SELECT * FROM habit_logs WHERE habitId = :habitId AND date = :date")

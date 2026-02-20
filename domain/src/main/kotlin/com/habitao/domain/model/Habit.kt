@@ -52,11 +52,22 @@ data class Habit(
             FrequencyType.DAILY -> true
             FrequencyType.SPECIFIC_DAYS -> scheduledDays.contains(date.dayOfWeek.toDomainDay())
             FrequencyType.TIMES_PER_WEEK -> true // Flexible - user decides when
-            FrequencyType.EVERY_X_DAYS -> {
-                val daysSinceStart = java.time.temporal.ChronoUnit.DAYS.between(startDate, date)
-                daysSinceStart % frequencyValue == 0L
-            }
+            FrequencyType.EVERY_X_DAYS -> true // Always visible, cycle-based completion tracking
         }
+    }
+
+    /**
+     * Get days until the next due date for EVERY_X_DAYS habits.
+     * Returns 0 if due today, positive if due in future days.
+     * For other frequency types, returns 0.
+     */
+    fun getDaysUntilDue(date: LocalDate): Int {
+        if (frequencyType != FrequencyType.EVERY_X_DAYS) return 0
+        if (date < startDate) return java.time.temporal.ChronoUnit.DAYS.between(date, startDate).toInt()
+        
+        val daysSinceStart = java.time.temporal.ChronoUnit.DAYS.between(startDate, date)
+        val daysIntoCycle = (daysSinceStart % frequencyValue).toInt()
+        return if (daysIntoCycle == 0) 0 else frequencyValue - daysIntoCycle
     }
 
     /**

@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import com.habitao.core.ui.theme.AppShapes
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.ChecklistItem
+import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.Habit
 import com.habitao.domain.model.HabitLog
 import com.habitao.domain.model.HabitType
@@ -83,6 +84,7 @@ fun HabitCard(
     habit: Habit,
     log: HabitLog?,
     streakCount: Int,
+    weeklyProgress: Int? = null,
     onComplete: () -> Unit,
     onUncomplete: () -> Unit,
     onIncrement: () -> Unit,
@@ -92,9 +94,13 @@ fun HabitCard(
     modifier: Modifier = Modifier,
 ) {
     val isCompleted = log?.isCompleted == true
-    val progress = log?.progress ?: 0f
+    // For period-based habits (TIMES_PER_WEEK, EVERY_X_DAYS), use aggregated progress
+    val isPeriodBased = habit.frequencyType == FrequencyType.TIMES_PER_WEEK ||
+        habit.frequencyType == FrequencyType.EVERY_X_DAYS
+    val displayValue = if (isPeriodBased && weeklyProgress != null) weeklyProgress else (log?.currentValue ?: 0)
+    val targetValue = if (isPeriodBased) habit.frequencyValue else (log?.targetValue ?: habit.targetValue)
+    val progress = if (targetValue > 0) (displayValue.toFloat() / targetValue).coerceIn(0f, 1f) else (log?.progress ?: 0f)
     val currentValue = log?.currentValue ?: 0
-    val targetValue = log?.targetValue ?: habit.targetValue
 
     val dismissState =
         rememberSwipeToDismissBoxState(
@@ -130,6 +136,7 @@ fun HabitCard(
             currentValue = currentValue,
             targetValue = targetValue,
             streakCount = streakCount,
+            weeklyProgress = weeklyProgress,
             onComplete = onComplete,
             onUncomplete = onUncomplete,
             onIncrement = onIncrement,
@@ -203,6 +210,7 @@ private fun HabitCardContent(
     currentValue: Int,
     targetValue: Int,
     streakCount: Int,
+    weeklyProgress: Int?,
     onComplete: () -> Unit,
     onUncomplete: () -> Unit,
     onIncrement: () -> Unit,
@@ -313,11 +321,24 @@ private fun HabitCardContent(
                     )
                 }
                 HabitType.MEASURABLE -> {
+                    val isPeriodBased = habit.frequencyType == FrequencyType.TIMES_PER_WEEK ||
+                        habit.frequencyType == FrequencyType.EVERY_X_DAYS
+                    val displayCurrentValue = if (isPeriodBased && weeklyProgress != null) weeklyProgress else currentValue
+                    val displayTargetValue = if (isPeriodBased) habit.frequencyValue else targetValue
+                    val displayUnit = when {
+                        habit.frequencyType == FrequencyType.TIMES_PER_WEEK -> "this week"
+                        habit.frequencyType == FrequencyType.EVERY_X_DAYS -> "this cycle"
+                        else -> habit.unit ?: "times"
+                    }
+                    val displayProgress = if (displayTargetValue > 0) {
+                        (displayCurrentValue.toFloat() / displayTargetValue).coerceIn(0f, 1f)
+                    } else progress
+
                     MeasurableHabitProgress(
-                        currentValue = currentValue,
-                        targetValue = targetValue,
-                        unit = habit.unit ?: "times",
-                        progress = progress,
+                        currentValue = displayCurrentValue,
+                        targetValue = displayTargetValue,
+                        unit = displayUnit,
+                        progress = displayProgress,
                         streakCount = streakCount,
                     )
                 }
