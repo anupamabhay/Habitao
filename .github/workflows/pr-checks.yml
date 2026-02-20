@@ -151,6 +151,9 @@ jobs:
   auto-label:
     name: Auto Label PR
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     
     steps:
       - name: Checkout code

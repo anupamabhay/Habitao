@@ -71,12 +71,12 @@ class HabitsViewModel
     constructor(
         private val habitRepository: HabitRepository,
     ) : ViewModel() {
-    private val selectedDateFlow = MutableStateFlow(LocalDate.now())
-    private val errorFlow = MutableStateFlow<String?>(null)
-    private val sortOptionFlow = MutableStateFlow(SortOption.MANUAL)
-    private val streaksFlow = MutableStateFlow<Map<String, Int>>(emptyMap())
-    private val weeklyProgressFlow = MutableStateFlow<Map<String, Int>>(emptyMap())
-    private val streakRefreshTrigger = MutableStateFlow(0L)
+        private val selectedDateFlow = MutableStateFlow(LocalDate.now())
+        private val errorFlow = MutableStateFlow<String?>(null)
+        private val sortOptionFlow = MutableStateFlow(SortOption.MANUAL)
+        private val streaksFlow = MutableStateFlow<Map<String, Int>>(emptyMap())
+        private val weeklyProgressFlow = MutableStateFlow<Map<String, Int>>(emptyMap())
+        private val streakRefreshTrigger = MutableStateFlow(0L)
 
         /**
          * Observe habits reactively - auto-updates when database changes.
@@ -123,17 +123,18 @@ class HabitsViewModel
 
                 // Filter out TIMES_PER_WEEK habits that have met their weekly target
                 // (unless they were completed today, so user can see their progress)
-                val filteredHabits = habits.filter { habit ->
-                    if (habit.frequencyType == FrequencyType.TIMES_PER_WEEK) {
-                        val progress = weeklyProgress[habit.id] ?: 0
-                        val target = habit.frequencyValue
-                        val isCompletedToday = logs[habit.id]?.isCompleted == true
-                        // Show if: target not reached OR completed today
-                        progress < target || isCompletedToday
-                    } else {
-                        true
+                val filteredHabits =
+                    habits.filter { habit ->
+                        if (habit.frequencyType == FrequencyType.TIMES_PER_WEEK) {
+                            val progress = weeklyProgress[habit.id] ?: 0
+                            val target = habit.frequencyValue
+                            val isCompletedToday = logs[habit.id]?.isCompleted == true
+                            // Show if: target not reached OR completed today
+                            progress < target || isCompletedToday
+                        } else {
+                            true
+                        }
                     }
-                }
 
                 val sortedHabits = applySorting(filteredHabits, logs, sortOption)
 
@@ -185,33 +186,33 @@ class HabitsViewModel
                 SortOption.ALPHABETICAL -> habits.sortedBy { it.title.lowercase() }
                 SortOption.NEWEST_FIRST -> habits.sortedByDescending { it.createdAt }
                 SortOption.OLDEST_FIRST -> habits.sortedBy { it.createdAt }
-                SortOption.BY_COMPLETION -> habits.sortedBy { logs[it.id]?.isCompleted == true }
+                SortOption.BY_COMPLETION -> habits.sortedBy { logs[it.id]?.isCompleted ?: false }
             }
         }
 
         private fun loadStreaks() {
             viewModelScope.launch {
                 // Observe habits from DB directly to avoid circular dependency with state
-            combine(selectedDateFlow, streakRefreshTrigger) { date, _ -> date }
-                .flatMapLatest { date ->
-                    habitRepository.observeHabitsForDate(date)
-                        .map { result -> result.getOrElse { emptyList() } }
-                        .catch { emit(emptyList()) }
-                }.collect { habits ->
-                    if (habits.isNotEmpty()) {
-                        val newStreaks = mutableMapOf<String, Int>()
-                        for (habit in habits) {
-                            habitRepository.calculateStreak(habit.id).onSuccess { info ->
-                                if (info.currentStreak > 0) {
-                                    newStreaks[habit.id] = info.currentStreak
+                combine(selectedDateFlow, streakRefreshTrigger) { date, _ -> date }
+                    .flatMapLatest { date ->
+                        habitRepository.observeHabitsForDate(date)
+                            .map { result -> result.getOrElse { emptyList() } }
+                            .catch { emit(emptyList()) }
+                    }.collect { habits ->
+                        if (habits.isNotEmpty()) {
+                            val newStreaks = mutableMapOf<String, Int>()
+                            for (habit in habits) {
+                                habitRepository.calculateStreak(habit.id).onSuccess { info ->
+                                    if (info.currentStreak > 0) {
+                                        newStreaks[habit.id] = info.currentStreak
+                                    }
                                 }
                             }
+                            streaksFlow.value = newStreaks
+                        } else {
+                            streaksFlow.value = emptyMap()
                         }
-                        streaksFlow.value = newStreaks
-                    } else {
-                        streaksFlow.value = emptyMap()
                     }
-                }
             }
         }
 
@@ -228,7 +229,8 @@ class HabitsViewModel
                             for (habit in habits) {
                                 // Fetch progress for period-based habits (weekly or cycle-based)
                                 if (habit.frequencyType == FrequencyType.TIMES_PER_WEEK ||
-                                    habit.frequencyType == FrequencyType.EVERY_X_DAYS) {
+                                    habit.frequencyType == FrequencyType.EVERY_X_DAYS
+                                ) {
                                     habitRepository.getWeeklyProgressForHabit(habit.id, date)
                                         .onSuccess { progress ->
                                             newWeeklyProgress[habit.id] = progress

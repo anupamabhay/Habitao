@@ -95,11 +95,20 @@ fun HabitCard(
 ) {
     val isCompleted = log?.isCompleted == true
     // For period-based habits (TIMES_PER_WEEK, EVERY_X_DAYS), use aggregated progress
-    val isPeriodBased = habit.frequencyType == FrequencyType.TIMES_PER_WEEK ||
-        habit.frequencyType == FrequencyType.EVERY_X_DAYS
+    val isPeriodBased =
+        habit.frequencyType == FrequencyType.TIMES_PER_WEEK ||
+            habit.frequencyType == FrequencyType.EVERY_X_DAYS
     val displayValue = if (isPeriodBased && weeklyProgress != null) weeklyProgress else (log?.currentValue ?: 0)
     val targetValue = if (isPeriodBased) habit.frequencyValue else (log?.targetValue ?: habit.targetValue)
-    val progress = if (targetValue > 0) (displayValue.toFloat() / targetValue).coerceIn(0f, 1f) else (log?.progress ?: 0f)
+    val progress =
+        if (targetValue > 0) {
+            (displayValue.toFloat() / targetValue).coerceIn(
+                0f,
+                1f,
+            )
+        } else {
+            (log?.progress ?: 0f)
+        }
     val currentValue = log?.currentValue ?: 0
 
     val dismissState =
@@ -321,18 +330,28 @@ private fun HabitCardContent(
                     )
                 }
                 HabitType.MEASURABLE -> {
-                    val isPeriodBased = habit.frequencyType == FrequencyType.TIMES_PER_WEEK ||
-                        habit.frequencyType == FrequencyType.EVERY_X_DAYS
-                    val displayCurrentValue = if (isPeriodBased && weeklyProgress != null) weeklyProgress else currentValue
+                    val isPeriodBased =
+                        habit.frequencyType == FrequencyType.TIMES_PER_WEEK ||
+                            habit.frequencyType == FrequencyType.EVERY_X_DAYS
+                    val displayCurrentValue =
+                        if (isPeriodBased && weeklyProgress != null) {
+                            weeklyProgress
+                        } else {
+                            currentValue
+                        }
                     val displayTargetValue = if (isPeriodBased) habit.frequencyValue else targetValue
-                    val displayUnit = when {
-                        habit.frequencyType == FrequencyType.TIMES_PER_WEEK -> "this week"
-                        habit.frequencyType == FrequencyType.EVERY_X_DAYS -> "this cycle"
-                        else -> habit.unit ?: "times"
-                    }
-                    val displayProgress = if (displayTargetValue > 0) {
-                        (displayCurrentValue.toFloat() / displayTargetValue).coerceIn(0f, 1f)
-                    } else progress
+                    val displayUnit =
+                        when {
+                            habit.frequencyType == FrequencyType.TIMES_PER_WEEK -> "this week"
+                            habit.frequencyType == FrequencyType.EVERY_X_DAYS -> "this cycle"
+                            else -> habit.unit ?: "times"
+                        }
+                    val displayProgress =
+                        if (displayTargetValue > 0) {
+                            (displayCurrentValue.toFloat() / displayTargetValue).coerceIn(0f, 1f)
+                        } else {
+                            progress
+                        }
 
                     MeasurableHabitProgress(
                         currentValue = displayCurrentValue,
