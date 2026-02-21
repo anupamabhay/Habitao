@@ -65,6 +65,7 @@ dependencies {
     implementation(projects.core.common)
     implementation(projects.core.ui)
     implementation(projects.system.notifications)
+    implementation(projects.feature.pomodoro)
 
     // AndroidX Core
     implementation(libs.androidx.core.ktx)
