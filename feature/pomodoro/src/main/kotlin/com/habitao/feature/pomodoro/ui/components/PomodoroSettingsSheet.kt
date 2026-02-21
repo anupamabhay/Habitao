@@ -15,6 +15,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -45,6 +46,30 @@ fun PomodoroSettingsSheet(
     var longBreakDuration by remember { mutableIntStateOf(prefs.longBreakDurationMinutes) }
     var sessionsBeforeLongBreak by remember { mutableIntStateOf(prefs.sessionsBeforeLongBreak) }
     var totalSessions by remember { mutableIntStateOf(prefs.totalSessions) }
+    var autoStartNextPomo by remember { mutableStateOf(prefs.autoStartNextPomo) }
+    var autoStartBreak by remember { mutableStateOf(prefs.autoStartBreak) }
+    var autoPomoCycle by remember { mutableIntStateOf(prefs.autoPomoCycle) }
+    var pomoEndingSoundUri by remember { mutableStateOf(prefs.pomoEndingSoundUri) }
+    var breakEndingSoundUri by remember { mutableStateOf(prefs.breakEndingSoundUri) }
+    var vibrateEnabled by remember { mutableStateOf(prefs.vibrateEnabled) }
+    var vibrateDurationSeconds by remember { mutableIntStateOf(prefs.vibrateDurationSeconds) }
+
+    val soundOptions = remember {
+        listOf(
+            SoundOption(
+                label = "Default Alarm",
+                uri = "content://settings/system/alarm_alert",
+            ),
+            SoundOption(
+                label = "Default Notification",
+                uri = "content://settings/system/notification_sound",
+            ),
+            SoundOption(
+                label = "Default Ringtone",
+                uri = "content://settings/system/ringtone",
+            ),
+        )
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -101,6 +126,54 @@ fun PomodoroSettingsSheet(
                 suffix = ""
             )
 
+            SettingsSwitchRow(
+                label = "Auto-start next pomodoro",
+                checked = autoStartNextPomo,
+                onCheckedChange = { autoStartNextPomo = it },
+            )
+
+            SettingsSwitchRow(
+                label = "Auto-start break",
+                checked = autoStartBreak,
+                onCheckedChange = { autoStartBreak = it },
+            )
+
+            SettingsNumberInput(
+                label = "Auto pomodoro cycle",
+                value = autoPomoCycle,
+                onValueChange = { autoPomoCycle = it },
+                valueRange = 1..20,
+                suffix = ""
+            )
+
+            SoundSettingRow(
+                label = "Pomodoro ending sound",
+                selectedUri = pomoEndingSoundUri,
+                options = soundOptions,
+                onSelect = { pomoEndingSoundUri = it },
+            )
+
+            SoundSettingRow(
+                label = "Break ending sound",
+                selectedUri = breakEndingSoundUri,
+                options = soundOptions,
+                onSelect = { breakEndingSoundUri = it },
+            )
+
+            SettingsSwitchRow(
+                label = "Vibrate on completion",
+                checked = vibrateEnabled,
+                onCheckedChange = { vibrateEnabled = it },
+            )
+
+            SettingsNumberInput(
+                label = "Vibration duration",
+                value = vibrateDurationSeconds,
+                onValueChange = { vibrateDurationSeconds = it },
+                valueRange = 1..10,
+                suffix = "sec"
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
@@ -110,12 +183,73 @@ fun PomodoroSettingsSheet(
                     prefs.longBreakDurationMinutes = longBreakDuration
                     prefs.sessionsBeforeLongBreak = sessionsBeforeLongBreak
                     prefs.totalSessions = totalSessions
+                    prefs.autoStartNextPomo = autoStartNextPomo
+                    prefs.autoStartBreak = autoStartBreak
+                    prefs.autoPomoCycle = autoPomoCycle
+                    prefs.pomoEndingSoundUri = pomoEndingSoundUri
+                    prefs.breakEndingSoundUri = breakEndingSoundUri
+                    prefs.vibrateEnabled = vibrateEnabled
+                    prefs.vibrateDurationSeconds = vibrateDurationSeconds
                     onDismiss()
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Save Settings")
             }
+        }
+    }
+}
+
+@Composable
+private fun SettingsSwitchRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = label, style = MaterialTheme.typography.bodyLarge)
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+private data class SoundOption(
+    val label: String,
+    val uri: String,
+)
+
+@Composable
+private fun SoundSettingRow(
+    label: String,
+    selectedUri: String,
+    options: List<SoundOption>,
+    onSelect: (String) -> Unit,
+) {
+    val currentIndex = options.indexOfFirst { it.uri == selectedUri }.let { index ->
+        if (index == -1) 0 else index
+    }
+    val currentLabel = options.getOrNull(currentIndex)?.label ?: options.first().label
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = label, style = MaterialTheme.typography.bodyLarge)
+        Button(
+            onClick = {
+                val nextIndex = (currentIndex + 1) % options.size
+                onSelect(options[nextIndex].uri)
+            },
+        ) {
+            Text(text = currentLabel)
         }
     }
 }
