@@ -19,9 +19,11 @@ import com.habitao.domain.repository.PomodoroRepository
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class TimerService : LifecycleService() {
@@ -37,9 +39,41 @@ class TimerService : LifecycleService() {
         getSystemService(NotificationManager::class.java)
     }
 
+    // Cache PendingIntents to avoid recreating them every second (ANR prevention)
+    private var pausePendingIntent: PendingIntent? = null
+    private var resumePendingIntent: PendingIntent? = null
+    private var stopPendingIntent: PendingIntent? = null
+
     override fun onCreate() {
         super.onCreate()
         sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        initPendingIntents()
+    }
+
+    private fun initPendingIntents() {
+        val pauseIntent = Intent(this, TimerService::class.java).apply { action = ACTION_PAUSE }
+        pausePendingIntent = PendingIntent.getService(
+            this,
+            REQUEST_CODE_PAUSE,
+            pauseIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        val resumeIntent = Intent(this, TimerService::class.java).apply { action = ACTION_RESUME }
+        resumePendingIntent = PendingIntent.getService(
+            this,
+            REQUEST_CODE_RESUME,
+            resumeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        val stopIntent = Intent(this, TimerService::class.java).apply { action = ACTION_STOP }
+        stopPendingIntent = PendingIntent.getService(
+            this,
+            REQUEST_CODE_STOP,
+            stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
     }
 
     override fun onStartCommand(
@@ -129,14 +163,18 @@ class TimerService : LifecycleService() {
         sharedPreferences.edit().putLong(PREF_END_TIMESTAMP, endTimestamp).apply()
         timerJob?.cancel()
         timerJob =
-            lifecycleScope.launch {
+            lifecycleScope.launch(Dispatchers.Default) {
                 while (true) {
                     val remaining = ((endTimestamp - System.currentTimeMillis()) / 1000).coerceAtLeast(0L)
                     timerStateHolder.updateRemainingSeconds(remaining)
-                    updateNotification(remaining)
+                    withContext(Dispatchers.Main) {
+                        updateNotification(remaining)
+                    }
                     if (remaining <= 0L) {
                         timerStateHolder.updateTimerState(TimerState.FINISHED)
-                        handleTimerFinished()
+                        withContext(Dispatchers.Main) {
+                            handleTimerFinished()
+                        }
                         break
                     }
                     delay(1000)
@@ -201,7 +239,11 @@ class TimerService : LifecycleService() {
             }
 
             PomodoroType.SHORT_BREAK -> timerStateHolder.updateCurrentSessionType(PomodoroType.WORK)
-            PomodoroType.LONG_BREAK -> timerStateHolder.updateCurrentSessionType(PomodoroType.WORK)
+            PomodoroType.LONG_BREAK -> {
+                // Reset session counter after completing long break (start fresh cycle)
+                timerStateHolder.updateCompletedWorkSessions(0)
+                timerStateHolder.updateCurrentSessionType(PomodoroType.WORK)
+            }
         }
     }
 
@@ -225,49 +267,19 @@ class TimerService : LifecycleService() {
     }
 
     private fun buildNotification(remainingSeconds: Long): Notification {
-        val pauseIntent =
-            Intent(this, TimerService::class.java).apply {
-                action =
-                    if (timerStateHolder.timerState.value == TimerState.RUNNING) {
-                        ACTION_PAUSE
-                    } else {
-                        ACTION_RESUME
-                    }
-            }
-        val pausePendingIntent =
-            PendingIntent.getService(
-                this,
-                REQUEST_CODE_PAUSE,
-                pauseIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            )
-
-        val stopIntent =
-            Intent(this, TimerService::class.java).apply {
-                action = ACTION_STOP
-            }
-        val stopPendingIntent =
-            PendingIntent.getService(
-                this,
-                REQUEST_CODE_STOP,
-                stopIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            )
-
-        val pauseTitle =
-            if (timerStateHolder.timerState.value == TimerState.RUNNING) {
-                "Pause"
-            } else {
-                "Resume"
-            }
+        // Use cached PendingIntents to avoid ANR from recreating them every second
+        val isRunning = timerStateHolder.timerState.value == TimerState.RUNNING
+        val actionPendingIntent = if (isRunning) pausePendingIntent else resumePendingIntent
+        val actionTitle = if (isRunning) "Pause" else "Resume"
         val contentText = formatTime(remainingSeconds)
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("Pomodoro Timer")
             .setContentText(contentText)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
-            .addAction(0, pauseTitle, pausePendingIntent)
+            .addAction(0, actionTitle, actionPendingIntent)
             .addAction(0, "Stop", stopPendingIntent)
             .build()
     }
@@ -324,6 +336,7 @@ class TimerService : LifecycleService() {
         private const val NOTIFICATION_COMPLETE_ID = 1002
         private const val REQUEST_CODE_PAUSE = 2001
         private const val REQUEST_CODE_STOP = 2002
+        private const val REQUEST_CODE_RESUME = 2003
         private const val PREFS_NAME = "pomodoro_timer_prefs"
         private const val PREF_END_TIMESTAMP = "end_timestamp"
         private const val PREF_REMAINING_SECONDS = "remaining_seconds"
