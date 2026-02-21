@@ -235,10 +235,7 @@ class TimerService : LifecycleService() {
             PomodoroType.SHORT_BREAK, PomodoroType.LONG_BREAK -> pomodoroPreferences.autoStartBreak
         }
 
-        val cycleCount = timerStateHolder.completedWorkSessions.value
-        val shouldAutoStart = isAutoStart && cycleCount < pomodoroPreferences.autoPomoCycle
-
-        if (shouldAutoStart) {
+        if (isAutoStart) {
             handleStart()
         } else {
             timerStateHolder.updateTimerState(TimerState.IDLE)
