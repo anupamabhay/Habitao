@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 
 class PomodoroPreferences(context: Context) {
-    private val sharedPreferences: SharedPreferences =
+    val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     var workDurationMinutes: Int

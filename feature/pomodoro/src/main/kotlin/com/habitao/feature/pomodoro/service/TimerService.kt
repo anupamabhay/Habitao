@@ -158,6 +158,16 @@ class TimerService : LifecycleService() {
 
     private fun handleSkip() {
         timerJob?.cancel()
+        val remaining = timerStateHolder.remainingSeconds.value
+        val total = timerStateHolder.totalSeconds.value
+        val elapsed = (total - remaining).coerceAtLeast(0L)
+        if (elapsed > 0) {
+            saveSession(
+                wasInterrupted = true,
+                actualDurationSeconds = elapsed,
+                completedAt = null,
+            )
+        }
         advanceSessionType()
         timerStateHolder.updateRemainingSeconds(0L)
         timerStateHolder.updateTotalSeconds(0L)
@@ -280,7 +290,7 @@ class TimerService : LifecycleService() {
                 val newCount = completedWorkSessions + 1
                 timerStateHolder.updateCompletedWorkSessions(newCount)
                 val nextType =
-                    if (newCount % pomodoroPreferences.sessionsBeforeLongBreak == 0) {
+                    if (newCount >= pomodoroPreferences.sessionsBeforeLongBreak) {
                         PomodoroType.LONG_BREAK
                     } else {
                         PomodoroType.SHORT_BREAK

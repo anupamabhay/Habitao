@@ -107,11 +107,20 @@ fun PomodoroScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Session ${state.completedWorkSessions + 1} of ${state.sessionsBeforeLongBreak}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (state.currentSessionType != PomodoroType.LONG_BREAK) {
+                val currentSession = (state.completedWorkSessions + 1).coerceAtMost(state.sessionsBeforeLongBreak)
+                Text(
+                    text = "Session $currentSession of ${state.sessionsBeforeLongBreak}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                Text(
+                    text = "Final Break",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
