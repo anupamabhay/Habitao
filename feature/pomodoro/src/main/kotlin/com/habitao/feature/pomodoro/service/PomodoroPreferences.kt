@@ -2,6 +2,7 @@ package com.habitao.feature.pomodoro.service
 
 import android.content.Context
 import android.content.SharedPreferences
+import java.time.LocalDate
 
 class PomodoroPreferences(context: Context) {
     val sharedPreferences: SharedPreferences =
@@ -57,6 +58,29 @@ class PomodoroPreferences(context: Context) {
         get() = sharedPreferences.getInt(KEY_VIBRATE_DURATION_SECONDS, DEFAULT_VIBRATE_DURATION_SECONDS)
         set(value) = sharedPreferences.edit().putInt(KEY_VIBRATE_DURATION_SECONDS, value).apply()
 
+    var completedRoundsToday: Int
+        get() = sharedPreferences.getInt(KEY_COMPLETED_ROUNDS_TODAY, DEFAULT_COMPLETED_ROUNDS_TODAY)
+        set(value) = sharedPreferences.edit().putInt(KEY_COMPLETED_ROUNDS_TODAY, value).apply()
+
+    var lastRoundResetDate: String
+        get() = sharedPreferences.getString(KEY_LAST_ROUND_RESET_DATE, DEFAULT_LAST_ROUND_RESET_DATE)
+            ?: DEFAULT_LAST_ROUND_RESET_DATE
+        set(value) = sharedPreferences.edit().putString(KEY_LAST_ROUND_RESET_DATE, value).apply()
+
+    fun incrementRound() {
+        val today = LocalDate.now().toString()
+        if (lastRoundResetDate != today) {
+            completedRoundsToday = 0
+            lastRoundResetDate = today
+        }
+        completedRoundsToday = completedRoundsToday + 1
+    }
+
+    fun getTodaysRounds(): Int {
+        val today = LocalDate.now().toString()
+        return if (lastRoundResetDate != today) 0 else completedRoundsToday
+    }
+
     companion object {
         private const val PREFS_NAME = "pomodoro_timer_prefs"
         private const val KEY_WORK_MINUTES = "pomo_work_minutes"
@@ -71,6 +95,8 @@ class PomodoroPreferences(context: Context) {
         private const val KEY_BREAK_ENDING_SOUND_URI = "break_ending_sound_uri"
         private const val KEY_VIBRATE_ENABLED = "pomo_vibrate_enabled"
         private const val KEY_VIBRATE_DURATION_SECONDS = "pomo_vibrate_duration_seconds"
+        private const val KEY_COMPLETED_ROUNDS_TODAY = "pomo_completed_rounds_today"
+        private const val KEY_LAST_ROUND_RESET_DATE = "pomo_last_round_reset_date"
 
         const val DEFAULT_WORK_MINUTES = 25
         const val DEFAULT_SHORT_BREAK_MINUTES = 5
@@ -84,5 +110,7 @@ class PomodoroPreferences(context: Context) {
         const val DEFAULT_BREAK_ENDING_SOUND_URI = ""
         const val DEFAULT_VIBRATE_ENABLED = true
         const val DEFAULT_VIBRATE_DURATION_SECONDS = 2
+        const val DEFAULT_COMPLETED_ROUNDS_TODAY = 0
+        const val DEFAULT_LAST_ROUND_RESET_DATE = ""
     }
 }

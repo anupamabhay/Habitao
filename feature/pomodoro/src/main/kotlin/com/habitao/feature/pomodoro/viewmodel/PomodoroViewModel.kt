@@ -35,6 +35,7 @@ data class PomodoroState(
     val totalSessions: Int = 5,
     val todaysFocusSeconds: Int = 0,
     val todaysSessions: Int = 0,
+    val todaysRounds: Int = 0,
 )
 
 sealed class PomodoroIntent {
@@ -145,6 +146,7 @@ class PomodoroViewModel
                     totalSessions = pomodoroPreferences.totalSessions,
                     todaysFocusSeconds = todaysFocusSeconds,
                     todaysSessions = todaysSessions,
+                    todaysRounds = pomodoroPreferences.getTodaysRounds(),
                 )
             }.stateIn(
                 scope = viewModelScope,
