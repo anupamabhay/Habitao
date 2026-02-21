@@ -88,7 +88,6 @@ fun PomodoroSettingsSheet(
     var totalSessions by remember { mutableIntStateOf(prefs.totalSessions) }
     var autoStartNextPomo by remember { mutableStateOf(prefs.autoStartNextPomo) }
     var autoStartBreak by remember { mutableStateOf(prefs.autoStartBreak) }
-    var autoPomoCycle by remember { mutableIntStateOf(prefs.autoPomoCycle) }
     var pomoEndingSoundUri by remember { mutableStateOf(prefs.pomoEndingSoundUri) }
     var breakEndingSoundUri by remember { mutableStateOf(prefs.breakEndingSoundUri) }
     var vibrateEnabled by remember { mutableStateOf(prefs.vibrateEnabled) }
@@ -181,16 +180,6 @@ fun PomodoroSettingsSheet(
                     icon = Icons.Filled.Refresh,
                     onValueChange = { totalSessions = it }
                 )
-                SettingsDivider()
-                SettingsNumberItem(
-                    label = "Max consecutive auto-starts",
-                    value = autoPomoCycle,
-                    suffix = "sessions",
-                    range = 1..20,
-                    icon = Icons.Filled.Refresh,
-                    onValueChange = { autoPomoCycle = it }
-                )
-                SettingsDivider()
                 SettingsSwitchItem(
                     label = "Auto-start next pomodoro",
                     checked = autoStartNextPomo,
@@ -249,7 +238,6 @@ fun PomodoroSettingsSheet(
                     prefs.totalSessions = totalSessions
                     prefs.autoStartNextPomo = autoStartNextPomo
                     prefs.autoStartBreak = autoStartBreak
-                    prefs.autoPomoCycle = autoPomoCycle
                     prefs.pomoEndingSoundUri = pomoEndingSoundUri
                     prefs.breakEndingSoundUri = breakEndingSoundUri
                     prefs.vibrateEnabled = vibrateEnabled
@@ -397,6 +385,7 @@ private fun SettingsNumberItem(
         
         Spacer(modifier = Modifier.width(12.dp))
         Surface(
+            modifier = Modifier.widthIn(min = 80.dp),
             color = MaterialTheme.colorScheme.surfaceVariant,
             shape = RoundedCornerShape(6.dp),
         ) {
@@ -552,6 +541,7 @@ private fun SettingsSoundItem(
         
         Spacer(modifier = Modifier.width(12.dp))
         Surface(
+            modifier = Modifier.widthIn(min = 80.dp, max = 120.dp),
             color = MaterialTheme.colorScheme.surfaceVariant,
             shape = RoundedCornerShape(6.dp),
         ) {
