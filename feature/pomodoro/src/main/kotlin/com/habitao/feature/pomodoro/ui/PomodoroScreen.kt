@@ -108,9 +108,9 @@ fun PomodoroScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             if (state.currentSessionType != PomodoroType.LONG_BREAK) {
-                val currentSession = (state.completedWorkSessions + 1).coerceAtMost(state.sessionsBeforeLongBreak)
+                val currentSession = (state.totalCompletedWorkSessions + 1).coerceAtMost(state.totalSessions)
                 Text(
-                    text = "Session $currentSession of ${state.sessionsBeforeLongBreak}",
+                    text = "Session $currentSession of ${state.totalSessions}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

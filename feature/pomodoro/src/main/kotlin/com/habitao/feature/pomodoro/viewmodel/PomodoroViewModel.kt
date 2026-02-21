@@ -30,7 +30,9 @@ data class PomodoroState(
     val totalSeconds: Long = 1500L,
     val currentSessionType: PomodoroType = PomodoroType.WORK,
     val completedWorkSessions: Int = 0,
+    val totalCompletedWorkSessions: Int = 0,
     val sessionsBeforeLongBreak: Int = 4,
+    val totalSessions: Int = 5,
     val todaysFocusMinutes: Int = 0,
     val todaysSessions: Int = 0,
 )
@@ -82,20 +84,26 @@ class PomodoroViewModel
                 }
             }
 
+        private val sessionsCountFlow = combine(
+            timerStateHolder.completedWorkSessions,
+            timerStateHolder.totalCompletedWorkSessions
+        ) { cycle, total -> Pair(cycle, total) }
+
         private val timerCombinedFlow =
             combine(
                 timerStateHolder.timerState,
                 timerStateHolder.remainingSeconds,
                 timerStateHolder.totalSeconds,
                 timerStateHolder.currentSessionType,
-                timerStateHolder.completedWorkSessions,
-            ) { timerState, remainingSeconds, totalSeconds, currentSessionType, completedWorkSessions ->
+                sessionsCountFlow,
+            ) { timerState, remainingSeconds, totalSeconds, currentSessionType, counts ->
                 TimerSnapshot(
                     timerState = timerState,
                     remainingSeconds = remainingSeconds,
                     totalSeconds = totalSeconds,
                     currentSessionType = currentSessionType,
-                    completedWorkSessions = completedWorkSessions,
+                    completedWorkSessions = counts.first,
+                    totalCompletedWorkSessions = counts.second,
                 )
             }
 
@@ -134,7 +142,9 @@ class PomodoroViewModel
                     totalSeconds = safeTotalSeconds,
                     currentSessionType = timer.currentSessionType,
                     completedWorkSessions = timer.completedWorkSessions,
+                    totalCompletedWorkSessions = timer.totalCompletedWorkSessions,
                     sessionsBeforeLongBreak = pomodoroPreferences.sessionsBeforeLongBreak,
+                    totalSessions = pomodoroPreferences.totalSessions,
                     todaysFocusMinutes = todaysFocusMinutes,
                     todaysSessions = todaysSessions,
                 )
@@ -150,6 +160,7 @@ class PomodoroViewModel
             val totalSeconds: Long,
             val currentSessionType: PomodoroType,
             val completedWorkSessions: Int,
+            val totalCompletedWorkSessions: Int,
         )
 
         fun processIntent(intent: PomodoroIntent) {

@@ -33,6 +33,9 @@ class TimerStateHolder
         private val _completedWorkSessions = MutableStateFlow(0)
         val completedWorkSessions: StateFlow<Int> = _completedWorkSessions.asStateFlow()
 
+        private val _totalCompletedWorkSessions = MutableStateFlow(0)
+        val totalCompletedWorkSessions: StateFlow<Int> = _totalCompletedWorkSessions.asStateFlow()
+
         fun updateTimerState(state: TimerState) {
             _timerState.value = state
         }
@@ -53,11 +56,16 @@ class TimerStateHolder
             _completedWorkSessions.value = count
         }
 
+        fun updateTotalCompletedWorkSessions(count: Int) {
+            _totalCompletedWorkSessions.value = count
+        }
+
         fun reset() {
             _timerState.value = TimerState.IDLE
             _remainingSeconds.value = 0L
             _totalSeconds.value = 0L
             _currentSessionType.value = PomodoroType.WORK
             _completedWorkSessions.value = 0
+            _totalCompletedWorkSessions.value = 0
         }
     }

@@ -285,10 +285,24 @@ class TimerService : LifecycleService() {
     private fun advanceSessionType() {
         val current = timerStateHolder.currentSessionType.value
         val completedWorkSessions = timerStateHolder.completedWorkSessions.value
+        val totalCompletedWorkSessions = timerStateHolder.totalCompletedWorkSessions.value
         when (current) {
             PomodoroType.WORK -> {
                 val newCount = completedWorkSessions + 1
+                val newTotalCount = totalCompletedWorkSessions + 1
                 timerStateHolder.updateCompletedWorkSessions(newCount)
+                timerStateHolder.updateTotalCompletedWorkSessions(newTotalCount)
+
+                if (newTotalCount >= pomodoroPreferences.totalSessions) {
+                    timerStateHolder.updateTimerState(TimerState.IDLE)
+                    timerStateHolder.updateRemainingSeconds(0L)
+                    timerStateHolder.updateTotalSeconds(0L)
+                    clearTimerPrefs()
+                    updateNotification(0L)
+                    timerStateHolder.reset()
+                    return
+                }
+
                 val nextType =
                     if (newCount >= pomodoroPreferences.sessionsBeforeLongBreak) {
                         PomodoroType.LONG_BREAK

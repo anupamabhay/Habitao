@@ -23,16 +23,22 @@ class PomodoroPreferences(context: Context) {
         get() = sharedPreferences.getInt(KEY_SESSIONS_BEFORE_LONG_BREAK, DEFAULT_SESSIONS_BEFORE_LONG_BREAK)
         set(value) = sharedPreferences.edit().putInt(KEY_SESSIONS_BEFORE_LONG_BREAK, value).apply()
 
+    var totalSessions: Int
+        get() = sharedPreferences.getInt(KEY_TOTAL_SESSIONS, DEFAULT_TOTAL_SESSIONS)
+        set(value) = sharedPreferences.edit().putInt(KEY_TOTAL_SESSIONS, value).apply()
+
     companion object {
         private const val PREFS_NAME = "pomodoro_timer_prefs"
         private const val KEY_WORK_MINUTES = "pomo_work_minutes"
         private const val KEY_SHORT_BREAK_MINUTES = "pomo_short_break_minutes"
         private const val KEY_LONG_BREAK_MINUTES = "pomo_long_break_minutes"
         private const val KEY_SESSIONS_BEFORE_LONG_BREAK = "pomo_sessions_before_long_break"
+        private const val KEY_TOTAL_SESSIONS = "pomo_total_sessions"
 
         const val DEFAULT_WORK_MINUTES = 25
         const val DEFAULT_SHORT_BREAK_MINUTES = 5
         const val DEFAULT_LONG_BREAK_MINUTES = 15
         const val DEFAULT_SESSIONS_BEFORE_LONG_BREAK = 4
+        const val DEFAULT_TOTAL_SESSIONS = 5
     }
 }
