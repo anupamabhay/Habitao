@@ -14,6 +14,8 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,10 +25,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.habitao.domain.model.PomodoroType
 import com.habitao.feature.pomodoro.service.TimerState
+import com.habitao.feature.pomodoro.ui.components.PomodoroSettingsSheet
 import com.habitao.feature.pomodoro.ui.components.TimerDisplay
 import com.habitao.feature.pomodoro.viewmodel.PomodoroIntent
 import com.habitao.feature.pomodoro.viewmodel.PomodoroViewModel
@@ -44,6 +51,9 @@ fun PomodoroScreen(
     viewModel: PomodoroViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    var showStopDialog by remember { mutableStateOf(false) }
+    var showSkipDialog by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
     val sessionLabel =
         when (state.currentSessionType) {
             PomodoroType.WORK -> "Focus Time"
@@ -61,6 +71,14 @@ fun PomodoroScreen(
         topBar = {
             TopAppBar(
                 title = { Text(text = "Pomodoro") },
+                actions = {
+                    IconButton(onClick = { showSettings = true }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Settings,
+                            contentDescription = "Settings",
+                        )
+                    }
+                },
             )
         },
     ) { paddingValues ->
@@ -102,9 +120,59 @@ fun PomodoroScreen(
                 onStart = { viewModel.processIntent(PomodoroIntent.StartTimer) },
                 onPause = { viewModel.processIntent(PomodoroIntent.PauseTimer) },
                 onResume = { viewModel.processIntent(PomodoroIntent.ResumeTimer) },
-                onStop = { viewModel.processIntent(PomodoroIntent.StopTimer) },
-                onSkip = { viewModel.processIntent(PomodoroIntent.SkipToNext) },
+                onStop = { showStopDialog = true },
+                onSkip = { showSkipDialog = true },
             )
+
+            if (showStopDialog) {
+                AlertDialog(
+                    onDismissRequest = { showStopDialog = false },
+                    title = { Text(text = "Stop Timer?") },
+                    text = { Text(text = "Your progress will be saved but marked as interrupted.") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                showStopDialog = false
+                                viewModel.processIntent(PomodoroIntent.StopTimer)
+                            },
+                        ) {
+                            Text(text = "Stop")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showStopDialog = false }) {
+                            Text(text = "Cancel")
+                        }
+                    },
+                )
+            }
+
+            if (showSkipDialog) {
+                AlertDialog(
+                    onDismissRequest = { showSkipDialog = false },
+                    title = { Text(text = "Skip to Next?") },
+                    text = { Text(text = "Current session will end and move to next.") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                showSkipDialog = false
+                                viewModel.processIntent(PomodoroIntent.SkipToNext)
+                            },
+                        ) {
+                            Text(text = "Skip")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showSkipDialog = false }) {
+                            Text(text = "Cancel")
+                        }
+                    },
+                )
+            }
+
+            if (showSettings) {
+                PomodoroSettingsSheet(onDismiss = { showSettings = false })
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

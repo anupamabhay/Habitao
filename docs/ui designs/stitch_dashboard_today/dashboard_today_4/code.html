@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>M3 Routines Management</title>
+<script type="text/javascript" nonce="5c925ff2520048cab66d47901e9" src="//local.adguard.org?ts=1771657604486&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzBmNzBjMDFhZTk2OTQ4Yjg4YzM3MGMwMWI5NzBjYjA1EgsSBxCI5Z_QvwUYAZIBJAoKcHJvamVjdF9pZBIWQhQxMDE0ODUxNzY1MjI3MzEzMzk1NQ%26filename%3D%26opi%3D89354086&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="5c925ff2520048cab66d47901e9" src="//local.adguard.org?ts=1771657604486&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Ibm+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {primary: "#c8adff", "on-primary": "#ffffff", "primary-container": "#ffdbca", "on-primary-container": "#341100", secondary: "#765748", "secondary-container": "#ffdcbe", "on-secondary-container": "#2c160a", tertiary: "#655f31", "tertiary-container": "#ece3aa", "on-tertiary-container": "#1e1b00", surface: "#fff8f4", "surface-dim": "#ded8d5", "surface-bright": "#fff8f4", "on-surface": "#211a17", "on-surface-variant": "#52443c", outline: "#85736b", "outline-variant": "#d7c1b8", "background-light": "#f6f5f8", "background-dark": "#160f23", "morning-container": "#ffecb3", "on-morning-container": "#3e2723", "afternoon-container": "#b3e5fc", "on-afternoon-container": "#01579b", "evening-container": "#d1c4e9", "on-evening-container": "#311b92"}, fontFamily: {display: "Ibm Plex Sans"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, boxShadow: {"elevation-1": "0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)", "elevation-2": "0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15)"}}}};</script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-on-surface dark:text-slate-100 min-h-screen pb-24">
+<header class="sticky top-0 z-30 bg-surface/95 dark:bg-background-dark/95 backdrop-blur-sm transition-all duration-300">
+<div class="flex items-center justify-between px-4 py-3 pt-6">
+<div class="flex flex-col gap-0.5">
+<h1 class="text-3xl font-normal text-on-surface dark:text-slate-100">Routines</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="material-symbols-outlined p-2 rounded-full hover:bg-on-surface/10 text-on-surface-variant dark:text-slate-300">search</button>
+<button class="material-symbols-outlined p-2 rounded-full hover:bg-on-surface/10 text-on-surface-variant dark:text-slate-300">settings</button>
+</div>
+</div>
+</header>
+<main class="px-4 py-6 space-y-6 max-w-md mx-auto">
+<section>
+<div class="flex items-center gap-2 mb-3 pl-1">
+<span class="material-symbols-outlined text-primary text-xl filled">wb_sunny</span>
+<h2 class="text-title-md font-medium text-on-surface-variant dark:text-orange-200">Morning</h2>
+</div>
+<details class="group mb-3 open">
+<summary class="list-none cursor-pointer">
+<div class="bg-surface-bright dark:bg-surface-dim/30 border border-outline/10 rounded-2xl p-4 shadow-elevation-1 transition-all group-open:rounded-b-none group-open:shadow-none hover:bg-surface-dim/50">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-xl bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center text-orange-700 dark:text-orange-200">
+<span class="material-symbols-outlined">coffee</span>
+</div>
+<div>
+<h3 class="text-lg font-medium text-on-surface dark:text-white">Morning Focus</h3>
+<p class="text-sm text-on-surface-variant dark:text-gray-400">5 actions • 30 mins</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+</div>
+</div>
+</summary>
+<div class="bg-surface-bright dark:bg-surface-dim/30 border-x border-b border-outline/10 rounded-b-2xl p-4 pt-0">
+<div class="pt-4 space-y-3">
+<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-on-surface/5">
+<span class="material-symbols-outlined text-on-surface-variant">check_circle</span>
+<span class="text-sm font-medium text-on-surface dark:text-slate-200">Drink water (500ml)</span>
+</div>
+<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-on-surface/5">
+<span class="material-symbols-outlined text-outline">radio_button_unchecked</span>
+<span class="text-sm font-medium text-on-surface dark:text-slate-200">10 min meditation</span>
+</div>
+<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-on-surface/5">
+<span class="material-symbols-outlined text-outline">radio_button_unchecked</span>
+<span class="text-sm font-medium text-on-surface dark:text-slate-200">Review today's goals</span>
+</div>
+<div class="mt-4 flex justify-end">
+<button class="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full font-medium shadow-sm active:shadow-none active:scale-95 transition-all">
+<span class="material-symbols-outlined text-xl">play_arrow</span>
+                                Start Routine
+                            </button>
+</div>
+</div>
+</div>
+</details>
+<details class="group">
+<summary class="list-none cursor-pointer">
+<div class="bg-surface-bright dark:bg-surface-dim/30 border border-outline/10 rounded-2xl p-4 shadow-elevation-1 transition-all group-open:rounded-b-none group-open:shadow-none hover:bg-surface-dim/50">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-xl bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center text-rose-700 dark:text-rose-200">
+<span class="material-symbols-outlined">fitness_center</span>
+</div>
+<div>
+<h3 class="text-lg font-medium text-on-surface dark:text-white">Quick Workout</h3>
+<p class="text-sm text-on-surface-variant dark:text-gray-400">3 actions • 15 mins</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+</div>
+</div>
+</summary>
+<div class="bg-surface-bright dark:bg-surface-dim/30 border-x border-b border-outline/10 rounded-b-2xl p-4 pt-0">
+<div class="pt-4 space-y-2">
+<p class="text-sm text-on-surface-variant">Details hidden...</p>
+<div class="mt-4 flex justify-end">
+<button class="flex items-center gap-2 px-5 py-2.5 bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary rounded-full font-medium shadow-sm">
+<span class="material-symbols-outlined text-xl">play_arrow</span>
+                                Start
+                            </button>
+</div>
+</div>
+</div>
+</details>
+</section>
+<section>
+<div class="flex items-center gap-2 mb-3 pl-1 pt-2">
+<span class="material-symbols-outlined text-amber-600 dark:text-amber-400 text-xl filled">light_mode</span>
+<h2 class="text-title-md font-medium text-on-surface-variant dark:text-amber-200">Afternoon</h2>
+</div>
+<details class="group mb-3">
+<summary class="list-none cursor-pointer">
+<div class="bg-surface-bright dark:bg-surface-dim/30 border border-outline/10 rounded-2xl p-4 shadow-elevation-1 transition-all group-open:rounded-b-none group-open:shadow-none hover:bg-surface-dim/50">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-700 dark:text-blue-200">
+<span class="material-symbols-outlined">laptop_chromebook</span>
+</div>
+<div>
+<h3 class="text-lg font-medium text-on-surface dark:text-white">Deep Work</h3>
+<p class="text-sm text-on-surface-variant dark:text-gray-400">2 actions • 90 mins</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+</div>
+</div>
+</summary>
+<div class="bg-surface-bright dark:bg-surface-dim/30 border-x border-b border-outline/10 rounded-b-2xl p-4 pt-0">
+<div class="pt-4 space-y-3">
+<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-on-surface/5">
+<span class="material-symbols-outlined text-outline">radio_button_unchecked</span>
+<span class="text-sm font-medium text-on-surface dark:text-slate-200">Turn off notifications</span>
+</div>
+<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-on-surface/5">
+<span class="material-symbols-outlined text-outline">radio_button_unchecked</span>
+<span class="text-sm font-medium text-on-surface dark:text-slate-200">Set primary task</span>
+</div>
+<div class="mt-4 flex justify-end">
+<button class="flex items-center gap-2 px-5 py-2.5 bg-secondary-container text-on-secondary-container dark:bg-secondary dark:text-on-secondary rounded-full font-medium shadow-sm hover:shadow-md transition-shadow">
+<span class="material-symbols-outlined text-xl">play_arrow</span>
+                                Start
+                            </button>
+</div>
+</div>
+</div>
+</details>
+</section>
+<section>
+<div class="flex items-center gap-2 mb-3 pl-1 pt-2">
+<span class="material-symbols-outlined text-indigo-500 dark:text-indigo-300 text-xl filled">nights_stay</span>
+<h2 class="text-title-md font-medium text-on-surface-variant dark:text-indigo-200">Evening</h2>
+</div>
+<details class="group">
+<summary class="list-none cursor-pointer">
+<div class="bg-surface-bright dark:bg-surface-dim/30 border border-outline/10 rounded-2xl p-4 shadow-elevation-1 transition-all group-open:rounded-b-none group-open:shadow-none hover:bg-surface-dim/50">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-700 dark:text-indigo-200">
+<span class="material-symbols-outlined">bedtime</span>
+</div>
+<div>
+<h3 class="text-lg font-medium text-on-surface dark:text-white">Wind Down</h3>
+<p class="text-sm text-on-surface-variant dark:text-gray-400">4 actions • 45 mins</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+</div>
+</div>
+</summary>
+<div class="bg-surface-bright dark:bg-surface-dim/30 border-x border-b border-outline/10 rounded-b-2xl p-4 pt-0">
+<div class="pt-4 space-y-3">
+<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-on-surface/5">
+<span class="material-symbols-outlined text-outline">radio_button_unchecked</span>
+<span class="text-sm font-medium text-on-surface dark:text-slate-200">Prepare clothes for tomorrow</span>
+</div>
+<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-on-surface/5">
+<span class="material-symbols-outlined text-outline">radio_button_unchecked</span>
+<span class="text-sm font-medium text-on-surface dark:text-slate-200">Read 10 pages</span>
+</div>
+<div class="mt-4 flex justify-end">
+<button class="flex items-center gap-2 px-5 py-2.5 bg-tertiary-container text-on-tertiary-container dark:bg-tertiary dark:text-on-tertiary rounded-full font-medium shadow-sm hover:shadow-md transition-shadow">
+<span class="material-symbols-outlined text-xl">play_arrow</span>
+                                Start
+                            </button>
+</div>
+</div>
+</div>
+</details>
+</section>
+</main>
+<button class="fixed bottom-24 right-4 size-14 rounded-2xl bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary shadow-elevation-2 flex items-center justify-center z-50 transition-transform active:scale-95 hover:shadow-lg">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<nav class="fixed bottom-0 left-0 right-0 bg-surface/90 dark:bg-background-dark/95 backdrop-blur-xl border-t border-outline/10 dark:border-white/5 px-2 pb-6 pt-2 flex justify-around items-center z-40">
+<a class="flex flex-col items-center gap-1 py-1 px-3 rounded-full text-on-surface-variant dark:text-slate-400 hover:bg-on-surface/5" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="text-[11px] font-medium tracking-wide">Stats</span>
+</a>
+<a class="flex flex-col items-center gap-1 py-1 px-3 rounded-full text-on-surface-variant dark:text-slate-400 hover:bg-on-surface/5" href="#">
+<span class="material-symbols-outlined">restart_alt</span>
+<span class="text-[11px] font-medium tracking-wide">Habits</span>
+</a>
+<a class="flex flex-col items-center gap-1 py-1 px-5 rounded-full bg-secondary-container dark:bg-secondary/30 text-on-secondary-container dark:text-secondary-container font-bold" href="#">
+<span class="material-symbols-outlined fill-1">schedule</span>
+<span class="text-[11px] font-bold tracking-wide">Routines</span>
+</a>
+<a class="flex flex-col items-center gap-1 py-1 px-3 rounded-full text-on-surface-variant dark:text-slate-400 hover:bg-on-surface/5" href="#">
+<span class="material-symbols-outlined">check_box</span>
+<span class="text-[11px] font-medium tracking-wide">Tasks</span>
+</a>
+<a class="flex flex-col items-center gap-1 py-1 px-3 rounded-full text-on-surface-variant dark:text-slate-400 hover:bg-on-surface/5" href="#">
+<span class="material-symbols-outlined">timer</span>
+<span class="text-[11px] font-medium tracking-wide">Timer</span>
+</a>
+</nav>
+</body></html>

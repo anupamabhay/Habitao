@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.PomodoroType
 import com.habitao.domain.repository.PomodoroRepository
+import com.habitao.feature.pomodoro.service.PomodoroPreferences
 import com.habitao.feature.pomodoro.service.TimerService
 import com.habitao.feature.pomodoro.service.TimerState
 import com.habitao.feature.pomodoro.service.TimerStateHolder
@@ -51,6 +52,8 @@ class PomodoroViewModel
         private val pomodoroRepository: PomodoroRepository,
         @ApplicationContext private val context: Context,
     ) : ViewModel() {
+        private val pomodoroPreferences = PomodoroPreferences(context)
+
         private val sessionsFlow =
             pomodoroRepository.observeSessionsForDate(LocalDate.now())
                 .map { result -> result.getOrElse { emptyList() } }
@@ -101,9 +104,9 @@ class PomodoroViewModel
             ) { timer, todaysFocusMinutes, todaysSessions ->
                 val defaultTotalSeconds =
                     when (timer.currentSessionType) {
-                        PomodoroType.WORK -> TimerService.DEFAULT_WORK_SECONDS
-                        PomodoroType.SHORT_BREAK -> TimerService.DEFAULT_SHORT_BREAK_SECONDS
-                        PomodoroType.LONG_BREAK -> TimerService.DEFAULT_LONG_BREAK_SECONDS
+                        PomodoroType.WORK -> pomodoroPreferences.workDurationMinutes.toLong() * 60
+                        PomodoroType.SHORT_BREAK -> pomodoroPreferences.shortBreakDurationMinutes.toLong() * 60
+                        PomodoroType.LONG_BREAK -> pomodoroPreferences.longBreakDurationMinutes.toLong() * 60
                     }
                 val safeTotalSeconds =
                     if (timer.totalSeconds > 0L) timer.totalSeconds else defaultTotalSeconds
@@ -116,7 +119,7 @@ class PomodoroViewModel
                     totalSeconds = safeTotalSeconds,
                     currentSessionType = timer.currentSessionType,
                     completedWorkSessions = timer.completedWorkSessions,
-                    sessionsBeforeLongBreak = TimerService.SESSIONS_BEFORE_LONG_BREAK,
+                    sessionsBeforeLongBreak = pomodoroPreferences.sessionsBeforeLongBreak,
                     todaysFocusMinutes = todaysFocusMinutes,
                     todaysSessions = todaysSessions,
                 )
