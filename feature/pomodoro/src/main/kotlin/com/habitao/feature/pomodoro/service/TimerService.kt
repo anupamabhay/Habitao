@@ -273,6 +273,8 @@ class TimerService : LifecycleService() {
                 pomodoroPreferences.breakEndingSoundUri
             }
 
+            if (uriString == "SILENT") return
+
             val uri = if (uriString.isNotEmpty()) {
                 android.net.Uri.parse(uriString)
             } else {
@@ -324,6 +326,7 @@ class TimerService : LifecycleService() {
                 timerStateHolder.updateTotalCompletedWorkSessions(newTotalCount)
 
                 if (newTotalCount >= pomodoroPreferences.totalSessions) {
+                    pomodoroPreferences.incrementRound()
                     timerStateHolder.updateTimerState(TimerState.IDLE)
                     timerStateHolder.updateRemainingSeconds(0L)
                     timerStateHolder.updateTotalSeconds(0L)

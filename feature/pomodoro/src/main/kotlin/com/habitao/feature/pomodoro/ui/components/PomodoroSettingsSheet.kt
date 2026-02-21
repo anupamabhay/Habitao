@@ -105,10 +105,10 @@ fun PomodoroSettingsSheet(
                 .verticalScroll(rememberScrollState())
         ) {
             // Drag handle spacer
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "Timer Settings",
+                text = "Pomodoro Settings",
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
@@ -162,7 +162,7 @@ fun PomodoroSettingsSheet(
                 )
                 SettingsDivider()
                 SettingsNumberItem(
-                    label = "Auto pomodoro cycle",
+                    label = "Auto-start limit",
                     value = autoPomoCycle,
                     suffix = "cycles",
                     range = 1..20,
@@ -315,6 +315,7 @@ private fun SettingsSwitchItem(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
+        Spacer(modifier = Modifier.width(12.dp))
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange
@@ -373,6 +374,7 @@ private fun SettingsNumberItem(
             )
         }
         
+        Spacer(modifier = Modifier.width(12.dp))
         Surface(
             color = MaterialTheme.colorScheme.surfaceVariant,
             shape = RoundedCornerShape(6.dp),
@@ -470,12 +472,14 @@ private fun SettingsSoundItem(
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val uri: Uri? = result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-            onSelect(uri?.toString() ?: "")
+            onSelect(uri?.toString() ?: "SILENT")
         }
     }
 
     val ringtoneName = remember(selectedUri) {
         if (selectedUri.isEmpty()) {
+            "Default"
+        } else if (selectedUri == "SILENT") {
             "Silent"
         } else {
             try {
@@ -496,7 +500,7 @@ private fun SettingsSoundItem(
                     putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION or RingtoneManager.TYPE_ALARM)
                     putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
                     putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
-                    if (selectedUri.isNotEmpty()) {
+                    if (selectedUri.isNotEmpty() && selectedUri != "SILENT") {
                         putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(selectedUri))
                     }
                 }
@@ -525,6 +529,7 @@ private fun SettingsSoundItem(
             )
         }
         
+        Spacer(modifier = Modifier.width(12.dp))
         Surface(
             color = MaterialTheme.colorScheme.surfaceVariant,
             shape = RoundedCornerShape(6.dp),
