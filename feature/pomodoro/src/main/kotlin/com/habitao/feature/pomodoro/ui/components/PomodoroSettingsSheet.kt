@@ -1,14 +1,24 @@
 package com.habitao.feature.pomodoro.ui.components
 
+import android.app.Activity
+import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
@@ -17,6 +27,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,9 +37,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.habitao.feature.pomodoro.service.PomodoroPreferences
 
@@ -54,23 +67,6 @@ fun PomodoroSettingsSheet(
     var vibrateEnabled by remember { mutableStateOf(prefs.vibrateEnabled) }
     var vibrateDurationSeconds by remember { mutableIntStateOf(prefs.vibrateDurationSeconds) }
 
-    val soundOptions = remember {
-        listOf(
-            SoundOption(
-                label = "Default Alarm",
-                uri = "content://settings/system/alarm_alert",
-            ),
-            SoundOption(
-                label = "Default Notification",
-                uri = "content://settings/system/notification_sound",
-            ),
-            SoundOption(
-                label = "Default Ringtone",
-                uri = "content://settings/system/ringtone",
-            ),
-        )
-    }
-
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -79,6 +75,8 @@ fun PomodoroSettingsSheet(
             modifier = Modifier
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
+                .verticalScroll(rememberScrollState())
+                .imePadding()
         ) {
             Text(
                 text = "Timer Settings",
@@ -149,14 +147,12 @@ fun PomodoroSettingsSheet(
             SoundSettingRow(
                 label = "Pomodoro ending sound",
                 selectedUri = pomoEndingSoundUri,
-                options = soundOptions,
                 onSelect = { pomoEndingSoundUri = it },
             )
 
             SoundSettingRow(
                 label = "Break ending sound",
                 selectedUri = breakEndingSoundUri,
-                options = soundOptions,
                 onSelect = { breakEndingSoundUri = it },
             )
 
@@ -218,22 +214,37 @@ private fun SettingsSwitchRow(
     }
 }
 
-private data class SoundOption(
-    val label: String,
-    val uri: String,
-)
-
 @Composable
 private fun SoundSettingRow(
     label: String,
     selectedUri: String,
-    options: List<SoundOption>,
     onSelect: (String) -> Unit,
 ) {
-    val currentIndex = options.indexOfFirst { it.uri == selectedUri }.let { index ->
-        if (index == -1) 0 else index
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val uri: Uri? = result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            if (uri != null) {
+                onSelect(uri.toString())
+            } else {
+                onSelect("") // Silent
+            }
+        }
     }
-    val currentLabel = options.getOrNull(currentIndex)?.label ?: options.first().label
+
+    val ringtoneName = remember(selectedUri) {
+        if (selectedUri.isEmpty()) {
+            "Silent"
+        } else {
+            try {
+                val uri = Uri.parse(selectedUri)
+                val ringtone = RingtoneManager.getRingtone(context, uri)
+                ringtone?.getTitle(context) ?: "Unknown"
+            } catch (e: Exception) {
+                "Unknown"
+            }
+        }
+    }
 
     Row(
         modifier = Modifier
@@ -243,13 +254,20 @@ private fun SoundSettingRow(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyLarge)
-        Button(
+        TextButton(
             onClick = {
-                val nextIndex = (currentIndex + 1) % options.size
-                onSelect(options[nextIndex].uri)
+                val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                    putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION or RingtoneManager.TYPE_ALARM)
+                    putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                    putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
+                    if (selectedUri.isNotEmpty()) {
+                        putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(selectedUri))
+                    }
+                }
+                launcher.launch(intent)
             },
         ) {
-            Text(text = currentLabel)
+            Text(text = ringtoneName, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 150.dp))
         }
     }
 }
@@ -264,6 +282,7 @@ private fun SettingsNumberInput(
 ) {
     var textValue by remember(value) { mutableStateOf(value.toString()) }
     var isError by remember { mutableStateOf(false) }
+    var hasInteracted by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
@@ -292,7 +311,20 @@ private fun SettingsNumberInput(
                     }
                 }
             },
-            modifier = Modifier.width(120.dp),
+            modifier = Modifier
+                .width(120.dp)
+                .onFocusChanged { focusState ->
+                    if (focusState.isFocused && !hasInteracted) {
+                        textValue = ""
+                        hasInteracted = true
+                    } else if (!focusState.isFocused) {
+                        hasInteracted = false
+                        if (textValue.isEmpty()) {
+                            textValue = value.toString()
+                            isError = false
+                        }
+                    }
+                },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
             isError = isError,

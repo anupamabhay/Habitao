@@ -80,7 +80,7 @@ class PomodoroViewModel
         private val todaysSessionsFlow =
             sessionsFlow.map { sessions ->
                 sessions.count { session ->
-                    session.sessionType == PomodoroType.WORK && !session.wasInterrupted
+                    session.sessionType == PomodoroType.WORK && (session.actualDurationSeconds ?: 0) > 0
                 }
             }
 
