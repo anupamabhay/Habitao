@@ -212,8 +212,26 @@ class TimerService : LifecycleService() {
         playCompletionFeedback()
         showCompletionNotification()
         advanceSessionType()
-        timerStateHolder.updateTimerState(TimerState.IDLE)
-        updateNotification(0L)
+
+        if (timerStateHolder.timerState.value == TimerState.IDLE) {
+            return
+        }
+
+        val nextSessionType = timerStateHolder.currentSessionType.value
+        val isAutoStart = when (nextSessionType) {
+            PomodoroType.WORK -> pomodoroPreferences.autoStartNextPomo
+            PomodoroType.SHORT_BREAK, PomodoroType.LONG_BREAK -> pomodoroPreferences.autoStartBreak
+        }
+
+        val cycleCount = timerStateHolder.completedWorkSessions.value
+        val shouldAutoStart = isAutoStart && cycleCount < pomodoroPreferences.autoPomoCycle
+
+        if (shouldAutoStart) {
+            handleStart()
+        } else {
+            timerStateHolder.updateTimerState(TimerState.IDLE)
+            updateNotification(0L)
+        }
     }
 
     private fun playCompletionFeedback() {
@@ -224,6 +242,7 @@ class TimerService : LifecycleService() {
     }
 
     private fun vibrateCompletionPulse() {
+        if (!pomodoroPreferences.vibrateEnabled) return
         if (checkSelfPermission(Manifest.permission.VIBRATE) != PackageManager.PERMISSION_GRANTED) {
             return
         }
@@ -240,16 +259,27 @@ class TimerService : LifecycleService() {
             return
         }
 
-        val effect = VibrationEffect.createOneShot(COMPLETION_VIBRATION_DURATION_MS, VibrationEffect.DEFAULT_AMPLITUDE)
+        val durationMs = pomodoroPreferences.vibrateDurationSeconds * 1000L
+        val effect = VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
         vibrator.vibrate(effect)
     }
 
     private fun playDefaultCompletionSound() {
         try {
-            val uri =
+            val isWorkSession = timerStateHolder.currentSessionType.value == PomodoroType.WORK
+            val uriString = if (isWorkSession) {
+                pomodoroPreferences.pomoEndingSoundUri
+            } else {
+                pomodoroPreferences.breakEndingSoundUri
+            }
+
+            val uri = if (uriString.isNotEmpty()) {
+                android.net.Uri.parse(uriString)
+            } else {
                 RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                     ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                    ?: return
+            } ?: return
+
             val ringtone = RingtoneManager.getRingtone(applicationContext, uri) ?: return
             ringtone.play()
         } catch (_: Throwable) {
@@ -381,7 +411,11 @@ class TimerService : LifecycleService() {
                 .setAutoCancel(true)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setVibrate(COMPLETION_VIBRATION_PATTERN)
+                .apply {
+                    if (pomodoroPreferences.vibrateEnabled) {
+                        setVibrate(longArrayOf(0L, pomodoroPreferences.vibrateDurationSeconds * 1000L))
+                    }
+                }
                 .build()
         notificationManager.notify(NOTIFICATION_COMPLETE_ID, notification)
     }
