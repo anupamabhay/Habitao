@@ -44,6 +44,7 @@ fun PomodoroSettingsSheet(
     var shortBreakDuration by remember { mutableIntStateOf(prefs.shortBreakDurationMinutes) }
     var longBreakDuration by remember { mutableIntStateOf(prefs.longBreakDurationMinutes) }
     var sessionsBeforeLongBreak by remember { mutableIntStateOf(prefs.sessionsBeforeLongBreak) }
+    var totalSessions by remember { mutableIntStateOf(prefs.totalSessions) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -92,6 +93,14 @@ fun PomodoroSettingsSheet(
                 suffix = ""
             )
 
+            SettingsNumberInput(
+                label = "Total Work Sessions",
+                value = totalSessions,
+                onValueChange = { totalSessions = it },
+                valueRange = 1..20,
+                suffix = ""
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
@@ -100,6 +109,7 @@ fun PomodoroSettingsSheet(
                     prefs.shortBreakDurationMinutes = shortBreakDuration
                     prefs.longBreakDurationMinutes = longBreakDuration
                     prefs.sessionsBeforeLongBreak = sessionsBeforeLongBreak
+                    prefs.totalSessions = totalSessions
                     onDismiss()
                 },
                 modifier = Modifier.fillMaxWidth()
