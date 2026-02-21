@@ -2,6 +2,7 @@ package com.habitao.feature.pomodoro.viewmodel
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.PomodoroType
@@ -14,8 +15,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -64,10 +67,10 @@ class PomodoroViewModel
                 val totalSeconds =
                     sessions
                         .filter { session ->
-                            session.sessionType == PomodoroType.WORK && !session.wasInterrupted
+                            session.sessionType == PomodoroType.WORK
                         }
                         .sumOf { session ->
-                            session.actualDurationSeconds ?: session.workDurationSeconds
+                            session.actualDurationSeconds ?: 0
                         }
                 totalSeconds / 60
             }
@@ -96,12 +99,24 @@ class PomodoroViewModel
                 )
             }
 
+        private val preferencesUpdateFlow = callbackFlow {
+            val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+                trySend(Unit)
+            }
+            pomodoroPreferences.sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
+            trySend(Unit)
+            awaitClose {
+                pomodoroPreferences.sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener)
+            }
+        }
+
         val state: StateFlow<PomodoroState> =
             combine(
                 timerCombinedFlow,
                 todaysFocusMinutesFlow,
                 todaysSessionsFlow,
-            ) { timer, todaysFocusMinutes, todaysSessions ->
+                preferencesUpdateFlow,
+            ) { timer, todaysFocusMinutes, todaysSessions, _ ->
                 val defaultTotalSeconds =
                     when (timer.currentSessionType) {
                         PomodoroType.WORK -> pomodoroPreferences.workDurationMinutes.toLong() * 60
