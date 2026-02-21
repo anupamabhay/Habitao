@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>M3 App Settings</title>
+<script type="text/javascript" nonce="5c925ff2520048cab66d47901e9" src="//local.adguard.org?ts=1771657604486&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzQ3MTMyZDIzNjAxZTRjN2JhYTYxZmEyNmZjNjZmYTk0EgsSBxCI5Z_QvwUYAZIBJAoKcHJvamVjdF9pZBIWQhQxMDE0ODUxNzY1MjI3MzEzMzk1NQ%26filename%3D%26opi%3D89354086&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="5c925ff2520048cab66d47901e9" src="//local.adguard.org?ts=1771657604486&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Ibm+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>tailwind.config = {darkMode: "class", theme: {extend: {colors: {primary: "#c8adff", "background-light": "#f6f5f8", "background-dark": "#160f23", "surface-dark": "#32251a", "surface-variant": "#473424", "on-surface": "#eae1d9", "on-surface-variant": "#c8ac93"}, fontFamily: {display: "Ibm Plex Sans"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}}}};</script>
+<style>
+      /* Custom scrollbar for webkit */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #473424;
+        border-radius: 3px;
+      }
+      
+      /* M3 Switch Styles */
+      .m3-switch {
+        position: relative;
+        display: inline-block;
+        width: 52px;
+        height: 32px;
+      }
+      .m3-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #473424; /* surface-variant */
+        transition: .4s;
+        border-radius: 32px;
+        border: 2px solid #8e7f74; /* Outline color */
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 6px;
+        bottom: 6px;
+        background-color: #c8ac93; /* on-surface-variant */
+        transition: .4s;
+        border-radius: 50%;
+      }
+      
+      input:checked + .slider {
+        background-color: #e77e23; /* Primary */
+        border-color: #e77e23;
+      }
+      
+      input:checked + .slider:before {
+        transform: translateX(20px);
+        background-color: #211811; /* on-primary (dark background) */
+        height: 24px;
+        width: 24px;
+        left: 2px;
+        bottom: 2px;
+      }
+
+      /* M3 Ripple Effect - Simple CSS implementation */
+      .ripple {
+        position: relative;
+        overflow: hidden;
+      }
+      .ripple:after {
+        content: "";
+        display: block;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+        background-repeat: no-repeat;
+        background-position: 50%;
+        transform: scale(10, 10);
+        opacity: 0;
+        transition: transform .5s, opacity 1s;
+      }
+      .ripple:active:after {
+        transform: scale(0, 0);
+        opacity: 0.2;
+        transition: 0s;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-on-surface font-display antialiased flex justify-center min-h-screen">
+<!-- Mobile Container -->
+<div class="w-full max-w-md h-screen flex flex-col relative bg-background-light dark:bg-background-dark overflow-hidden shadow-2xl">
+<!-- Top App Bar -->
+<header class="flex items-center justify-between px-4 py-3 bg-background-light dark:bg-background-dark sticky top-0 z-10">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 ripple text-slate-900 dark:text-on-surface">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-xl font-medium text-slate-900 dark:text-on-surface">Settings</h1>
+<div class="w-10 h-10"></div> <!-- Spacer for centering -->
+</header>
+<!-- Main Content (Scrollable) -->
+<main class="flex-1 overflow-y-auto pb-24 px-4">
+<!-- Account Section -->
+<section class="mt-4 mb-6">
+<div class="bg-white dark:bg-surface-dark rounded-xl p-4 flex items-center gap-4 shadow-sm dark:shadow-none">
+<div class="relative shrink-0">
+<img alt="Profile portrait of a user looking at camera" class="w-16 h-16 rounded-full object-cover border-2 border-primary/20" data-alt="User profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCU7aWRKg6aHY02uI2ySUoTGqMNBcjel_EHEU05T4VWGNKxyac_PIS4eMgy5sx5oVT1b0igGD-2gHWUi3KVi3AzkX3CtLNmPPYVYhxWprQDqM-YL-L10N8F9u68wxV6zhj3UVWDVNy9etRHG6pZdc3VhJ85h59oUoCKyeNWR2uRZ86Lh5cjaSovqe_GnN4RIgcXlYUMkYyPruVcH9TCNzcmPKKg3FumyNqg8gPD6WNvDxCWN6zxhhvi9g820NNU70MQJVCLFP0xOsp9"/>
+</div>
+<div class="flex-1 min-w-0">
+<h2 class="text-lg font-medium text-slate-900 dark:text-on-surface truncate">Alex Doe</h2>
+<p class="text-sm text-slate-500 dark:text-on-surface-variant truncate">alex@example.com</p>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-primary/10 ripple shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">edit</span>
+</button>
+</div>
+</section>
+<!-- App Preferences Section -->
+<section class="mb-6">
+<h3 class="text-sm font-medium text-primary ml-4 mb-2 tracking-wide">App Preferences</h3>
+<div class="bg-white dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm dark:shadow-none divide-y divide-slate-100 dark:divide-surface-variant">
+<!-- Theme Item -->
+<button class="w-full flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5 ripple text-left">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-500 dark:text-on-surface-variant">dark_mode</span>
+<div class="flex flex-col">
+<span class="text-base font-normal text-slate-900 dark:text-on-surface">Theme</span>
+<span class="text-xs text-slate-500 dark:text-on-surface-variant">System Default</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-400 dark:text-on-surface-variant text-sm">chevron_right</span>
+</button>
+<!-- Notifications Item -->
+<div class="w-full flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-500 dark:text-on-surface-variant">notifications</span>
+<span class="text-base font-normal text-slate-900 dark:text-on-surface">Notifications</span>
+</div>
+<label class="m3-switch">
+<input checked="" type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+<!-- Daily Reminders Item -->
+<button class="w-full flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5 ripple text-left">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-500 dark:text-on-surface-variant">schedule</span>
+<div class="flex flex-col">
+<span class="text-base font-normal text-slate-900 dark:text-on-surface">Daily Reminders</span>
+</div>
+</div>
+<div class="bg-slate-100 dark:bg-surface-variant px-3 py-1 rounded text-sm font-medium text-slate-700 dark:text-on-surface">
+                            09:00 AM
+                        </div>
+</button>
+</div>
+</section>
+<!-- Data & Security Section -->
+<section class="mb-6">
+<h3 class="text-sm font-medium text-primary ml-4 mb-2 tracking-wide">Data &amp; Security</h3>
+<div class="bg-white dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm dark:shadow-none divide-y divide-slate-100 dark:divide-surface-variant">
+<!-- Cloud Sync Item -->
+<div class="w-full flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-500 dark:text-on-surface-variant">cloud_sync</span>
+<div class="flex flex-col">
+<span class="text-base font-normal text-slate-900 dark:text-on-surface">Cloud Sync</span>
+<span class="text-xs text-slate-500 dark:text-on-surface-variant">Last synced 2m ago</span>
+</div>
+</div>
+<label class="m3-switch">
+<input checked="" type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+<!-- Export Data Item -->
+<button class="w-full flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5 ripple text-left group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-500 dark:text-on-surface-variant group-hover:text-primary transition-colors">download</span>
+<span class="text-base font-normal text-slate-900 dark:text-on-surface">Export Data</span>
+</div>
+</button>
+</div>
+</section>
+<!-- About Section -->
+<section class="mb-6">
+<h3 class="text-sm font-medium text-primary ml-4 mb-2 tracking-wide">About</h3>
+<div class="bg-white dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm dark:shadow-none divide-y divide-slate-100 dark:divide-surface-variant">
+<!-- Version Item -->
+<div class="w-full flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-500 dark:text-on-surface-variant">info</span>
+<span class="text-base font-normal text-slate-900 dark:text-on-surface">Version</span>
+</div>
+<span class="text-sm text-slate-400 dark:text-on-surface-variant/70">1.0.2</span>
+</div>
+<!-- Privacy Policy Item -->
+<a class="w-full flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5 ripple text-left no-underline" href="#">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-500 dark:text-on-surface-variant">policy</span>
+<span class="text-base font-normal text-slate-900 dark:text-on-surface">Privacy Policy</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 dark:text-on-surface-variant text-sm">open_in_new</span>
+</a>
+</div>
+</section>
+<div class="text-center pb-8 opacity-40">
+<p class="text-xs text-slate-500 dark:text-on-surface-variant">M3 Productivity App © 2023</p>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="border-t border-slate-200 dark:border-surface-variant bg-white dark:bg-surface-dark px-2 pb-5 pt-2 flex justify-between items-center z-20">
+<a class="group flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-on-surface-variant hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<div class="flex h-8 w-16 items-center justify-center rounded-full group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">bar_chart</span>
+</div>
+<p class="text-xs font-medium leading-normal">Stats</p>
+</a>
+<a class="group flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-on-surface-variant hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<div class="flex h-8 w-16 items-center justify-center rounded-full group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">check_circle</span>
+</div>
+<p class="text-xs font-medium leading-normal">Habits</p>
+</a>
+<a class="group flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-on-surface-variant hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<div class="flex h-8 w-16 items-center justify-center rounded-full group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">autorenew</span>
+</div>
+<p class="text-xs font-medium leading-normal">Routines</p>
+</a>
+<a class="group flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-on-surface-variant hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<div class="flex h-8 w-16 items-center justify-center rounded-full group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">task_alt</span>
+</div>
+<p class="text-xs font-medium leading-normal">Tasks</p>
+</a>
+<!-- Active Settings Tab -->
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-900 dark:text-on-surface" href="#">
+<div class="flex h-8 w-16 items-center justify-center rounded-full bg-primary/20 dark:bg-primary/30">
+<span class="material-symbols-outlined text-[24px] text-primary" style="font-variation-settings: 'FILL' 1">settings</span>
+</div>
+<p class="text-xs font-bold leading-normal text-primary dark:text-on-surface">Settings</p>
+</a>
+</nav>
+</div>
+</body></html>

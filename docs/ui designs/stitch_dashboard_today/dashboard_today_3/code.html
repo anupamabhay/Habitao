@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>M3 Habits Management</title>
+<script type="text/javascript" nonce="5c925ff2520048cab66d47901e9" src="//local.adguard.org?ts=1771657604486&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzQwZjBhYzQ0ODRiYjQ2MTc5NDVmZTk0NmNmMGQ2MmQwEgsSBxCI5Z_QvwUYAZIBJAoKcHJvamVjdF9pZBIWQhQxMDE0ODUxNzY1MjI3MzEzMzk1NQ%26filename%3D%26opi%3D89354086&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="5c925ff2520048cab66d47901e9" src="//local.adguard.org?ts=1771657604486&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Ibm+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {primary: "#c8adff", "on-primary": "#ffffff", "primary-container": "#ffdbca", "on-primary-container": "#341100", secondary: "#765748", "secondary-container": "#ffdcbe", "on-secondary-container": "#2c160a", tertiary: "#655f31", "tertiary-container": "#ece3aa", "on-tertiary-container": "#1e1b00", surface: "#fff8f4", "surface-dim": "#ded8d5", "surface-bright": "#fff8f4", "on-surface": "#211a17", "on-surface-variant": "#52443c", outline: "#85736b", "outline-variant": "#d8c2bb", "background-light": "#f6f5f8", "background-dark": "#160f23", "surface-container": "#f0dbd4", "surface-container-high": "#ebe0dc", "surface-container-highest": "#e6e1e0", "on-surface-container": "#211a17", "dark-surface-container": "#362b25"}, fontFamily: {display: "Ibm Plex Sans"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, boxShadow: {"elevation-1": "0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)", "elevation-2": "0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15)"}}}};</script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface dark:bg-background-dark text-on-surface dark:text-slate-100 min-h-screen pb-24 relative">
+<header class="px-4 py-4 sticky top-0 bg-surface/95 dark:bg-background-dark/95 backdrop-blur-sm z-30 transition-colors flex items-center justify-between">
+<h1 class="text-3xl font-bold text-on-surface dark:text-white">Habits</h1>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center size-10 rounded-full text-on-surface-variant dark:text-slate-400 hover:bg-on-surface/10 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="flex items-center justify-center size-10 rounded-full text-on-surface-variant dark:text-slate-400 hover:bg-on-surface/10 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</header>
+<section class="px-0 mb-4">
+<div class="flex overflow-x-auto gap-2 px-4 pb-4 hide-scrollbar snap-x items-center">
+<div class="snap-start flex flex-col items-center justify-center min-w-[52px] h-[78px] rounded-full border border-outline/20 dark:border-white/10 text-on-surface-variant dark:text-slate-400">
+<span class="text-xs font-medium">Mon</span>
+<span class="text-lg font-bold">12</span>
+<div class="flex gap-[2px] mt-1">
+<div class="size-1 rounded-full bg-primary/50"></div>
+<div class="size-1 rounded-full bg-secondary/50"></div>
+</div>
+</div>
+<div class="snap-start flex flex-col items-center justify-center min-w-[52px] h-[78px] rounded-full border border-outline/20 dark:border-white/10 text-on-surface-variant dark:text-slate-400">
+<span class="text-xs font-medium">Tue</span>
+<span class="text-lg font-bold">13</span>
+<div class="flex gap-[2px] mt-1">
+<div class="size-1 rounded-full bg-primary/50"></div>
+</div>
+</div>
+<div class="snap-start flex flex-col items-center justify-center min-w-[52px] h-[78px] rounded-full bg-primary text-on-primary shadow-lg shadow-primary/25 transform scale-105">
+<span class="text-xs font-medium opacity-90">Wed</span>
+<span class="text-lg font-bold">14</span>
+<div class="flex gap-[2px] mt-1">
+<div class="size-1 rounded-full bg-white"></div>
+<div class="size-1 rounded-full bg-white/70"></div>
+</div>
+</div>
+<div class="snap-start flex flex-col items-center justify-center min-w-[52px] h-[78px] rounded-full border border-outline/20 dark:border-white/10 text-on-surface-variant dark:text-slate-400">
+<span class="text-xs font-medium">Thu</span>
+<span class="text-lg font-bold">15</span>
+<div class="flex gap-[2px] mt-1">
+<div class="size-1 rounded-full bg-tertiary/50"></div>
+</div>
+</div>
+<div class="snap-start flex flex-col items-center justify-center min-w-[52px] h-[78px] rounded-full border border-outline/20 dark:border-white/10 text-on-surface-variant dark:text-slate-400">
+<span class="text-xs font-medium">Fri</span>
+<span class="text-lg font-bold">16</span>
+<div class="h-1 mt-1"></div>
+</div>
+<div class="snap-start flex flex-col items-center justify-center min-w-[52px] h-[78px] rounded-full border border-outline/20 dark:border-white/10 text-on-surface-variant dark:text-slate-400">
+<span class="text-xs font-medium">Sat</span>
+<span class="text-lg font-bold">17</span>
+<div class="flex gap-[2px] mt-1">
+<div class="size-1 rounded-full bg-primary/50"></div>
+<div class="size-1 rounded-full bg-secondary/50"></div>
+</div>
+</div>
+<div class="snap-start flex flex-col items-center justify-center min-w-[52px] h-[78px] rounded-full border border-outline/20 dark:border-white/10 text-on-surface-variant dark:text-slate-400">
+<span class="text-xs font-medium">Sun</span>
+<span class="text-lg font-bold">18</span>
+<div class="flex gap-[2px] mt-1">
+<div class="size-1 rounded-full bg-primary/50"></div>
+</div>
+</div>
+</div>
+</section>
+<main class="px-4 space-y-3">
+<article class="bg-surface-container-highest dark:bg-dark-surface-container rounded-[20px] p-4 flex items-center gap-4 transition-all active:scale-[0.99] active:brightness-95">
+<div class="size-12 rounded-xl bg-[#3E3630] flex items-center justify-center text-[#ffdcbe] shrink-0">
+<span class="material-symbols-outlined">self_improvement</span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="text-base font-semibold text-on-surface dark:text-white truncate">Morning Meditation</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-xs text-on-surface-variant dark:text-slate-400">15 mins • daily</span>
+<div class="h-3 flex items-end gap-[3px] opacity-70">
+<div class="w-1 bg-primary/40 h-[40%] rounded-sm"></div>
+<div class="w-1 bg-primary/40 h-[60%] rounded-sm"></div>
+<div class="w-1 bg-primary/40 h-[30%] rounded-sm"></div>
+<div class="w-1 bg-primary/40 h-[80%] rounded-sm"></div>
+<div class="w-1 bg-primary/40 h-[50%] rounded-sm"></div>
+<div class="w-1 bg-primary/40 h-[90%] rounded-sm"></div>
+<div class="w-1 bg-primary h-full rounded-sm"></div>
+</div>
+</div>
+</div>
+<div class="shrink-0">
+<input checked="" class="size-6 rounded-md border-outline text-primary focus:ring-primary/20 dark:bg-white/5 dark:border-white/20 transition-all cursor-pointer" type="checkbox"/>
+</div>
+</article>
+<article class="bg-surface-container-highest dark:bg-dark-surface-container rounded-[20px] p-4 flex items-center gap-4 transition-all active:scale-[0.99] active:brightness-95">
+<div class="size-12 rounded-xl bg-[#3E3630] flex items-center justify-center text-[#ffdcbe] shrink-0">
+<span class="material-symbols-outlined">menu_book</span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="text-base font-semibold text-on-surface dark:text-white truncate">Read 20 Pages</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-xs text-on-surface-variant dark:text-slate-400">Growth • streak: 5</span>
+<div class="h-3 flex items-end gap-[3px] opacity-70">
+<div class="w-1 bg-[#d8c2bb] h-[20%] rounded-sm"></div>
+<div class="w-1 bg-[#d8c2bb] h-[40%] rounded-sm"></div>
+<div class="w-1 bg-[#d8c2bb] h-[40%] rounded-sm"></div>
+<div class="w-1 bg-[#d8c2bb] h-[100%] rounded-sm"></div>
+<div class="w-1 bg-[#d8c2bb] h-[100%] rounded-sm"></div>
+<div class="w-1 bg-[#d8c2bb] h-[80%] rounded-sm"></div>
+<div class="w-1 bg-[#85736b] h-[40%] rounded-sm"></div>
+</div>
+</div>
+</div>
+<div class="shrink-0">
+<input class="size-6 rounded-md border-outline text-secondary focus:ring-secondary/20 dark:bg-white/5 dark:border-white/20 transition-all cursor-pointer" type="checkbox"/>
+</div>
+</article>
+<article class="bg-surface-container-highest dark:bg-dark-surface-container rounded-[20px] p-4 flex items-center gap-4 transition-all active:scale-[0.99] active:brightness-95">
+<div class="size-12 rounded-xl bg-[#3E3630] flex items-center justify-center text-[#ffdcbe] shrink-0">
+<span class="material-symbols-outlined">water_drop</span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="text-base font-semibold text-on-surface dark:text-white truncate">Drink 2L Water</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-xs text-on-surface-variant dark:text-slate-400">Health • 1.5L / 2L</span>
+<div class="h-2 w-14 bg-surface-dim dark:bg-white/10 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%] rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="shrink-0">
+<input class="size-6 rounded-md border-outline text-primary focus:ring-primary/20 dark:bg-white/5 dark:border-white/20 transition-all cursor-pointer" type="checkbox"/>
+</div>
+</article>
+<article class="bg-surface-container-highest dark:bg-dark-surface-container rounded-[20px] p-4 flex items-center gap-4 transition-all active:scale-[0.99] active:brightness-95 opacity-60">
+<div class="size-12 rounded-xl bg-gray-200 dark:bg-white/10 flex items-center justify-center text-gray-600 dark:text-slate-400 shrink-0">
+<span class="material-symbols-outlined">fitness_center</span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="text-base font-semibold text-on-surface dark:text-white truncate line-through decoration-on-surface-variant/50">Morning Workout</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-xs text-on-surface-variant dark:text-slate-400">Completed at 7:30 AM</span>
+</div>
+</div>
+<div class="shrink-0">
+<input checked="" class="size-6 rounded-md border-outline text-gray-500 focus:ring-gray-500/20 dark:bg-white/5 dark:border-white/20 transition-all cursor-not-allowed opacity-50" disabled="" type="checkbox"/>
+</div>
+</article>
+<article class="bg-surface-container-highest dark:bg-dark-surface-container rounded-[20px] p-4 flex items-center gap-4 transition-all active:scale-[0.99] active:brightness-95">
+<div class="size-12 rounded-xl bg-[#3E3630] flex items-center justify-center text-[#ffdcbe] shrink-0">
+<span class="material-symbols-outlined">code</span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="text-base font-semibold text-on-surface dark:text-white truncate">Code for 1 Hour</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-xs text-on-surface-variant dark:text-slate-400">Career • streak: 2</span>
+<div class="h-3 flex items-end gap-[3px] opacity-70">
+<div class="w-1 bg-[#d8c2bb] h-[0%] rounded-sm"></div>
+<div class="w-1 bg-[#d8c2bb] h-[50%] rounded-sm"></div>
+<div class="w-1 bg-[#d8c2bb] h-[20%] rounded-sm"></div>
+<div class="w-1 bg-[#d8c2bb] h-[0%] rounded-sm"></div>
+<div class="w-1 bg-[#d8c2bb] h-[100%] rounded-sm"></div>
+<div class="w-1 bg-[#d8c2bb] h-[100%] rounded-sm"></div>
+<div class="w-1 bg-[#85736b] h-[10%] rounded-sm"></div>
+</div>
+</div>
+</div>
+<div class="shrink-0">
+<input class="size-6 rounded-md border-outline text-tertiary focus:ring-tertiary/20 dark:bg-white/5 dark:border-white/20 transition-all cursor-pointer" type="checkbox"/>
+</div>
+</article>
+<div class="h-8"></div>
+</main>
+<button class="fixed bottom-24 right-6 size-14 rounded-2xl bg-primary-container text-on-primary-container dark:bg-primary dark:text-on-primary shadow-elevation-2 flex items-center justify-center z-50 transition-all hover:shadow-lg active:scale-95 active:shadow-sm">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+<nav class="fixed bottom-0 left-0 right-0 bg-surface/90 dark:bg-background-dark/90 backdrop-blur-xl border-t border-outline/10 dark:border-white/5 px-4 pb-6 pt-3 flex justify-between items-center z-40">
+<a class="flex flex-col items-center gap-1 w-16 text-on-surface-variant dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors group" href="#">
+<div class="py-1 px-4 rounded-full group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined fill-0 group-hover:fill-1">bar_chart</span>
+</div>
+<span class="text-[10px] font-medium">Stats</span>
+</a>
+<a class="flex flex-col items-center gap-1 w-16 text-primary" href="#">
+<div class="py-1 px-4 rounded-full bg-primary/10 dark:bg-primary/20">
+<span class="material-symbols-outlined fill-1">check_circle</span>
+</div>
+<span class="text-[10px] font-bold">Habits</span>
+</a>
+<a class="flex flex-col items-center gap-1 w-16 text-on-surface-variant dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors group" href="#">
+<div class="py-1 px-4 rounded-full group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined fill-0 group-hover:fill-1">schedule</span>
+</div>
+<span class="text-[10px] font-medium">Routines</span>
+</a>
+<a class="flex flex-col items-center gap-1 w-16 text-on-surface-variant dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors group" href="#">
+<div class="py-1 px-4 rounded-full group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined fill-0 group-hover:fill-1">task_alt</span>
+</div>
+<span class="text-[10px] font-medium">Tasks</span>
+</a>
+<a class="flex flex-col items-center gap-1 w-16 text-on-surface-variant dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors group" href="#">
+<div class="py-1 px-4 rounded-full group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined fill-0 group-hover:fill-1">timer</span>
+</div>
+<span class="text-[10px] font-medium">Timer</span>
+</a>
+</nav>
+</body></html>
