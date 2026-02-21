@@ -203,8 +203,9 @@ fun PomodoroScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column {
+                            val focusLabel = formatFocusDuration(state.todaysFocusSeconds)
                             Text(
-                                text = "${state.todaysFocusMinutes} min",
+                                text = focusLabel,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.SemiBold,
                             )
@@ -230,6 +231,18 @@ fun PomodoroScreen(
                 }
             }
         }
+    }
+}
+
+private fun formatFocusDuration(totalSeconds: Int): String {
+    val safeSeconds = totalSeconds.coerceAtLeast(0)
+    val hours = safeSeconds / 3600
+    val minutes = (safeSeconds % 3600) / 60
+    val seconds = safeSeconds % 60
+    return when {
+        hours > 0 -> "${hours}h ${minutes}m ${seconds}s"
+        minutes > 0 -> "${minutes}m ${seconds}s"
+        else -> "${seconds}s"
     }
 }
 
