@@ -101,12 +101,19 @@
 | Today's Focus | Shows exact duration (Hh Mm Ss format) + sessions + rounds | Complete |
 | Habit Reminder Sound | Added sound + vibration to habit reminder notifications | Complete |
 | Stats Screen | Redesigned with Pomodoro focus data alongside habit stats | Complete |
+| Sound Auto-Stop | MediaPlayer-based playback with 10s timeout, cleanup on lifecycle | Complete |
+| Stats Real-time | Focus time ticks up live while timer runs | Complete |
+| Stats Filters | Day/Week/Month segmented buttons update chart subtitle | Complete |
+| Scrollable Calendar | Habits calendar now scrolls infinitely (LazyRow ±1000 days) | Complete |
+| Nav Default Tab | Stats page is now the default/first tab | Complete |
 
 #### Key Decisions:
 - Used SharedPreferences for Pomodoro settings (simple sync reads needed by foreground service)
 - Sound picker defaults to "Default" (system alarm), user can explicitly choose "Silent"
 - "Round" = completing all configured work sessions (e.g., 5/5 = 1 round)
 - Separated vibrate toggle from sound picker (per competitor app research)
+- Used MediaPlayer instead of Ringtone for completion sounds (Ringtone loops alarm URIs infinitely)
+- 10-second timeout on completion sounds to prevent battery drain and ANR
 
 ---
 

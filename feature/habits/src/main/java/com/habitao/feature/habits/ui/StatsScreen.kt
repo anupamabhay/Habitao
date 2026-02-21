@@ -106,6 +106,13 @@ private fun StatsContent(
     state: StatsState,
     modifier: Modifier = Modifier,
 ) {
+    var selectedIndex by remember { mutableStateOf(0) }
+    val activitySubtitle =
+        when (selectedIndex) {
+            0 -> "Today"
+            1 -> "Past 7 days"
+            else -> "Past 30 days"
+        }
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -118,7 +125,6 @@ private fun StatsContent(
 
         // Time Filter
         item {
-            var selectedIndex by remember { mutableStateOf(0) }
             val options = listOf("Day", "Week", "Month")
             
             SingleChoiceSegmentedButtonRow(
@@ -138,7 +144,7 @@ private fun StatsContent(
 
         // Unified Activity Chart
         item {
-            UnifiedActivityCard()
+            UnifiedActivityCard(subtitle = activitySubtitle)
         }
 
         // Completion Breakdown
@@ -322,7 +328,7 @@ private fun StatsContent(
 }
 
 @Composable
-private fun UnifiedActivityCard() {
+private fun UnifiedActivityCard(subtitle: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -338,7 +344,7 @@ private fun UnifiedActivityCard() {
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "Past 7 days",
+                text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

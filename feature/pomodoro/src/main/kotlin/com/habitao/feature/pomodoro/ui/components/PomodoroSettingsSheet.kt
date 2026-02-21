@@ -183,9 +183,9 @@ fun PomodoroSettingsSheet(
                 )
                 SettingsDivider()
                 SettingsNumberItem(
-                    label = "Auto-start limit",
+                    label = "Max consecutive auto-starts",
                     value = autoPomoCycle,
-                    suffix = "cycles",
+                    suffix = "sessions",
                     range = 1..20,
                     icon = Icons.Filled.Refresh,
                     onValueChange = { autoPomoCycle = it }
