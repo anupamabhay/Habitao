@@ -74,9 +74,9 @@ private enum class Tab(
     val unselectedIcon: ImageVector,
     val route: Any,
 ) {
+    STATS("Stats", Icons.Filled.BarChart, Icons.Outlined.BarChart, StatsRoute),
     HABITS("Habits", Icons.Filled.CheckCircle, Icons.Outlined.CheckCircleOutline, HabitsRoute),
     POMODORO("Pomodoro", Icons.Filled.Timer, Icons.Outlined.Timer, PomodoroRoute),
-    STATS("Stats", Icons.Filled.BarChart, Icons.Outlined.BarChart, StatsRoute),
     SETTINGS("Settings", Icons.Filled.Settings, Icons.Outlined.Settings, SettingsRoute),
 }
 
@@ -140,7 +140,7 @@ private fun HabitaoApp() {
 
         NavHost(
             navController = navController,
-            startDestination = HabitsRoute,
+            startDestination = StatsRoute,
         ) {
             // -- Tab destinations --
             composable<HabitsRoute> {

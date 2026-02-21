@@ -8,6 +8,8 @@ import android.content.pm.PackageManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.media.AudioAttributes
+import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
 import android.os.VibrationEffect
@@ -42,6 +44,8 @@ class TimerService : LifecycleService() {
     private var timerJob: Job? = null
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var pomodoroPreferences: PomodoroPreferences
+    private var completionMediaPlayer: MediaPlayer? = null
+    private val soundHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private val notificationManager by lazy {
         getSystemService(NotificationManager::class.java)
     }
@@ -99,7 +103,13 @@ class TimerService : LifecycleService() {
         return START_STICKY
     }
 
+    override fun onDestroy() {
+        stopCompletionSound()
+        super.onDestroy()
+    }
+
     private fun handleStart() {
+        stopCompletionSound()
         createNotificationChannel()
         if (timerStateHolder.timerState.value == TimerState.RUNNING) {
             return
@@ -141,6 +151,7 @@ class TimerService : LifecycleService() {
     }
 
     private fun handleStop() {
+        stopCompletionSound()
         timerJob?.cancel()
         val remaining = timerStateHolder.remainingSeconds.value
         val total = timerStateHolder.totalSeconds.value
@@ -157,6 +168,7 @@ class TimerService : LifecycleService() {
     }
 
     private fun handleSkip() {
+        stopCompletionSound()
         timerJob?.cancel()
         val remaining = timerStateHolder.remainingSeconds.value
         val total = timerStateHolder.totalSeconds.value
@@ -265,6 +277,7 @@ class TimerService : LifecycleService() {
     }
 
     private fun playDefaultCompletionSound() {
+        stopCompletionSound()
         try {
             val isWorkSession = timerStateHolder.currentSessionType.value == PomodoroType.WORK
             val uriString = if (isWorkSession) {
@@ -282,11 +295,36 @@ class TimerService : LifecycleService() {
                     ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             } ?: return
 
-            val ringtone = RingtoneManager.getRingtone(applicationContext, uri) ?: return
-            ringtone.play()
+            val mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build(),
+                )
+                setDataSource(applicationContext, uri)
+                isLooping = false
+                setOnCompletionListener { stopCompletionSound() }
+                prepare()
+                start()
+            }
+            completionMediaPlayer = mediaPlayer
+            soundHandler.postDelayed({ stopCompletionSound() }, 10_000L)
         } catch (_: Throwable) {
             // Best-effort only: some devices/OS versions can throw or block playback.
+            stopCompletionSound()
         }
+    }
+
+    private fun stopCompletionSound() {
+        soundHandler.removeCallbacksAndMessages(null)
+        completionMediaPlayer?.let { mp ->
+            try {
+                if (mp.isPlaying) mp.stop()
+                mp.release()
+            } catch (_: Throwable) {}
+        }
+        completionMediaPlayer = null
     }
 
     private fun saveSession(
