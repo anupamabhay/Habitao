@@ -33,7 +33,7 @@ data class PomodoroState(
     val totalCompletedWorkSessions: Int = 0,
     val sessionsBeforeLongBreak: Int = 4,
     val totalSessions: Int = 5,
-    val todaysFocusMinutes: Int = 0,
+    val todaysFocusSeconds: Int = 0,
     val todaysSessions: Int = 0,
 )
 
@@ -64,17 +64,15 @@ class PomodoroViewModel
                 .map { result -> result.getOrElse { emptyList() } }
                 .catch { emit(emptyList()) }
 
-        private val todaysFocusMinutesFlow =
+        private val todaysFocusSecondsFlow =
             sessionsFlow.map { sessions ->
-                val totalSeconds =
-                    sessions
-                        .filter { session ->
-                            session.sessionType == PomodoroType.WORK
-                        }
-                        .sumOf { session ->
-                            session.actualDurationSeconds ?: 0
-                        }
-                totalSeconds / 60
+                sessions
+                    .filter { session ->
+                        session.sessionType == PomodoroType.WORK
+                    }
+                    .sumOf { session ->
+                        session.actualDurationSeconds ?: 0
+                    }
             }
 
         private val todaysSessionsFlow =
@@ -121,10 +119,10 @@ class PomodoroViewModel
         val state: StateFlow<PomodoroState> =
             combine(
                 timerCombinedFlow,
-                todaysFocusMinutesFlow,
+                todaysFocusSecondsFlow,
                 todaysSessionsFlow,
                 preferencesUpdateFlow,
-            ) { timer, todaysFocusMinutes, todaysSessions, _ ->
+            ) { timer, todaysFocusSeconds, todaysSessions, _ ->
                 val defaultTotalSeconds =
                     when (timer.currentSessionType) {
                         PomodoroType.WORK -> pomodoroPreferences.workDurationMinutes.toLong() * 60
@@ -145,7 +143,7 @@ class PomodoroViewModel
                     totalCompletedWorkSessions = timer.totalCompletedWorkSessions,
                     sessionsBeforeLongBreak = pomodoroPreferences.sessionsBeforeLongBreak,
                     totalSessions = pomodoroPreferences.totalSessions,
-                    todaysFocusMinutes = todaysFocusMinutes,
+                    todaysFocusSeconds = todaysFocusSeconds,
                     todaysSessions = todaysSessions,
                 )
             }.stateIn(
