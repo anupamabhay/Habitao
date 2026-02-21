@@ -100,6 +100,7 @@
 | Cycle (Round) Counter | Daily round tracking, resets each day | Complete |
 | Today's Focus | Shows exact duration (Hh Mm Ss format) + sessions + rounds | Complete |
 | Habit Reminder Sound | Added sound + vibration to habit reminder notifications | Complete |
+| Stats Screen | Redesigned with Pomodoro focus data alongside habit stats | Complete |
 
 #### Key Decisions:
 - Used SharedPreferences for Pomodoro settings (simple sync reads needed by foreground service)
@@ -110,12 +111,6 @@
 ---
 
 ## Next Up (Prioritized)
-
-### This Session (Remaining)
-1. **Stats Screen Redesign** (Priority: High)
-   - Add Pomodoro stats alongside habit stats
-   - Follow Stitch M3 Productivity Suite design
-   - Show focus time trends, session counts, round data
 
 ### After This Session
 1. **Routines Module** (Priority: High)
