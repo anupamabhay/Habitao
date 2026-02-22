@@ -1,0 +1,183 @@
+# Habitao - Planned Features & Task Breakdown
+
+**Last Updated:** February 23, 2026
+**Status:** Active Planning
+
+---
+
+## Priority 1: Performance Optimization
+
+### 1.1 Calendar Widget (Replace LazyRow with HorizontalPager)
+**Branch:** `feature/calendar-optimization`
+**Effort:** Small (1 session)
+- Replace LazyRow in HabitsScreen with HorizontalPager for week-based swiping
+- Use large page count with middle-index centering for infinite scroll illusion
+- Pre-calculate calendar data in ViewModel (not in Composable)
+- Add snap-to-week physics
+- Limit visible range to reasonable bounds (no Int.MAX_VALUE items)
+
+### 1.2 Compose Recomposition Optimization
+**Branch:** `feature/performance`
+**Effort:** Medium (1-2 sessions)
+- Audit all screens for unnecessary recompositions using Layout Inspector
+- Convert direct state reads to lambda-based modifiers where applicable
+- Add `key` parameters to all LazyColumn/LazyRow items
+- Use `derivedStateOf` for scroll-dependent state (e.g., show/hide buttons)
+- Defer rapidly-changing state reads (timer seconds) to Layout phase
+- Add Baseline Profiles for critical user paths
+
+### 1.3 General Performance
+**Branch:** `feature/performance`
+**Effort:** Small (1 session)
+- Review all ViewModels for heavy operations on main thread
+- Ensure all database operations use IO dispatcher
+- Review image loading and memory usage
+- Profile cold start time and optimize if needed
+
+---
+
+## Priority 2: Pomodoro UX Enhancements
+
+### 2.1 Task Association (Link Pomodoro to Tasks)
+**Branch:** `feature/pomodoro-tasks`
+**Effort:** Large (2-3 sessions)
+**Depends on:** Tasks module being implemented
+- Add optional "task" field to PomodoroSession model
+- Before starting timer, show task selector (list of active tasks)
+- Allow starting without a task ("Free focus")
+- Track total Pomodoro time per task
+- Show per-task focus time in task detail view
+
+### 2.2 Full-Screen / Desk Clock Mode
+**Branch:** `feature/pomodoro-fullscreen`
+**Effort:** Medium (1-2 sessions)
+- Add full-screen timer mode (tap to enter, back to exit)
+- Dark background, large timer text, minimal UI
+- Keep screen awake during full-screen mode (FLAG_KEEP_SCREEN_ON)
+- Show session progress dots at bottom
+- Optional ambient sounds integration (future)
+
+### 2.3 Timer Animations
+**Branch:** `feature/pomodoro-animations`
+**Effort:** Medium (1-2 sessions)
+- Research and implement 2-3 timer animation styles:
+  - Shrinking circle (current, polish it)
+  - Growing plant/tree (Forest-style, simpler version)
+  - Filling hourglass
+- Let user choose animation style in settings
+- Use Compose Canvas for custom drawing
+- Ensure animations don't cause jank (use lambda-based state reads)
+
+### 2.4 Focus Sounds / White Noise
+**Branch:** `feature/pomodoro-sounds`
+**Effort:** Medium (1-2 sessions)
+- Add ambient sound player (rain, cafe, forest, ocean)
+- Bundle 4-5 short audio loops as raw resources
+- Play/pause with timer, fade in/out
+- Volume control independent of system volume
+- Sound selection in Pomodoro settings
+
+---
+
+## Priority 3: Routines Module
+
+### 3.1 Data Layer
+**Branch:** `feature/routines`
+**Effort:** Medium (1-2 sessions)
+- Create Routine and RoutineStep domain models
+- Create Room entities and DAOs
+- Create RoutineRepository interface and implementation
+- Add Hilt DI bindings
+- Database migration (version bump)
+
+### 3.2 Routine CRUD UI
+**Branch:** `feature/routines`
+**Effort:** Large (2-3 sessions)
+- Create Routine screen with list of routines
+- Create/Edit routine form (title, description, schedule)
+- Step management (add/remove/reorder with drag handles)
+- Step completion tracking (checkboxes)
+- Partial completion logic (X of Y steps done)
+
+### 3.3 Routine Scheduling
+**Branch:** `feature/routines`
+**Effort:** Medium (1 session)
+- Apply same frequency patterns as habits (daily, specific days, etc.)
+- Auto-reset routine steps based on schedule
+- Reminder notifications for routines
+
+---
+
+## Priority 4: Tasks Module
+
+### 4.1 Data Layer
+**Branch:** `feature/tasks`
+**Effort:** Medium (1-2 sessions)
+- Create Task and Subtask domain models
+- Create Room entities and DAOs (with foreign key for subtasks)
+- Create TaskRepository interface and implementation
+- Add Hilt DI bindings
+- Database migration
+
+### 4.2 Task CRUD UI
+**Branch:** `feature/tasks`
+**Effort:** Large (2-3 sessions)
+- Task list screen (grouped by Today/Tomorrow/This Week/Later)
+- Create/Edit task form (title, description, due date, priority)
+- Subtask management (add/remove, checkbox)
+- Swipe to complete/delete
+- Priority indicators (color-coded)
+
+### 4.3 Task Reminders
+**Branch:** `feature/tasks`
+**Effort:** Small (1 session)
+- Deadline reminder notifications
+- Configurable reminder time (e.g., 1 hour before, at due time)
+- Overdue task highlighting
+
+---
+
+## Priority 5: Polish & Launch Prep
+
+### 5.1 Home Screen Widget
+**Branch:** `feature/widget`
+**Effort:** Large (2-3 sessions)
+- Design widget layout (today's habits + next task)
+- Implement with RemoteViews + WorkManager
+- Quick actions from widget (complete habit, start timer)
+- Widget configuration activity
+
+### 5.2 Settings Screen
+**Branch:** `feature/settings`
+**Effort:** Medium (1-2 sessions)
+- Theme selection (light/dark/system)
+- Notification preferences
+- Data export (JSON)
+- About screen
+- App version info
+
+### 5.3 Onboarding
+**Branch:** `feature/onboarding`
+**Effort:** Medium (1 session)
+- Welcome screen with app overview
+- Permission requests (notifications, alarms)
+- Quick habit template suggestions
+- Skip option
+
+---
+
+## Implementation Order
+
+| Session | Task | Branch | Priority |
+|---------|------|--------|----------|
+| Next | Calendar optimization + Performance | feature/calendar-optimization | P1 |
+| +1 | Compose performance audit | feature/performance | P1 |
+| +2 | Pomodoro full-screen mode | feature/pomodoro-fullscreen | P2 |
+| +3 | Pomodoro timer animations | feature/pomodoro-animations | P2 |
+| +4 | Routines data layer | feature/routines | P3 |
+| +5 | Routines CRUD UI | feature/routines | P3 |
+| +6 | Tasks data layer | feature/tasks | P4 |
+| +7 | Tasks CRUD UI | feature/tasks | P4 |
+| +8 | Task association for Pomodoro | feature/pomodoro-tasks | P2 |
+| +9 | Widget | feature/widget | P5 |
+| +10 | Settings + Onboarding | feature/settings | P5 |
