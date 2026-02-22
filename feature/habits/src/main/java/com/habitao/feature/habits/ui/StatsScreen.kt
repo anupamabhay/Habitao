@@ -119,12 +119,12 @@ private fun StatsContent(
             .padding(horizontal = Dimensions.screenPaddingHorizontal),
         verticalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
     ) {
-        item {
+        item(key = "top_spacer") {
             Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
         }
 
         // Time Filter
-        item {
+        item(key = "time_filter") {
             val options = listOf("Day", "Week", "Month")
             
             SingleChoiceSegmentedButtonRow(
@@ -143,12 +143,12 @@ private fun StatsContent(
         }
 
         // Unified Activity Chart
-        item {
+        item(key = "unified_activity") {
             UnifiedActivityCard(subtitle = activitySubtitle)
         }
 
         // Completion Breakdown
-        item {
+        item(key = "completion_breakdown") {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing)
@@ -251,7 +251,7 @@ private fun StatsContent(
         }
 
         // Current Streaks Header
-        item {
+        item(key = "current_streaks_header") {
             Text(
                 text = "Current Streaks",
                 style = MaterialTheme.typography.titleMedium,
@@ -265,7 +265,7 @@ private fun StatsContent(
 
         // Individual habit streaks
         if (state.habitStats.isEmpty()) {
-            item {
+            item(key = "empty_habit_stats") {
                 Text(
                     text = "No habits tracked yet",
                     style = MaterialTheme.typography.bodyMedium,
@@ -282,7 +282,7 @@ private fun StatsContent(
         }
 
         // Summary Grid Header
-        item {
+        item(key = "summary_header") {
             Text(
                 text = "Summary",
                 style = MaterialTheme.typography.titleMedium,
@@ -295,7 +295,7 @@ private fun StatsContent(
         }
 
         // Summary Grid
-        item {
+        item(key = "summary_grid") {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing)
@@ -321,7 +321,7 @@ private fun StatsContent(
             }
         }
 
-        item {
+        item(key = "fab_clearance") {
             Spacer(modifier = Modifier.height(Dimensions.fabClearance))
         }
     }

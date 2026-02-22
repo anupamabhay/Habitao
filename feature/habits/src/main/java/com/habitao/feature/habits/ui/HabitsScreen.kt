@@ -1,5 +1,6 @@
 package com.habitao.feature.habits.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,9 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Checklist
@@ -52,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -64,6 +66,7 @@ import com.habitao.feature.habits.viewmodel.HabitsState
 import com.habitao.feature.habits.viewmodel.HabitsViewModel
 import com.habitao.feature.habits.viewmodel.SortOption
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -372,28 +375,31 @@ private fun DateSelector(
     modifier: Modifier = Modifier,
 ) {
     val today = remember { LocalDate.now() }
-    val totalItems = Int.MAX_VALUE
-    val centerIndex = totalItems / 2
-    val initialIndex = centerIndex - 3
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
+    val pageCount = 10000
+    val middlePage = pageCount / 2
+    val pagerState = rememberPagerState(initialPage = middlePage, pageCount = { pageCount })
+    val baseWeekStart = remember(today) { today.with(DayOfWeek.MONDAY) }
 
-    LaunchedEffect(today) {
-        listState.scrollToItem(initialIndex)
-    }
-
-    LazyRow(
+    HorizontalPager(
         modifier = modifier.fillMaxWidth(),
-        state = listState,
-        horizontalArrangement =
-            Arrangement.spacedBy(Dimensions.elementSpacing),
-    ) {
-        items(totalItems) { index ->
-            val date = today.plusDays((index - centerIndex).toLong())
-            DateChip(
-                date = date,
-                isSelected = date == selectedDate,
-                onClick = { onDateSelected(date) },
-            )
+        state = pagerState,
+    ) { page ->
+        val weekStart = baseWeekStart.minusWeeks((page - middlePage).toLong())
+        val isCurrentWeek = page == middlePage
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
+        ) {
+            repeat(7) { dayIndex ->
+                val date = weekStart.plusDays(dayIndex.toLong())
+                DateChip(
+                    date = date,
+                    isSelected = date == selectedDate,
+                    isToday = date == today,
+                    isInCurrentWeek = isCurrentWeek,
+                    onClick = { onDateSelected(date) },
+                )
+            }
         }
     }
 }
@@ -402,11 +408,15 @@ private fun DateSelector(
 private fun DateChip(
     date: LocalDate,
     isSelected: Boolean,
+    isToday: Boolean,
+    isInCurrentWeek: Boolean,
     onClick: () -> Unit,
 ) {
     val backgroundColor =
         if (isSelected) {
             MaterialTheme.colorScheme.primary
+        } else if (isInCurrentWeek) {
+            MaterialTheme.colorScheme.surfaceVariant
         } else {
             MaterialTheme.colorScheme.surfaceContainerHigh
         }
@@ -447,6 +457,16 @@ private fun DateChip(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
+            Spacer(modifier = Modifier.height(2.dp))
+            if (isToday) {
+                Box(
+                    modifier =
+                        Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                )
+            }
         }
     }
 }
