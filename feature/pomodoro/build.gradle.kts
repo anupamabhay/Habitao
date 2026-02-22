@@ -69,6 +69,7 @@ dependencies {
     // AndroidX Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.bundles.lifecycle)
+    implementation(libs.androidx.lifecycle.service)
 
     // Compose
     implementation(platform(libs.compose.bom))

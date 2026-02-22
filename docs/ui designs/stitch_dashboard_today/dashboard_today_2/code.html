@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>M3 Productivity Stats Dashboard</title>
+<script type="text/javascript" nonce="5c925ff2520048cab66d47901e9" src="//local.adguard.org?ts=1771657604486&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzk1NDE1MWY2ZWI1ZjRlOTViMzg5YmJiZDNkYjRjY2U3EgsSBxCI5Z_QvwUYAZIBJAoKcHJvamVjdF9pZBIWQhQxMDE0ODUxNzY1MjI3MzEzMzk1NQ%26filename%3D%26opi%3D89354086&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="5c925ff2520048cab66d47901e9" src="//local.adguard.org?ts=1771657604486&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Ibm+Plex+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>tailwind.config = {darkMode: "class", theme: {extend: {fontFamily: {sans: ["Roboto", "sans-serif"], display: "Ibm Plex Sans"}, colors: {"m3-primary": "#D0BCFF", "m3-on-primary": "#381E72", "m3-primary-container": "#4F378B", "m3-on-primary-container": "#EADDFF", "m3-secondary": "#CCC2DC", "m3-on-secondary": "#332D41", "m3-secondary-container": "#4A4458", "m3-on-secondary-container": "#E8DEF8", "m3-tertiary": "#EFB8C8", "m3-on-tertiary": "#492532", "m3-tertiary-container": "#633B48", "m3-on-tertiary-container": "#FFD8E4", "m3-surface": "#141218", "m3-surface-dim": "#141218", "m3-surface-container-low": "#1D1B20", "m3-surface-container": "#211F26", "m3-surface-container-high": "#2B2930", "m3-surface-container-highest": "#36343B", "m3-on-surface": "#E6E1E5", "m3-on-surface-variant": "#CAC4D0", "m3-outline": "#938F99", "m3-outline-variant": "#49454F", "m3-inverse-surface": "#E6E1E5", "m3-inverse-on-surface": "#313033", "m3-inverse-primary": "#6750A4", primary: "#c8adff", "background-light": "#f6f5f8", "background-dark": "#160f23"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, boxShadow: {"m3-elevation-1": "0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)", "m3-elevation-2": "0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15)", "m3-elevation-3": "0px 1px 3px 0px rgba(0, 0, 0, 0.3), 0px 4px 8px 3px rgba(0, 0, 0, 0.15)"}}}};</script>
+<style>
+        body {
+            width: 100%;
+            max-width: 412px;
+            min-height: 100dvh;
+            margin: 0 auto;
+            background-color: #141218;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-m3-on-surface bg-m3-surface relative pb-28">
+<header class="sticky top-0 z-50 bg-m3-surface/95 backdrop-blur-sm px-4 h-[64px] flex items-center justify-between border-b border-m3-outline-variant/20">
+<div class="flex items-center gap-4">
+<h1 class="text-[22px] leading-[28px] font-normal text-m3-on-surface">Stats</h1>
+</div>
+<div class="flex items-center gap-1">
+<button class="w-12 h-12 flex items-center justify-center rounded-full text-m3-on-surface-variant hover:bg-m3-on-surface/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">settings</span>
+</button>
+</div>
+</header>
+<main class="px-4 flex flex-col gap-6 pt-4 pb-8">
+<section class="flex justify-center">
+<div class="inline-flex rounded-full border border-m3-outline p-[1px] h-8 w-full max-w-sm relative">
+<button class="flex-1 rounded-full bg-m3-secondary-container text-m3-on-secondary-container text-xs font-medium flex items-center justify-center z-10 transition-colors">
+<span class="material-symbols-outlined text-[14px] mr-1.5">check</span>
+                    Day
+                </button>
+<button class="flex-1 rounded-full text-m3-on-surface-variant text-xs font-medium flex items-center justify-center z-10 hover:bg-m3-on-surface/5 transition-colors">
+                    Week
+                </button>
+<button class="flex-1 rounded-full text-m3-on-surface-variant text-xs font-medium flex items-center justify-center z-10 hover:bg-m3-on-surface/5 transition-colors">
+                    Month
+                </button>
+</div>
+</section>
+<section class="bg-m3-surface-container rounded-m3-xl p-4 shadow-m3-elevation-1">
+<div class="flex justify-between items-baseline mb-4">
+<h2 class="text-title-medium font-medium text-m3-on-surface">Unified Activity</h2>
+<span class="text-label-medium text-m3-on-surface-variant">Past 7 days</span>
+</div>
+<div class="overflow-x-auto no-scrollbar -mx-2 px-2 pb-2">
+<div class="min-w-[340px]">
+<div class="relative h-40 w-full mt-2 mb-4">
+<div class="absolute inset-0 flex flex-col justify-between text-xs text-m3-outline-variant/50 font-medium">
+<div class="border-b border-m3-outline-variant/10 w-full h-0"></div>
+<div class="border-b border-m3-outline-variant/10 w-full h-0"></div>
+</div>
+<svg class="absolute inset-0 w-full h-full overflow-visible" preserveAspectRatio="none">
+<defs>
+<linearGradient id="gradPrimary" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#D0BCFF;stop-opacity:0.25"></stop>
+<stop offset="100%" style="stop-color:#D0BCFF;stop-opacity:0"></stop>
+</linearGradient>
+</defs>
+<path class="opacity-40" d="M0,120 C50,115 100,100 150,105 C200,110 250,90 300,80 C350,70 400,75 450,65" fill="none" stroke="#EFB8C8" stroke-width="1.5"></path>
+<path class="opacity-60" d="M0,90 C60,95 120,80 180,85 C240,90 300,60 360,55 C400,50 450,40 450,40" fill="none" stroke="#CCC2DC" stroke-width="1.5"></path>
+<path d="M0,70 C70,40 140,60 210,30 C280,0 350,30 420,10 C440,5 450,5 450,5" fill="none" stroke="#D0BCFF" stroke-width="2.5"></path>
+<path class="opacity-20" d="M0,70 C70,40 140,60 210,30 C280,0 350,30 420,10 C440,5 450,5 V160 H0 Z" fill="url(#gradPrimary)"></path>
+<circle cx="210" cy="30" fill="#D0BCFF" r="2.5"></circle>
+<circle cx="420" cy="10" fill="#D0BCFF" r="2.5"></circle>
+</svg>
+</div>
+<div class="flex justify-between text-[10px] text-m3-on-surface-variant font-medium px-1 uppercase tracking-wide opacity-70">
+<span class="w-8 text-center">M</span>
+<span class="w-8 text-center">T</span>
+<span class="w-8 text-center text-m3-primary font-bold opacity-100">W</span>
+<span class="w-8 text-center">T</span>
+<span class="w-8 text-center">F</span>
+<span class="w-8 text-center">S</span>
+<span class="w-8 text-center">S</span>
+</div>
+</div>
+</div>
+<div class="flex justify-center gap-6 mt-4 pt-3 border-t border-m3-outline-variant/10">
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-m3-primary"></div>
+<span class="text-[10px] tracking-wide text-m3-on-surface-variant uppercase">Habits</span>
+</div>
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-m3-secondary"></div>
+<span class="text-[10px] tracking-wide text-m3-on-surface-variant uppercase">Routines</span>
+</div>
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-m3-tertiary"></div>
+<span class="text-[10px] tracking-wide text-m3-on-surface-variant uppercase">Tasks</span>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-2">
+<h2 class="text-label-large font-medium text-m3-on-surface-variant px-2 uppercase tracking-wider text-[11px]">Current Streaks</h2>
+<div class="bg-m3-surface-container-low rounded-lg p-3 pr-4 shadow-sm flex items-center gap-3 transition-all active:scale-[0.99] border border-m3-outline-variant/10">
+<div class="size-10 rounded-full bg-m3-primary-container text-m3-on-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">water_drop</span>
+</div>
+<div class="flex-1 min-w-0 flex items-center justify-between">
+<div>
+<div class="text-body-medium text-m3-on-surface font-medium truncate">Hydration</div>
+<div class="text-xs text-m3-on-surface-variant">Target: 2L</div>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-2xl font-bold text-m3-on-surface">14</span>
+<span class="text-[10px] uppercase text-m3-on-surface-variant font-medium">Days</span>
+</div>
+</div>
+<div class="bg-m3-primary-container text-m3-on-primary-container p-1 rounded-md flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">local_fire_department</span>
+</div>
+</div>
+<div class="bg-m3-surface-container-low rounded-lg p-3 pr-4 shadow-sm flex items-center gap-3 transition-all active:scale-[0.99] border border-m3-outline-variant/10">
+<div class="size-10 rounded-full bg-m3-secondary-container text-m3-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">book_2</span>
+</div>
+<div class="flex-1 min-w-0 flex items-center justify-between">
+<div>
+<div class="text-body-medium text-m3-on-surface font-medium truncate">Reading</div>
+<div class="text-xs text-m3-on-surface-variant">Daily 30m</div>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-2xl font-bold text-m3-on-surface">8</span>
+<span class="text-[10px] uppercase text-m3-on-surface-variant font-medium">Days</span>
+</div>
+</div>
+<div class="text-m3-secondary opacity-60 flex items-center justify-center w-6">
+<span class="material-symbols-outlined text-[20px]">trending_up</span>
+</div>
+</div>
+<div class="bg-m3-surface-container-low rounded-lg p-3 pr-4 shadow-sm flex items-center gap-3 transition-all active:scale-[0.99] border border-m3-outline-variant/10">
+<div class="size-10 rounded-full bg-m3-tertiary-container text-m3-on-tertiary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">self_improvement</span>
+</div>
+<div class="flex-1 min-w-0 flex items-center justify-between">
+<div>
+<div class="text-body-medium text-m3-on-surface font-medium truncate">Meditation</div>
+<div class="text-xs text-m3-on-surface-variant">Morning Routine</div>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-2xl font-bold text-m3-on-surface">21</span>
+<span class="text-[10px] uppercase text-m3-on-surface-variant font-medium">Days</span>
+</div>
+</div>
+<div class="text-m3-tertiary opacity-60 flex items-center justify-center w-6">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-2">
+<h2 class="text-label-large font-medium text-m3-on-surface-variant px-2 uppercase tracking-wider text-[11px]">Completion Breakdown</h2>
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-m3-surface-container-high rounded-xl p-4 shadow-sm flex flex-col items-center">
+<div class="w-full flex justify-between items-start mb-2">
+<h3 class="text-title-small font-medium text-m3-on-surface">Tasks</h3>
+<span class="material-symbols-outlined text-[16px] text-m3-on-surface-variant">more_horiz</span>
+</div>
+<div class="relative size-24 my-2">
+<svg class="size-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-m3-surface-container-low" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+<path class="text-m3-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="60, 100" stroke-linecap="round" stroke-width="3"></path>
+<path class="text-m3-tertiary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="25, 100" stroke-dashoffset="-65" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-xl font-bold text-m3-on-surface">85%</span>
+</div>
+</div>
+<div class="w-full flex flex-col gap-1 mt-1">
+<div class="flex items-center justify-between w-full">
+<div class="flex items-center gap-1.5">
+<div class="size-2 rounded-full bg-m3-primary"></div>
+<span class="text-[10px] text-m3-on-surface-variant">Work</span>
+</div>
+<span class="text-[10px] font-medium text-m3-on-surface">12</span>
+</div>
+<div class="flex items-center justify-between w-full">
+<div class="flex items-center gap-1.5">
+<div class="size-2 rounded-full bg-m3-tertiary"></div>
+<span class="text-[10px] text-m3-on-surface-variant">Life</span>
+</div>
+<span class="text-[10px] font-medium text-m3-on-surface">5</span>
+</div>
+</div>
+</div>
+<div class="bg-m3-surface-container-high rounded-xl p-4 shadow-sm flex flex-col items-center">
+<div class="w-full flex justify-between items-start mb-2">
+<h3 class="text-title-small font-medium text-m3-on-surface">Daily Goal</h3>
+<span class="bg-m3-secondary-container text-m3-on-secondary-container px-1.5 py-0.5 rounded text-[9px] font-bold">ON TRACK</span>
+</div>
+<div class="relative size-24 my-2">
+<svg class="size-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-m3-surface-container-low" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.5"></path>
+<path class="text-m3-secondary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="75, 100" stroke-linecap="round" stroke-width="2.5"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-m3-secondary text-lg mb-0.5">flag</span>
+<span class="text-xl font-bold text-m3-on-surface">6/8</span>
+</div>
+</div>
+<div class="mt-1 text-center">
+<p class="text-[10px] leading-tight text-m3-on-surface-variant">2 more targets to hit your goal.</p>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<div class="bg-m3-surface-container-high rounded-xl p-3 flex flex-col items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-m3-primary text-[20px]">timer</span>
+<span class="text-title-medium font-bold text-m3-on-surface">4.5h</span>
+<span class="text-[10px] text-m3-on-surface-variant uppercase">Focus</span>
+</div>
+<div class="bg-m3-surface-container-high rounded-xl p-3 flex flex-col items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-m3-tertiary text-[20px]">done_all</span>
+<span class="text-title-medium font-bold text-m3-on-surface">18</span>
+<span class="text-[10px] text-m3-on-surface-variant uppercase">Completed</span>
+</div>
+<div class="bg-m3-surface-container-high rounded-xl p-3 flex flex-col items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-m3-secondary text-[20px]">trending_up</span>
+<span class="text-title-medium font-bold text-m3-on-surface">+12%</span>
+<span class="text-[10px] text-m3-on-surface-variant uppercase">Growth</span>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 w-full max-w-[412px] bg-m3-surface-container pb-6 pt-3 px-4 flex justify-between items-center z-40">
+<a class="flex flex-col items-center gap-1 group w-16" href="#">
+<div class="px-5 py-1 rounded-full bg-m3-secondary-container group-hover:bg-m3-on-surface/10 transition-colors">
+<span class="material-symbols-outlined text-m3-on-secondary-container filled text-[24px]">analytics</span>
+</div>
+<span class="text-[12px] font-bold text-m3-on-surface leading-tight">Stats</span>
+</a>
+<a class="flex flex-col items-center gap-1 group w-16 text-m3-on-surface-variant" href="#">
+<div class="px-5 py-1 rounded-full group-hover:bg-m3-on-surface/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">restart_alt</span>
+</div>
+<span class="text-[12px] font-medium leading-tight">Habits</span>
+</a>
+<a class="flex flex-col items-center gap-1 group w-16 text-m3-on-surface-variant" href="#">
+<div class="px-5 py-1 rounded-full group-hover:bg-m3-on-surface/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">schedule</span>
+</div>
+<span class="text-[12px] font-medium leading-tight">Routines</span>
+</a>
+<a class="flex flex-col items-center gap-1 group w-16 text-m3-on-surface-variant" href="#">
+<div class="px-5 py-1 rounded-full group-hover:bg-m3-on-surface/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">check_circle</span>
+</div>
+<span class="text-[12px] font-medium leading-tight">Tasks</span>
+</a>
+<a class="flex flex-col items-center gap-1 group w-16 text-m3-on-surface-variant" href="#">
+<div class="px-5 py-1 rounded-full group-hover:bg-m3-on-surface/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">timer</span>
+</div>
+<span class="text-[12px] font-medium leading-tight">Timer</span>
+</a>
+</nav>
+<button class="fixed bottom-28 right-4 w-14 h-14 rounded-[16px] bg-m3-primary-container text-m3-on-primary-container shadow-m3-elevation-3 flex items-center justify-center z-50 transition-transform active:scale-95 hover:shadow-lg hover:bg-opacity-90">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</body></html>

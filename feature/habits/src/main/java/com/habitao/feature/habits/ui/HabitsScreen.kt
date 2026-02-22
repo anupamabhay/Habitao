@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Checklist
@@ -371,17 +372,23 @@ private fun DateSelector(
     modifier: Modifier = Modifier,
 ) {
     val today = remember { LocalDate.now() }
-    val dates =
-        remember(today) {
-            (-3..3).map { today.plusDays(it.toLong()) }
-        }
+    val totalItems = Int.MAX_VALUE
+    val centerIndex = totalItems / 2
+    val initialIndex = centerIndex - 3
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
+
+    LaunchedEffect(today) {
+        listState.scrollToItem(initialIndex)
+    }
 
     LazyRow(
         modifier = modifier.fillMaxWidth(),
+        state = listState,
         horizontalArrangement =
             Arrangement.spacedBy(Dimensions.elementSpacing),
     ) {
-        items(dates) { date ->
+        items(totalItems) { index ->
+            val date = today.plusDays((index - centerIndex).toLong())
             DateChip(
                 date = date,
                 isSelected = date == selectedDate,

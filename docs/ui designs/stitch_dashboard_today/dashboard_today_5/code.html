@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Clean M3 Task Management</title>
+<script type="text/javascript" nonce="5c925ff2520048cab66d47901e9" src="//local.adguard.org?ts=1771619805332&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sX2I5YWU2YzM4Yjk5YzRiOTZiNWQ2ODhhYTkyMmRkYjFiEgsSBxCI5Z_QvwUYAZIBJAoKcHJvamVjdF9pZBIWQhQxMDE0ODUxNzY1MjI3MzEzMzk1NQ%26filename%3D%26opi%3D89354086&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="5c925ff2520048cab66d47901e9" src="//local.adguard.org?ts=1771619805332&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#e77e23", 
+                        "on-primary": "#ffffff",
+                        "primary-container": "#ffdbca",
+                        "on-primary-container": "#341100",
+                        "secondary": "#765748",
+                        "secondary-container": "#ffdcbe",
+                        "on-secondary-container": "#2c160a",
+                        "surface": "#121212",
+                        "surface-container": "#1E1E1E",
+                        "surface-container-high": "#2B2B2B",
+                        "on-surface": "#E3E3E3",
+                        "on-surface-variant": "#C4C7C5",
+                        "outline": "#8E918F",
+                        "outline-variant": "#444746",
+                        "priority-high": "#FF453A", // Red
+                        "priority-medium": "#FF9F0A", // Orange
+                        "priority-low": "#30D158", // Blue/Green ish for Low as requested but adjusted for visibility
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }.checkbox-circle {
+            appearance: none;
+            -webkit-appearance: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .checkbox-circle:checked {
+            background-color: currentColor;
+            border-color: currentColor;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen pb-24 selection:bg-primary/30">
+<header class="sticky top-0 bg-surface/95 backdrop-blur-md z-30 transition-all border-b border-outline-variant/30 px-4 py-3">
+<div class="flex justify-between items-center h-12">
+<h1 class="text-[22px] font-semibold tracking-tight text-on-surface ml-2">My Tasks</h1>
+<div class="flex items-center gap-1">
+<button class="size-10 flex items-center justify-center rounded-full hover:bg-on-surface/10 active:bg-on-surface/20 transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[24px]">search</span>
+</button>
+<button class="size-10 flex items-center justify-center rounded-full hover:bg-on-surface/10 active:bg-on-surface/20 transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[24px]">sort</span>
+</button>
+<button class="size-10 flex items-center justify-center rounded-full hover:bg-on-surface/10 active:bg-on-surface/20 transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[24px]">settings</span>
+</button>
+</div>
+</div>
+</header>
+<main class="px-4 py-4 max-w-lg mx-auto w-full">
+<section class="mb-6">
+<div class="flex items-center gap-2 mb-2 px-2 py-1">
+<h2 class="text-sm font-semibold text-on-surface tracking-wide">Today</h2>
+<span class="text-xs text-on-surface-variant/70 font-medium">• 3</span>
+</div>
+<div class="flex flex-col gap-[1px] bg-surface-container rounded-xl overflow-hidden shadow-sm">
+<div class="group relative flex items-center gap-3 p-3 bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-priority-high"></div>
+<button class="ml-2 size-5 rounded-full border border-outline hover:border-priority-high transition-colors flex items-center justify-center flex-shrink-0 group-hover:border-on-surface">
+</button>
+<div class="flex-1 min-w-0 flex flex-col justify-center">
+<span class="text-[15px] font-medium text-on-surface leading-tight truncate">Design System Update</span>
+<div class="flex items-center gap-3 mt-1">
+<div class="flex items-center gap-1 text-priority-high">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="text-[11px] font-medium">5:00 PM</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant/60">
+<span class="material-symbols-outlined text-[14px]">folder</span>
+<span class="text-[11px]">Work</span>
+</div>
+</div>
+</div>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-priority-high text-[18px]">flag</span>
+</div>
+</div>
+<div class="h-[1px] bg-outline-variant/20 mx-3"></div>
+<div class="group relative flex items-center gap-3 p-3 bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-priority-medium"></div>
+<button class="ml-2 size-5 rounded-full border border-outline hover:border-priority-medium transition-colors flex items-center justify-center flex-shrink-0 group-hover:border-on-surface">
+</button>
+<div class="flex-1 min-w-0 flex flex-col justify-center">
+<span class="text-[15px] font-medium text-on-surface leading-tight truncate">Quarterly Report</span>
+<div class="flex items-center gap-3 mt-1">
+<div class="flex items-center gap-1 text-on-surface-variant/80">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="text-[11px]">Due Today</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant/60">
+<span class="material-symbols-outlined text-[14px] filled">pie_chart</span>
+<span class="text-[11px]">50%</span>
+</div>
+</div>
+</div>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-priority-medium text-[18px]">flag</span>
+</div>
+</div>
+<div class="h-[1px] bg-outline-variant/20 mx-3"></div>
+<div class="group relative flex items-center gap-3 p-3 bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer">
+<button class="ml-2 size-5 rounded-full border border-outline hover:border-primary transition-colors flex items-center justify-center flex-shrink-0 group-hover:border-on-surface">
+</button>
+<div class="flex-1 min-w-0 flex flex-col justify-center">
+<span class="text-[15px] font-medium text-on-surface leading-tight truncate">Read 'Atomic Habits'</span>
+<div class="flex items-center gap-3 mt-1">
+<div class="flex items-center gap-1 text-priority-high">
+<span class="material-symbols-outlined text-[14px]">error</span>
+<span class="text-[11px] font-medium">Overdue</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant/60">
+<span class="material-symbols-outlined text-[14px]">folder</span>
+<span class="text-[11px]">Self-growth</span>
+</div>
+</div>
+</div>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-priority-low text-[18px]">flag</span>
+</div>
+</div>
+</div>
+</section>
+<section class="mb-6">
+<div class="flex items-center gap-2 mb-2 px-2 py-1">
+<h2 class="text-sm font-semibold text-on-surface tracking-wide">Upcoming</h2>
+<span class="text-xs text-on-surface-variant/70 font-medium">• 1</span>
+</div>
+<div class="flex flex-col gap-[1px] bg-surface-container rounded-xl overflow-hidden shadow-sm">
+<div class="group relative flex items-center gap-3 p-3 bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-priority-low"></div>
+<button class="ml-2 size-5 rounded-full border border-outline hover:border-priority-low transition-colors flex items-center justify-center flex-shrink-0 group-hover:border-on-surface">
+</button>
+<div class="flex-1 min-w-0 flex flex-col justify-center">
+<span class="text-[15px] font-medium text-on-surface leading-tight truncate">Grocery Shopping</span>
+<div class="flex items-center gap-3 mt-1">
+<div class="flex items-center gap-1 text-on-surface-variant/80">
+<span class="material-symbols-outlined text-[14px]">calendar_month</span>
+<span class="text-[11px]">Tomorrow</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant/60">
+<span class="material-symbols-outlined text-[14px]">folder</span>
+<span class="text-[11px]">Personal</span>
+</div>
+</div>
+</div>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-priority-low text-[18px]">flag</span>
+</div>
+</div>
+</div>
+</section>
+<section class="mb-24 opacity-60">
+<div class="flex items-center gap-2 mb-2 px-2 py-1">
+<h2 class="text-sm font-semibold text-on-surface tracking-wide">Completed</h2>
+<span class="text-xs text-on-surface-variant/70 font-medium">• 2</span>
+</div>
+<div class="flex flex-col gap-[1px] bg-surface-container/50 rounded-xl overflow-hidden border border-outline-variant/10">
+<div class="flex items-center gap-3 p-3 bg-surface-container/30">
+<button class="ml-2 size-5 rounded-full bg-on-surface-variant text-surface-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[14px] font-bold">check</span>
+</button>
+<div class="flex-1 min-w-0 flex flex-col justify-center">
+<span class="text-[15px] font-medium text-on-surface-variant line-through truncate">Morning Yoga</span>
+</div>
+</div>
+<div class="h-[1px] bg-outline-variant/10 mx-3"></div>
+<div class="flex items-center gap-3 p-3 bg-surface-container/30">
+<button class="ml-2 size-5 rounded-full bg-on-surface-variant text-surface-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[14px] font-bold">check</span>
+</button>
+<div class="flex-1 min-w-0 flex flex-col justify-center">
+<span class="text-[15px] font-medium text-on-surface-variant line-through truncate">Email Client</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<button class="fixed bottom-24 right-4 size-14 rounded-[16px] bg-primary text-on-primary shadow-lg shadow-black/40 hover:shadow-xl hover:shadow-black/50 flex items-center justify-center z-50 transition-all active:scale-95 group">
+<span class="material-symbols-outlined text-[28px] group-hover:rotate-90 transition-transform duration-300">add</span>
+</button>
+<nav class="fixed bottom-0 left-0 right-0 bg-surface-container/95 backdrop-blur-xl border-t border-outline-variant/20 px-2 pb-6 pt-2 flex justify-around items-center z-40">
+<a class="flex flex-col items-center gap-1 text-on-surface-variant w-16 group" href="#">
+<div class="py-1 px-4 rounded-full group-hover:bg-on-surface/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">bar_chart</span>
+</div>
+<span class="text-[11px] font-medium">Stats</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant w-16 group" href="#">
+<div class="py-1 px-4 rounded-full group-hover:bg-on-surface/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">self_improvement</span>
+</div>
+<span class="text-[11px] font-medium">Habits</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant w-16 group" href="#">
+<div class="py-1 px-4 rounded-full group-hover:bg-on-surface/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">repeat</span>
+</div>
+<span class="text-[11px] font-medium">Routines</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface w-16 group" href="#">
+<div class="py-1 px-4 rounded-full bg-primary/20 text-primary transition-colors">
+<span class="material-symbols-outlined text-[24px] fill-1">check_circle</span>
+</div>
+<span class="text-[11px] font-bold text-primary">Tasks</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant w-16 group" href="#">
+<div class="py-1 px-4 rounded-full group-hover:bg-on-surface/10 transition-colors">
+<span class="material-symbols-outlined text-[24px]">timer</span>
+</div>
+<span class="text-[11px] font-medium">Timer</span>
+</a>
+</nav>
+</body></html>
