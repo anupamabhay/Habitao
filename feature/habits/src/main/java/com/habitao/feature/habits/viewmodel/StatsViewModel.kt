@@ -2,8 +2,11 @@ package com.habitao.feature.habits.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.habitao.domain.model.PomodoroType
 import com.habitao.domain.model.StreakInfo
 import com.habitao.domain.repository.HabitRepository
+import com.habitao.domain.repository.PomodoroRepository
+import com.habitao.feature.pomodoro.service.TimerStateHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,6 +40,9 @@ data class StatsState(
     val overallCompletionRate: Float = 0f,
     val currentBestStreak: Int = 0,
     val habitStats: List<HabitStatItem> = emptyList(),
+    val todaysFocusSeconds: Int = 0,
+    val todaysPomodoroSessions: Int = 0,
+    val todaysCompletedRounds: Int = 0,
     val isLoading: Boolean = true,
 )
 
@@ -45,10 +51,37 @@ class StatsViewModel
     @Inject
     constructor(
         private val habitRepository: HabitRepository,
+        private val pomodoroRepository: PomodoroRepository,
+        private val timerStateHolder: TimerStateHolder,
     ) : ViewModel() {
         private val today = LocalDate.now()
         private val statsDataFlow = MutableStateFlow<List<HabitStatItem>>(emptyList())
         private val isLoadingFlow = MutableStateFlow(true)
+        private val pomodoroSessionsFlow =
+            pomodoroRepository.observeSessionsForDate(today)
+                .map { result -> result.getOrElse { emptyList() } }
+                .catch { emit(emptyList()) }
+
+        private val activeWorkSecondsFlow =
+            combine(
+                timerStateHolder.totalSeconds,
+                timerStateHolder.remainingSeconds,
+                timerStateHolder.currentSessionType,
+            ) { totalSeconds, remainingSeconds, sessionType ->
+                if (sessionType == PomodoroType.WORK && totalSeconds > 0L) {
+                    (totalSeconds - remainingSeconds).coerceAtLeast(0L).toInt()
+                } else {
+                    0
+                }
+            }
+
+        private val pomodoroCombinedFlow =
+            combine(
+                pomodoroSessionsFlow,
+                activeWorkSecondsFlow,
+            ) { sessions, activeSeconds ->
+                Pair(sessions, activeSeconds)
+            }
 
         val state: StateFlow<StatsState> =
             combine(
@@ -60,7 +93,11 @@ class StatsViewModel
                     .catch { emit(emptyMap()) },
                 statsDataFlow,
                 isLoadingFlow,
-            ) { habits, logs, statItems, isLoading ->
+                pomodoroCombinedFlow,
+            ) { habits, logs, statItems, isLoading, pomodoroData ->
+                val pomodoroSessions = pomodoroData.first
+                val activeWorkSeconds = pomodoroData.second
+
                 val completedToday = logs.count { it.value.isCompleted }
                 val totalHabits = habits.size
                 val rate =
@@ -69,6 +106,14 @@ class StatsViewModel
                     } else {
                         0f
                     }
+                val todaysFocusSeconds =
+                    pomodoroSessions
+                        .filter { it.sessionType == PomodoroType.WORK }
+                        .sumOf { it.actualDurationSeconds ?: 0 }
+                        .plus(activeWorkSeconds)
+                val todaysPomodoroSessions =
+                    pomodoroSessions
+                        .count { it.sessionType == PomodoroType.WORK && (it.actualDurationSeconds ?: 0) > 0 }
 
                 StatsState(
                     totalHabits = totalHabits,
@@ -76,6 +121,9 @@ class StatsViewModel
                     overallCompletionRate = rate,
                     currentBestStreak = statItems.maxOfOrNull { it.currentStreak } ?: 0,
                     habitStats = statItems,
+                    todaysFocusSeconds = todaysFocusSeconds,
+                    todaysPomodoroSessions = todaysPomodoroSessions,
+                    todaysCompletedRounds = 0,
                     isLoading = isLoading,
                 )
             }.stateIn(

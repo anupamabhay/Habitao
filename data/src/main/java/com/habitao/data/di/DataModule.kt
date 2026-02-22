@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.room.Room
 import com.habitao.data.local.dao.HabitDao
 import com.habitao.data.local.dao.HabitLogDao
+import com.habitao.data.local.dao.PomodoroSessionDao
 import com.habitao.data.local.database.HabitaoDatabase
 import com.habitao.data.repository.HabitRepositoryImpl
+import com.habitao.data.repository.PomodoroRepositoryImpl
 import com.habitao.domain.repository.HabitRepository
+import com.habitao.domain.repository.PomodoroRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -25,6 +28,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindHabitRepository(impl: HabitRepositoryImpl): HabitRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPomodoroRepository(impl: PomodoroRepositoryImpl): PomodoroRepository
 }
 
 @Module
@@ -52,6 +59,11 @@ object DatabaseModule {
     @Provides
     fun provideHabitLogDao(database: HabitaoDatabase): HabitLogDao {
         return database.habitLogDao()
+    }
+
+    @Provides
+    fun providePomodoroSessionDao(database: HabitaoDatabase): PomodoroSessionDao {
+        return database.pomodoroSessionDao()
     }
 
     @Provides

@@ -12,9 +12,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.CheckCircleOutline
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -39,6 +41,7 @@ import com.habitao.core.ui.theme.HabitaoTheme
 import com.habitao.feature.habits.ui.CreateHabitScreen
 import com.habitao.feature.habits.ui.HabitsScreen
 import com.habitao.feature.habits.ui.StatsScreen
+import com.habitao.feature.pomodoro.ui.PomodoroScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
 
@@ -46,6 +49,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 object HabitsRoute
+
+@Serializable
+object PomodoroRoute
 
 @Serializable
 object StatsRoute
@@ -68,8 +74,9 @@ private enum class Tab(
     val unselectedIcon: ImageVector,
     val route: Any,
 ) {
-    HABITS("Habits", Icons.Filled.CheckCircle, Icons.Outlined.CheckCircleOutline, HabitsRoute),
     STATS("Stats", Icons.Filled.BarChart, Icons.Outlined.BarChart, StatsRoute),
+    HABITS("Habits", Icons.Filled.CheckCircle, Icons.Outlined.CheckCircleOutline, HabitsRoute),
+    POMODORO("Pomodoro", Icons.Filled.Timer, Icons.Outlined.Timer, PomodoroRoute),
     SETTINGS("Settings", Icons.Filled.Settings, Icons.Outlined.Settings, SettingsRoute),
 }
 
@@ -133,7 +140,7 @@ private fun HabitaoApp() {
 
         NavHost(
             navController = navController,
-            startDestination = HabitsRoute,
+            startDestination = StatsRoute,
         ) {
             // -- Tab destinations --
             composable<HabitsRoute> {
@@ -144,6 +151,12 @@ private fun HabitaoApp() {
                             navController.navigate(EditHabitRoute(habitId))
                         },
                     )
+                }
+            }
+
+            composable<PomodoroRoute> {
+                Box(modifier = bottomPad) {
+                    PomodoroScreen()
                 }
             }
 

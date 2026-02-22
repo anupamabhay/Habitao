@@ -2,17 +2,17 @@
 
 **Purpose:** Track implementation progress, document decisions, record solutions, and maintain context across development sessions.
 
-**Last Updated:** February 20, 2026 - Bug Testing Phase
+**Last Updated:** February 23, 2026 - Planning & Research
 
 ---
 
-## Current Phase: Bug Testing & Polish
+## Current Phase: Pomodoro Feature Implementation
 
-**Goal:** Fix all UI/UX bugs discovered during user testing, then proceed with test coverage and UI redesign.
+**Goal:** Complete Pomodoro timer feature with full settings, session tracking, and cycle counting.
 
-**Branch:** `feature/ui-redesign`
+**Branch:** `feature/pomodoro`
 
-**Status:** Bug fixes committed and pushed, awaiting user APK testing
+**Status:** Pomodoro feature fully functional, settings UI redesigned, awaiting user testing
 
 ---
 
@@ -80,29 +80,57 @@
 
 ## In Progress
 
-### Bug Testing
-**Status:** Awaiting user APK testing  
-**Next Steps:** User tests the 4 bug fixes from commit `4127023`
+### Pomodoro Feature (feature/pomodoro branch)
+**Status:** Core feature complete, settings redesigned, cycle tracking added
+
+#### Completed Work:
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Timer Core | Foreground service, countdown, pause/resume/stop/skip | Complete |
+| ANR Fix | Cached PendingIntents, timer on Dispatchers.Default | Complete |
+| Session Counter | Correct session counting with reset after long break | Complete |
+| Confirmation Dialogs | AlertDialogs for Stop and Skip actions | Complete |
+| Completion Feedback | Sound, haptic vibration, high-priority notification | Complete |
+| Settings UI | Redesigned with M3 grouped cards, section headers, ringtone picker | Complete |
+| Customizable Durations | Work, short break, long break (1-180 min) | Complete |
+| Total Sessions | User-configurable work session count | Complete |
+| Auto-start | Auto-start next pomodoro, auto-start break, with cycle limit | Complete |
+| Sound Settings | System ringtone picker for pomo/break ending sounds | Complete |
+| Vibration Settings | Toggle + configurable duration | Complete |
+| Cycle (Round) Counter | Daily round tracking, resets each day | Complete |
+| Today's Focus | Shows exact duration (Hh Mm Ss format) + sessions + rounds | Complete |
+| Habit Reminder Sound | Added sound + vibration to habit reminder notifications | Complete |
+| Stats Screen | Redesigned with Pomodoro focus data alongside habit stats | Complete |
+| Sound Auto-Stop | MediaPlayer-based playback with 10s timeout, cleanup on lifecycle | Complete |
+| Stats Real-time | Focus time ticks up live while timer runs | Complete |
+| Stats Filters | Day/Week/Month segmented buttons update chart subtitle | Complete |
+| Scrollable Calendar | Habits calendar now scrolls infinitely (LazyRow ±1000 days) | Complete |
+| Nav Default Tab | Stats page is now the default/first tab | Complete |
+
+#### Key Decisions:
+- Used SharedPreferences for Pomodoro settings (simple sync reads needed by foreground service)
+- Sound picker defaults to "Default" (system alarm), user can explicitly choose "Silent"
+- "Round" = completing all configured work sessions (e.g., 5/5 = 1 round)
+- Separated vibrate toggle from sound picker (per competitor app research)
+- Used MediaPlayer instead of Ringtone for completion sounds (Ringtone loops alarm URIs infinitely)
+- 10-second timeout on completion sounds to prevent battery drain and ANR
 
 ---
 
 ## Next Up (Prioritized)
 
-### After Bug Testing Complete
-1. **Test Coverage Improvement** (Priority: High)
+### After This Session
+1. **Routines Module** (Priority: High)
+   - Morning/afternoon/evening routine management
+   - Action items within routines
+
+2. **Tasks Module** (Priority: High)
+   - Task management with priorities
+   - Due dates and categories
+
+3. **Test Coverage Improvement** (Priority: Medium)
    - Unit tests for ViewModels
    - Repository tests with fake DAOs
-   - Use case tests
-
-2. **UI Redesign** (Priority: Medium)
-   - Review and polish existing screens
-   - Improve visual hierarchy
-   - Add animations/transitions
-
-3. **Additional Features** (Priority: Medium)
-   - Routines module
-   - Tasks module
-   - Pomodoro timer
 
 ---
 
@@ -172,17 +200,20 @@ None yet - will document as we encounter and solve issues.
 
 ### Code Statistics
 ```
-Modules Implemented: 8/14 (app, domain, data, core/common, core/ui, feature/habits, system/notifications, system/alarms)
-Features Complete: 1/4 (Habits complete, Routines/Tasks/Pomodoro pending)
+Modules Implemented: 9/14 (app, domain, data, core/common, core/ui, feature/habits, feature/pomodoro, system/notifications, system/alarms)
+Features Complete: 2/4 (Habits complete, Pomodoro complete, Routines/Tasks pending)
 Test Coverage: TBD (next phase)
 ```
+
+### Recent Commits (feature/pomodoro branch)
+- `b5b1455` - feat: redesign Pomodoro settings UI and update Today's Focus format
+- `7e138e4` - fix: resolve Pomodoro UI issues, session count display, and add RingtonePicker
+- `2ec5e8e` - feat: add auto-start, custom sounds, and vibration settings
+- `f576f47` - fix: resolve ANR and session counter bugs in Pomodoro timer
 
 ### Recent Commits (feature/ui-redesign branch)
 - `4127023` - fix: address 4 UI/UX bugs from user testing
 - `900c5d7` - fix: resolve all 5 habit tracking bugs
-- `557aa13` - fix: habits not showing after creation and empty state alignment
-- `0f17fc2` - fix: resolve compilation errors from incorrect scheduling filter placement
-- `79408ef` - fix: resolve runtime bugs found during user testing
 
 ---
 
@@ -206,6 +237,45 @@ Test Coverage: TBD (next phase)
 ## 📝 Notes & Learnings
 
 ### Session Notes
+
+#### 2026-02-23: Planning & Research Session
+- Created PR #3 to merge feature/pomodoro into dev
+- Researched Pomodoro UX enhancements from Forest, TickTick, Focus To-Do, Be Focused
+- Researched Compose performance best practices (recomposition, 120Hz, baseline profiles)
+- Researched calendar widget optimization (HorizontalPager vs LazyRow)
+- Removed redundant "auto-start limit" setting (no competitor app has this)
+- Created comprehensive feature planning doc (docs/07-PLANNED-FEATURES.md)
+- Fixed completion sound infinite loop (MediaPlayer + 10s timeout)
+- Made Stats page the default navigation tab
+- Added real-time focus time updates to Stats screen
+
+**Key Findings:**
+- Calendar should use HorizontalPager with snap-to-week, not LazyRow with thousands of items
+- Compose state reads during scroll should use lambda modifiers to skip recomposition
+- Forest/TickTick use narrative animations (growing trees, shrinking tomatoes) for engagement
+- Auto-start should cycle through all sessions until totalSessions goal, no separate limit needed
+
+#### 2026-02-22: Pomodoro Feature - Polish & Settings
+- Redesigned PomodoroSettingsSheet with M3 grouped cards (Duration, Cycles, Sound & Vibration)
+- Updated Today's Focus to show exact duration (e.g., "1h 12m 33s")
+- Added daily "Rounds" counter (1 round = completing all configured sessions)
+- Fixed sound picker to show "Default" instead of "Silent", with "SILENT" marker for explicit silent choice
+- Renamed confusing "Auto pomodoro cycle" label to "Auto-start limit"
+- Added spacing and alignment fixes throughout settings UI
+- Handled "SILENT" marker in TimerService sound playback
+- Research: Analyzed TickTick, Forest, Pomofocus, Be Focused for UX patterns
+
+#### 2026-02-21: Pomodoro Feature - Core Implementation
+- Implemented full Pomodoro timer with foreground service
+- Fixed ANR bug (cached PendingIntents, timer on background dispatcher)
+- Fixed session counter logic (reset after long break)
+- Added confirmation dialogs for Stop/Skip
+- Added completion feedback (sound, haptic, notification)
+- Implemented customizable settings (durations, session counts)
+- Added auto-start next pomodoro / auto-start break
+- Added system ringtone picker for ending sounds
+- Added vibration toggle and duration settings
+- Added total sessions goal with auto-completion
 
 #### 2026-02-20: Bug Fixing Session 2
 - Resumed bug fixing from previous session

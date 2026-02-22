@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>M3 Productivity Suite</title>
+<script type="text/javascript" nonce="5c925ff2520048cab66d47901e9" src="//local.adguard.org?ts=1771657604486&amp;type=content-script&amp;dmn=contribution.usercontent.google.com&amp;url=https%3A%2F%2Fcontribution.usercontent.google.com%2Fdownload%3Fc%3DCgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzEzNGVjZTRiYzIwNTQ5NWQ4MmExNzY4M2Q0MGYxNmUxEgsSBxCI5Z_QvwUYAZIBJAoKcHJvamVjdF9pZBIWQhQxMDE0ODUxNzY1MjI3MzEzMzk1NQ%26filename%3D%26opi%3D89354086&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="5c925ff2520048cab66d47901e9" src="//local.adguard.org?ts=1771657604486&amp;name=AdGuard%20Extra&amp;type=user-script"></script><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Ibm+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {primary: "#c8adff", "on-primary": "#ffffff", "primary-container": "#ffdbca", "on-primary-container": "#341100", secondary: "#765748", "secondary-container": "#ffdcbe", "on-secondary-container": "#2c160a", tertiary: "#655f31", "tertiary-container": "#ece3aa", "on-tertiary-container": "#1e1b00", surface: "#141218", "surface-dim": "#141218", "surface-bright": "#3b383e", "surface-container": "#211F26", "surface-container-high": "#2B2930", "surface-container-highest": "#36343B", "surface-container-low": "#1D1B20", "on-surface": "#E6E1E5", "on-surface-variant": "#CAC4D0", outline: "#938F99", "outline-variant": "#49454F", "background-light": "#f6f5f8", "background-dark": "#160f23", "m3-primary": "#D0BCFF", "m3-on-primary": "#381E72", "m3-primary-container": "#4F378B", "m3-on-primary-container": "#EADDFF", "m3-secondary": "#CCC2DC", "m3-on-secondary": "#332D41", "m3-secondary-container": "#4A4458", "m3-on-secondary-container": "#E8DEF8", "m3-tertiary": "#EFB8C8", "m3-on-tertiary": "#492532", "m3-tertiary-container": "#633B48", "m3-on-tertiary-container": "#FFD8E4", "priority-high": "#FF453A", "priority-medium": "#FF9F0A", "priority-low": "#30D158"}, fontFamily: {display: "Ibm Plex Sans", sans: ["Inter", "Roboto", "sans-serif"]}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, boxShadow: {"elevation-1": "0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)", "elevation-2": "0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15)", "m3-elevation-1": "0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)", "m3-elevation-2": "0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15)", "m3-elevation-3": "0px 1px 3px 0px rgba(0, 0, 0, 0.3), 0px 4px 8px 3px rgba(0, 0, 0, 0.15)"}}}};</script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 100vh;
+            background-color: #141218;
+            color: #E6E1E5;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        .checkbox-circle {
+            appearance: none;
+            -webkit-appearance: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .checkbox-circle:checked {
+            background-color: currentColor;
+            border-color: currentColor;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/history@5/umd/history.development.js"></script>
+<script src="https://unpkg.com/react-router@6.3.0/umd/react-router.development.js"></script>
+<script src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.development.js"></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        const { MemoryRouter, Routes, Route, Link, useNavigate, useLocation } = ReactRouterDOM;
+
+        // --- Common Components ---
+
+        const NavItem = ({ to, icon, label, active, fillIcon = false }) => (
+            <Link to={to} className={`flex flex-col items-center gap-1 w-16 group transition-colors ${active ? 'text-primary' : 'text-on-surface-variant hover:text-primary'}`}>
+                <div className={`py-1 px-4 rounded-full transition-colors ${active ? 'bg-primary/20 text-primary' : 'group-hover:bg-primary/10'}`}>
+                    <span className={`material-symbols-outlined ${active || fillIcon ? 'fill-1' : 'fill-0'}`}>{icon}</span>
+                </div>
+                <span className={`text-[10px] font-medium ${active ? 'font-bold' : ''}`}>{label}</span>
+            </Link>
+        );
+
+        const BottomNav = () => {
+            const location = useLocation();
+            const p = location.pathname;
+
+            return (
+                <nav className="fixed bottom-0 left-0 right-0 bg-surface-container/95 backdrop-blur-xl border-t border-outline/10 px-4 pb-6 pt-3 flex justify-between items-center z-40 max-w-lg mx-auto w-full">
+                    <NavItem to="/stats" icon="bar_chart" label="Stats" active={p === '/stats'} />
+                    <NavItem to="/habits" icon="check_circle" label="Habits" active={p === '/habits'} />
+                    <NavItem to="/routines" icon="schedule" label="Routines" active={p === '/routines'} />
+                    <NavItem to="/tasks" icon="task_alt" label="Tasks" active={p === '/tasks'} />
+                    <NavItem to="/" icon="timer" label="Timer" active={p === '/'} />
+                </nav>
+            );
+        };
+
+        const FloatingActionButton = ({ icon, onClick, className = "" }) => (
+            <button 
+                onClick={onClick}
+                className={`fixed bottom-24 right-4 size-14 rounded-2xl bg-primary text-on-primary shadow-elevation-2 flex items-center justify-center z-50 transition-all hover:shadow-lg active:scale-95 active:shadow-sm ${className}`}
+            >
+                <span className="material-symbols-outlined text-[28px]">{icon}</span>
+            </button>
+        );
+
+        // --- Screens ---
+
+        // Screen 1: Pomodoro Timer
+        const PomodoroScreen = () => {
+            return (
+                <div className="bg-background-dark text-on-surface min-h-screen pb-24 relative flex flex-col">
+                    <header className="px-4 py-4 sticky top-0 bg-background-dark/95 backdrop-blur-sm z-30 transition-colors flex justify-between items-center">
+                        <h1 className="text-xl font-medium text-slate-200">Pomodoro</h1>
+                        <button className="text-slate-400 p-3 rounded-full hover:bg-on-surface/10 transition-colors">
+                            <span className="material-symbols-outlined">settings</span>
+                        </button>
+                    </header>
+                    <main className="flex-1 flex flex-col items-center px-6 pt-4 pb-8 space-y-8">
+                        <div className="flex items-center justify-center gap-3 w-full overflow-x-auto hide-scrollbar py-2">
+                            <button className="px-5 py-2.5 rounded-full bg-primary/20 text-primary-container text-sm font-medium border border-transparent shadow-sm transition-all">
+                                Focus
+                            </button>
+                            <button className="px-5 py-2.5 rounded-full bg-surface-container-high dark:bg-surface-container text-slate-400 text-sm font-medium border border-transparent hover:bg-surface-container-highest transition-all">
+                                Short Break
+                            </button>
+                            <button className="px-5 py-2.5 rounded-full bg-surface-container-high dark:bg-surface-container text-slate-400 text-sm font-medium border border-transparent hover:bg-surface-container-highest transition-all">
+                                Long Break
+                            </button>
+                        </div>
+                        <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm">
+                            <div className="relative size-72 sm:size-80 flex items-center justify-center">
+                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                                    <circle className="text-surface-container-high" cx="100" cy="100" fill="none" r="90" stroke="currentColor" strokeWidth="6"></circle>
+                                    <circle className="text-primary transition-all duration-1000 ease-linear" cx="100" cy="100" fill="none" r="90" stroke="currentColor" strokeDasharray="565.48" strokeDashoffset="141.37" strokeLinecap="round" strokeWidth="6"></circle>
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span className="text-[5rem] font-light leading-none tracking-tight text-white tabular-nums">25:00</span>
+                                    <span className="text-slate-400 mt-2 text-base font-medium">Focus Session</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-8">
+                            <button className="size-14 rounded-full bg-surface-container text-slate-300 flex items-center justify-center hover:bg-surface-container-highest hover:shadow-md transition-all active:scale-95">
+                                <span className="material-symbols-outlined text-2xl">replay</span>
+                            </button>
+                            <button className="size-20 rounded-[28px] bg-primary text-on-primary shadow-elevation-2 flex items-center justify-center hover:shadow-lg transition-all active:scale-95 active:shadow-sm">
+                                <span className="material-symbols-outlined text-4xl fill-1">play_arrow</span>
+                            </button>
+                            <button className="size-14 rounded-full bg-surface-container text-slate-300 flex items-center justify-center hover:bg-surface-container-highest hover:shadow-md transition-all active:scale-95 opacity-50 cursor-not-allowed">
+                                <span className="material-symbols-outlined text-2xl">skip_next</span>
+                            </button>
+                        </div>
+                        <div className="w-full mt-auto">
+                            <div className="flex items-center justify-between mb-2 px-2">
+                                <span className="text-xs font-bold tracking-wider uppercase text-slate-500">Working on</span>
+                                <span className="text-xs text-primary font-medium cursor-pointer">Change</span>
+                            </div>
+                            <article className="bg-surface-container rounded-[20px] p-4 flex items-center gap-4 transition-all active:scale-[0.99] active:brightness-95 cursor-pointer ring-1 ring-white/5">
+                                <div className="size-12 rounded-xl bg-tertiary/20 flex items-center justify-center text-tertiary-container shrink-0">
+                                    <span className="material-symbols-outlined">code</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-base font-semibold text-white truncate">Refactor Auth Module</h3>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="inline-flex items-center gap-1 text-xs text-slate-400 bg-black/20 px-2 py-0.5 rounded-md">
+                                            <span className="size-1.5 rounded-full bg-tertiary"></span>
+                                            Development
+                                        </span>
+                                        <span className="text-xs text-slate-500">2/4 pomodoros</span>
+                                    </div>
+                                </div>
+                                <div className="shrink-0">
+                                    <span className="material-symbols-outlined text-slate-500">chevron_right</span>
+                                </div>
+                            </article>
+                        </div>
+                    </main>
+                    <BottomNav />
+                </div>
+            );
+        };
+
+        // Screen 2: Stats Dashboard
+        const StatsScreen = () => {
+            return (
+                <div className="text-m3-on-surface bg-m3-surface relative pb-24 min-h-screen">
+                    <header className="sticky top-0 z-50 bg-m3-surface/95 backdrop-blur-sm px-4 h-[64px] flex items-center justify-between border-b border-m3-outline-variant/20">
+                        <div className="flex items-center gap-2">
+                            <button className="w-10 h-10 rounded-full overflow-hidden border border-m3-outline-variant/30">
+                                <img alt="Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIL0dsDPQE1ctBxAaTOCxe3lHGbuOflt_uKCYlzkK4As_PRoXfnxrWRANepaXeKWWt2hjqlQ_1AqXiEDON39HDw7y5lM8O2Ii778kvpQVq7ntmIJfVLEhfFBiuwoSrU_9pEeo1t1EHUcIXkG3dvgKYuzjxA3uWyck31246YPDdmfDmE5Cunp0yaXrQQBTS-O0K2_aqMei9vW7T9hcJMRARMoV46jSSTLuNXbeizSpmMYuFDAaj2V-6UPFUUrtPeJn7pH8cHAcrWWeZ"/>
+                            </button>
+                        </div>
+                        <h1 className="text-[22px] leading-[28px] font-normal text-m3-on-surface absolute left-1/2 -translate-x-1/2">Stats</h1>
+                        <div className="flex items-center gap-1">
+                            <button className="w-12 h-12 flex items-center justify-center rounded-full text-m3-on-surface-variant hover:bg-m3-on-surface/10 transition-colors">
+                                <span className="material-symbols-outlined text-[24px]">settings</span>
+                            </button>
+                        </div>
+                    </header>
+                    <main className="px-4 flex flex-col gap-6 pt-4 pb-8">
+                        <section className="flex justify-center">
+                            <div className="inline-flex rounded-full border border-m3-outline p-[1px] h-10 w-full max-w-sm relative">
+                                <button className="flex-1 rounded-full bg-m3-secondary-container text-m3-on-secondary-container text-sm font-medium flex items-center justify-center z-10 transition-colors">
+                                    <span className="material-symbols-outlined text-[18px] mr-2">check</span>
+                                    Day
+                                </button>
+                                <button className="flex-1 rounded-full text-m3-on-surface-variant text-sm font-medium flex items-center justify-center z-10 hover:bg-m3-on-surface/5 transition-colors">
+                                    Week
+                                </button>
+                                <button className="flex-1 rounded-full text-m3-on-surface-variant text-sm font-medium flex items-center justify-center z-10 hover:bg-m3-on-surface/5 transition-colors">
+                                    Month
+                                </button>
+                            </div>
+                        </section>
+                        <section className="bg-m3-surface-container rounded-m3-xl p-6 shadow-m3-elevation-1">
+                            <div className="flex justify-between items-baseline mb-6">
+                                <h2 className="text-title-medium font-medium text-m3-on-surface">Unified Activity</h2>
+                                <span className="text-label-medium text-m3-on-surface-variant">Past 7 days</span>
+                            </div>
+                            <div className="overflow-x-auto no-scrollbar -mx-2 px-2 pb-2">
+                                <div className="min-w-[300px] w-full">
+                                    <div className="relative h-48 w-full mt-2 mb-4">
+                                        <div className="absolute inset-0 flex flex-col justify-between text-xs text-m3-outline-variant/50 font-medium">
+                                            <div className="border-b border-m3-outline-variant/20 w-full h-0"></div>
+                                            <div className="border-b border-m3-outline-variant/20 w-full h-0"></div>
+                                            <div className="border-b border-m3-outline-variant/20 w-full h-0"></div>
+                                            <div className="border-b border-m3-outline-variant/20 w-full h-0"></div>
+                                        </div>
+                                        <svg className="absolute inset-0 w-full h-full overflow-visible" preserveAspectRatio="none">
+                                            <defs>
+                                                <linearGradient id="gradPrimary" x1="0%" x2="0%" y1="0%" y2="100%">
+                                                    <stop offset="0%" style={{ stopColor: '#D0BCFF', stopOpacity: 0.4 }}></stop>
+                                                    <stop offset="100%" style={{ stopColor: '#D0BCFF', stopOpacity: 0 }}></stop>
+                                                </linearGradient>
+                                                <linearGradient id="gradSecondary" x1="0%" x2="0%" y1="0%" y2="100%">
+                                                    <stop offset="0%" style={{ stopColor: '#CCC2DC', stopOpacity: 0.4 }}></stop>
+                                                    <stop offset="100%" style={{ stopColor: '#CCC2DC', stopOpacity: 0 }}></stop>
+                                                </linearGradient>
+                                                <linearGradient id="gradTertiary" x1="0%" x2="0%" y1="0%" y2="100%">
+                                                    <stop offset="0%" style={{ stopColor: '#EFB8C8', stopOpacity: 0.4 }}></stop>
+                                                    <stop offset="100%" style={{ stopColor: '#EFB8C8', stopOpacity: 0 }}></stop>
+                                                </linearGradient>
+                                            </defs>
+                                            <path className="opacity-60" d="M0,140 C50,130 100,100 150,110 C200,120 250,90 300,70 C350,50 400,60 450,40" fill="none" stroke="#EFB8C8" strokeWidth="2"></path>
+                                            <path className="opacity-30" d="M0,140 C50,130 100,100 150,110 C200,120 250,90 300,70 C350,50 400,60 450,40 V192 H0 Z" fill="url(#gradTertiary)"></path>
+                                            <path className="opacity-80" d="M0,100 C60,110 120,80 180,90 C240,100 300,60 360,50 C400,43 450,20 450,20" fill="none" stroke="#CCC2DC" strokeWidth="2"></path>
+                                            <path className="opacity-30" d="M0,100 C60,110 120,80 180,90 C240,100 300,60 360,50 C400,43 450,20 450,20 V192 H0 Z" fill="url(#gradSecondary)"></path>
+                                            <path d="M0,80 C70,40 140,70 210,30 C280,-10 350,40 420,10 C440,0 450,5 450,5" fill="none" stroke="#D0BCFF" strokeWidth="3"></path>
+                                            <path className="opacity-40" d="M0,80 C70,40 140,70 210,30 C280,-10 350,40 420,10 C440,0 450,5 450,5 V192 H0 Z" fill="url(#gradPrimary)"></path>
+                                        </svg>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-m3-on-surface-variant font-medium px-2">
+                                        <span className="w-8 text-center">Mon</span>
+                                        <span className="w-8 text-center">Tue</span>
+                                        <span className="w-8 text-center text-m3-primary font-bold">Wed</span>
+                                        <span className="w-8 text-center">Thu</span>
+                                        <span className="w-8 text-center">Fri</span>
+                                        <span className="w-8 text-center">Sat</span>
+                                        <span className="w-8 text-center">Sun</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section className="flex flex-col gap-4">
+                            <h2 className="text-title-medium font-medium text-m3-on-surface px-2">Current Streaks</h2>
+                            <div className="bg-m3-surface-container-low rounded-m3-xl p-4 pr-6 shadow-m3-elevation-1 flex items-center gap-4 transition-all active:scale-[0.98]">
+                                <div className="size-14 rounded-full bg-m3-primary-container text-m3-on-primary-container flex items-center justify-center shrink-0">
+                                    <span className="material-symbols-outlined text-[28px]">water_drop</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-4xl font-bold text-m3-on-surface">14</span>
+                                        <span className="text-title-small text-m3-on-surface-variant">Days</span>
+                                    </div>
+                                    <div className="text-body-medium text-m3-on-surface font-medium truncate">Days Hydrated</div>
+                                </div>
+                                <div className="bg-m3-primary-container text-m3-on-primary-container px-3 py-1 rounded-m3-sm text-label-small font-bold flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[14px]">local_fire_department</span>
+                                    HOT
+                                </div>
+                            </div>
+                        </section>
+                        <section className="flex flex-col gap-4">
+                            <h2 className="text-title-medium font-medium text-m3-on-surface px-2">Completion Breakdown</h2>
+                            <div className="bg-m3-surface-container-high rounded-m3-xl p-6 shadow-sm">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-title-large font-medium text-m3-on-surface">Daily Goal</h3>
+                                    <div className="bg-m3-secondary-container text-m3-on-secondary-container px-3 py-1 rounded-full text-label-small font-bold">On Track</div>
+                                </div>
+                                <div className="flex flex-col items-center justify-center py-4">
+                                    <div className="relative size-56">
+                                        <svg className="size-full -rotate-90" viewBox="0 0 36 36">
+                                            <path className="text-m3-surface-container-low" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2.5"></path>
+                                            <path className="text-m3-secondary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray="75, 100" strokeLinecap="round" strokeWidth="2.5"></path>
+                                        </svg>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                            <span className="material-symbols-outlined text-m3-secondary text-5xl mb-2">flag</span>
+                                            <span className="text-4xl font-bold text-m3-on-surface">6/8</span>
+                                            <span className="text-label-small text-m3-on-surface-variant mt-1 font-medium tracking-wide uppercase">Targets</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </main>
+                    <FloatingActionButton icon="add" className="bg-m3-primary-container text-m3-on-primary-container" />
+                    <BottomNav />
+                </div>
+            );
+        };
+
+        // Screen 3: Habits Management
+        const HabitsScreen = () => {
+            return (
+                <div className="bg-background-dark text-on-surface min-h-screen pb-24 relative">
+                    <header className="px-4 py-4 sticky top-0 bg-background-dark/95 backdrop-blur-sm z-30 transition-colors">
+                        <div className="flex items-center gap-4">
+                            <div className="flex-1 flex items-center gap-4 bg-surface-container rounded-full px-4 py-3">
+                                <span className="material-symbols-outlined text-slate-400">search</span>
+                                <input className="bg-transparent border-none outline-none text-white placeholder:text-slate-500 w-full p-0 focus:ring-0 text-base" placeholder="Search habits..." type="text"/>
+                                <button className="text-slate-400 p-1 rounded-full hover:bg-on-surface/10">
+                                    <span className="material-symbols-outlined">filter_list</span>
+                                </button>
+                                <div className="size-8 rounded-full border border-outline/20 overflow-hidden shrink-0">
+                                    <img alt="User Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIL0dsDPQE1ctBxAaTOCxe3lHGbuOflt_uKCYlzkK4As_PRoXfnxrWRANepaXeKWWt2hjqlQ_1AqXiEDON39HDw7y5lM8O2Ii778kvpQVq7ntmIJfVLEhfFBiuwoSrU_9pEeo1t1EHUcIXkG3dvgKYuzjxA3uWyck31246YPDdmfDmE5Cunp0yaXrQQBTS-O0K2_aqMei9vW7T9hcJMRARMoV46jSSTLuNXbeizSpmMYuFDAaj2V-6UPFUUrtPeJn7pH8cHAcrWWeZ"/>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+                    <section className="px-0 mb-4">
+                        <div className="flex overflow-x-auto gap-2 px-4 pb-4 hide-scrollbar snap-x items-center">
+                            <div className="snap-start flex flex-col items-center justify-center min-w-[52px] h-[78px] rounded-full border border-white/10 text-slate-400">
+                                <span className="text-xs font-medium">Mon</span>
+                                <span className="text-lg font-bold">12</span>
+                            </div>
+                            <div className="snap-start flex flex-col items-center justify-center min-w-[52px] h-[78px] rounded-full border border-white/10 text-slate-400">
+                                <span className="text-xs font-medium">Tue</span>
+                                <span className="text-lg font-bold">13</span>
+                            </div>
+                            <div className="snap-start flex flex-col items-center justify-center min-w-[52px] h-[78px] rounded-full bg-primary text-on-primary shadow-lg shadow-primary/25 transform scale-105">
+                                <span className="text-xs font-medium opacity-90">Wed</span>
+                                <span className="text-lg font-bold">14</span>
+                            </div>
+                            <div className="snap-start flex flex-col items-center justify-center min-w-[52px] h-[78px] rounded-full border border-white/10 text-slate-400">
+                                <span className="text-xs font-medium">Thu</span>
+                                <span className="text-lg font-bold">15</span>
+                            </div>
+                        </div>
+                    </section>
+                    <main className="px-4 space-y-3">
+                        <article className="bg-surface-container rounded-[20px] p-4 flex items-center gap-4 transition-all active:scale-[0.99] active:brightness-95">
+                            <div className="size-12 rounded-xl bg-tertiary/20 flex items-center justify-center text-tertiary-container shrink-0">
+                                <span className="material-symbols-outlined">self_improvement</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-base font-semibold text-white truncate">Morning Meditation</h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-xs text-slate-400">15 mins • daily</span>
+                                </div>
+                            </div>
+                            <div className="shrink-0">
+                                <input defaultChecked className="size-6 rounded-md border-white/20 bg-white/5 text-primary focus:ring-primary/20 transition-all cursor-pointer" type="checkbox"/>
+                            </div>
+                        </article>
+                        <article className="bg-surface-container rounded-[20px] p-4 flex items-center gap-4 transition-all active:scale-[0.99] active:brightness-95">
+                            <div className="size-12 rounded-xl bg-secondary/20 flex items-center justify-center text-secondary-container shrink-0">
+                                <span className="material-symbols-outlined">menu_book</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-base font-semibold text-white truncate">Read 20 Pages</h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-xs text-slate-400">Growth • streak: 5</span>
+                                </div>
+                            </div>
+                            <div className="shrink-0">
+                                <input className="size-6 rounded-md border-white/20 bg-white/5 text-secondary focus:ring-secondary/20 transition-all cursor-pointer" type="checkbox"/>
+                            </div>
+                        </article>
+                        <article className="bg-surface-container rounded-[20px] p-4 flex items-center gap-4 transition-all active:scale-[0.99] active:brightness-95 opacity-60">
+                            <div className="size-12 rounded-xl bg-white/10 flex items-center justify-center text-slate-400 shrink-0">
+                                <span className="material-symbols-outlined">fitness_center</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-base font-semibold text-white truncate line-through decoration-slate-500/50">Morning Workout</h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-xs text-slate-400">Completed at 7:30 AM</span>
+                                </div>
+                            </div>
+                            <div className="shrink-0">
+                                <input defaultChecked disabled className="size-6 rounded-md border-white/20 bg-white/5 text-gray-500 cursor-not-allowed opacity-50" type="checkbox"/>
+                            </div>
+                        </article>
+                    </main>
+                    <FloatingActionButton icon="add" />
+                    <BottomNav />
+                </div>
+            );
+        };
+
+        // Screen 4: Routines Management
+        const RoutinesScreen = () => {
+            return (
+                <div className="bg-background-dark text-on-surface min-h-screen pb-24">
+                    <header className="sticky top-0 z-30 bg-background-dark/95 backdrop-blur-sm transition-all duration-300">
+                        <div className="flex items-center justify-between px-4 py-3 pt-6">
+                            <div className="flex flex-col gap-0.5">
+                                <p className="text-sm font-medium text-orange-200/80 uppercase tracking-wider">Today's Focus</p>
+                                <h1 className="text-3xl font-normal text-slate-100">Routines</h1>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button className="material-symbols-outlined p-2 rounded-full hover:bg-on-surface/10 text-slate-300">search</button>
+                                <button className="material-symbols-outlined p-2 rounded-full hover:bg-on-surface/10 text-slate-300">settings</button>
+                                <div className="size-10 ml-1 rounded-full border border-outline/20 overflow-hidden ring-2 ring-transparent hover:ring-primary/20 transition-all cursor-pointer">
+                                    <img alt="User Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIL0dsDPQE1ctBxAaTOCxe3lHGbuOflt_uKCYlzkK4As_PRoXfnxrWRANepaXeKWWt2hjqlQ_1AqXiEDON39HDw7y5lM8O2Ii778kvpQVq7ntmIJfVLEhfFBiuwoSrU_9pEeo1t1EHUcIXkG3dvgKYuzjxA3uWyck31246YPDdmfDmE5Cunp0yaXrQQBTS-O0K2_aqMei9vW7T9hcJMRARMoV46jSSTLuNXbeizSpmMYuFDAaj2V-6UPFUUrtPeJn7pH8cHAcrWWeZ"/>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+                    <main className="px-4 py-6 space-y-6 max-w-md mx-auto">
+                        <section>
+                            <div className="flex items-center gap-2 mb-3 pl-1">
+                                <span className="material-symbols-outlined text-primary text-xl filled">wb_sunny</span>
+                                <h2 className="text-title-md font-medium text-orange-200">Morning</h2>
+                            </div>
+                            <details className="group mb-3" open>
+                                <summary className="list-none cursor-pointer">
+                                    <div className="bg-surface-dim/30 border border-outline/10 rounded-2xl p-4 shadow-elevation-1 transition-all group-open:rounded-b-none group-open:shadow-none hover:bg-surface-dim/50">
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center gap-4">
+                                                <div className="size-12 rounded-xl bg-orange-900/40 flex items-center justify-center text-orange-200">
+                                                    <span className="material-symbols-outlined">coffee</span>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-lg font-medium text-white">Morning Focus</h3>
+                                                    <p className="text-sm text-gray-400">5 actions • 30 mins</p>
+                                                </div>
+                                            </div>
+                                            <span className="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+                                        </div>
+                                    </div>
+                                </summary>
+                                <div className="bg-surface-dim/30 border-x border-b border-outline/10 rounded-b-2xl p-4 pt-0">
+                                    <div className="pt-4 space-y-3">
+                                        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-on-surface/5">
+                                            <span className="material-symbols-outlined text-on-surface-variant">check_circle</span>
+                                            <span className="text-sm font-medium text-slate-200">Drink water (500ml)</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-on-surface/5">
+                                            <span className="material-symbols-outlined text-outline">radio_button_unchecked</span>
+                                            <span className="text-sm font-medium text-slate-200">10 min meditation</span>
+                                        </div>
+                                        <div className="mt-4 flex justify-end">
+                                            <button className="flex items-center gap-2 px-5 py-2.5 bg-primary text-on-primary rounded-full font-medium shadow-sm active:shadow-none active:scale-95 transition-all">
+                                                <span className="material-symbols-outlined text-xl">play_arrow</span>
+                                                Start Routine
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+                        </section>
+                        <section>
+                            <div className="flex items-center gap-2 mb-3 pl-1 pt-2">
+                                <span className="material-symbols-outlined text-amber-400 text-xl filled">light_mode</span>
+                                <h2 className="text-title-md font-medium text-amber-200">Afternoon</h2>
+                            </div>
+                            <details className="group mb-3">
+                                <summary className="list-none cursor-pointer">
+                                    <div className="bg-surface-dim/30 border border-outline/10 rounded-2xl p-4 shadow-elevation-1 transition-all group-open:rounded-b-none group-open:shadow-none hover:bg-surface-dim/50">
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center gap-4">
+                                                <div className="size-12 rounded-xl bg-blue-900/40 flex items-center justify-center text-blue-200">
+                                                    <span className="material-symbols-outlined">laptop_chromebook</span>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-lg font-medium text-white">Deep Work</h3>
+                                                    <p className="text-sm text-gray-400">2 actions • 90 mins</p>
+                                                </div>
+                                            </div>
+                                            <span className="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+                                        </div>
+                                    </div>
+                                </summary>
+                                <div className="bg-surface-dim/30 border-x border-b border-outline/10 rounded-b-2xl p-4 pt-0">
+                                    <div className="pt-4 space-y-3">
+                                        <div className="mt-4 flex justify-end">
+                                            <button className="flex items-center gap-2 px-5 py-2.5 bg-secondary text-on-secondary rounded-full font-medium shadow-sm hover:shadow-md transition-shadow">
+                                                <span className="material-symbols-outlined text-xl">play_arrow</span>
+                                                Start
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+                        </section>
+                    </main>
+                    <FloatingActionButton icon="add" />
+                    <BottomNav />
+                </div>
+            );
+        };
+
+        // Screen 5: Task Management
+        const TasksScreen = () => {
+            return (
+                <div className="bg-surface text-on-surface min-h-screen pb-24 selection:bg-primary/30">
+                    <header className="sticky top-0 bg-surface/95 backdrop-blur-md z-30 transition-all border-b border-outline-variant/30 px-4 py-3">
+                        <div className="flex justify-between items-center h-12">
+                            <h1 className="text-[22px] font-semibold tracking-tight text-on-surface ml-2">My Tasks</h1>
+                            <div className="flex items-center gap-1">
+                                <button className="size-10 flex items-center justify-center rounded-full hover:bg-on-surface/10 active:bg-on-surface/20 transition-colors text-on-surface-variant">
+                                    <span className="material-symbols-outlined text-[24px]">search</span>
+                                </button>
+                                <button className="size-10 flex items-center justify-center rounded-full hover:bg-on-surface/10 active:bg-on-surface/20 transition-colors text-on-surface-variant">
+                                    <span className="material-symbols-outlined text-[24px]">sort</span>
+                                </button>
+                                <button className="size-10 flex items-center justify-center rounded-full hover:bg-on-surface/10 active:bg-on-surface/20 transition-colors text-on-surface-variant">
+                                    <span className="material-symbols-outlined text-[24px]">settings</span>
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+                    <main className="px-4 py-4 max-w-lg mx-auto w-full">
+                        <section className="mb-6">
+                            <div className="flex items-center gap-2 mb-2 px-2 py-1">
+                                <h2 className="text-sm font-semibold text-on-surface tracking-wide">Today</h2>
+                                <span className="text-xs text-on-surface-variant/70 font-medium">• 3</span>
+                            </div>
+                            <div className="flex flex-col gap-[1px] bg-surface-container rounded-xl overflow-hidden shadow-sm">
+                                <div className="group relative flex items-center gap-3 p-3 bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer">
+                                    <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-priority-high"></div>
+                                    <button className="ml-2 size-5 rounded-full border border-outline hover:border-priority-high transition-colors flex items-center justify-center flex-shrink-0 group-hover:border-on-surface">
+                                    </button>
+                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                        <span className="text-[15px] font-medium text-on-surface leading-tight truncate">Design System Update</span>
+                                        <div className="flex items-center gap-3 mt-1">
+                                            <div className="flex items-center gap-1 text-priority-high">
+                                                <span className="material-symbols-outlined text-[14px]">schedule</span>
+                                                <span className="text-[11px] font-medium">5:00 PM</span>
+                                            </div>
+                                            <div className="flex items-center gap-1 text-on-surface-variant/60">
+                                                <span className="material-symbols-outlined text-[14px]">folder</span>
+                                                <span className="text-[11px]">Work</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <span className="material-symbols-outlined text-priority-high text-[18px]">flag</span>
+                                    </div>
+                                </div>
+                                <div className="h-[1px] bg-outline-variant/20 mx-3"></div>
+                                <div className="group relative flex items-center gap-3 p-3 bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer">
+                                    <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-priority-medium"></div>
+                                    <button className="ml-2 size-5 rounded-full border border-outline hover:border-priority-medium transition-colors flex items-center justify-center flex-shrink-0 group-hover:border-on-surface">
+                                    </button>
+                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                        <span className="text-[15px] font-medium text-on-surface leading-tight truncate">Quarterly Report</span>
+                                        <div className="flex items-center gap-3 mt-1">
+                                            <div className="flex items-center gap-1 text-on-surface-variant/80">
+                                                <span className="material-symbols-outlined text-[14px]">schedule</span>
+                                                <span className="text-[11px]">Due Today</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <span className="material-symbols-outlined text-priority-medium text-[18px]">flag</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section className="mb-24 opacity-60">
+                            <div className="flex items-center gap-2 mb-2 px-2 py-1">
+                                <h2 className="text-sm font-semibold text-on-surface tracking-wide">Completed</h2>
+                                <span className="text-xs text-on-surface-variant/70 font-medium">• 2</span>
+                            </div>
+                            <div className="flex flex-col gap-[1px] bg-surface-container/50 rounded-xl overflow-hidden border border-outline-variant/10">
+                                <div className="flex items-center gap-3 p-3 bg-surface-container/30">
+                                    <button className="ml-2 size-5 rounded-full bg-on-surface-variant text-surface-container flex items-center justify-center flex-shrink-0">
+                                        <span className="material-symbols-outlined text-[14px] font-bold">check</span>
+                                    </button>
+                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                        <span className="text-[15px] font-medium text-on-surface-variant line-through truncate">Morning Yoga</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </main>
+                    <FloatingActionButton icon="add" />
+                    <BottomNav />
+                </div>
+            );
+        };
+
+        const App = () => {
+            return (
+                <MemoryRouter>
+                    <Routes>
+                        <Route path="/" element={<PomodoroScreen />} />
+                        <Route path="/stats" element={<StatsScreen />} />
+                        <Route path="/habits" element={<HabitsScreen />} />
+                        <Route path="/routines" element={<RoutinesScreen />} />
+                        <Route path="/tasks" element={<TasksScreen />} />
+                    </Routes>
+                </MemoryRouter>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

@@ -7,6 +7,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -22,6 +24,12 @@ class NotificationHelper(
     private val notificationManager: NotificationManager,
 ) {
     fun createNotificationChannel() {
+        val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val audioAttributes =
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
         val channel =
             NotificationChannel(
                 CHANNEL_ID,
@@ -29,6 +37,9 @@ class NotificationHelper(
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 description = "Habit reminder notifications"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 500)
+                setSound(defaultSoundUri, audioAttributes)
             }
         notificationManager.createNotificationChannel(channel)
     }
@@ -48,6 +59,7 @@ class NotificationHelper(
         habitId: String,
         habitTitle: String,
     ) {
+        val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val contentIntent =
             context.packageManager.getLaunchIntentForPackage(context.packageName)?.let { intent ->
                 PendingIntent.getActivity(
@@ -81,6 +93,8 @@ class NotificationHelper(
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSound(defaultSoundUri)
+                .setVibrate(longArrayOf(0, 500))
                 .addAction(android.R.drawable.ic_menu_agenda, "Mark Complete", completePendingIntent)
                 .build()
 
