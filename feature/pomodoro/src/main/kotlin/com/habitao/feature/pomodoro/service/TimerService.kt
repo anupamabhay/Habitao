@@ -43,7 +43,8 @@ class TimerService : LifecycleService() {
 
     private var timerJob: Job? = null
     private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var pomodoroPreferences: PomodoroPreferences
+    @Inject
+    lateinit var pomodoroPreferences: PomodoroPreferences
     private var completionMediaPlayer: MediaPlayer? = null
     private val soundHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private val notificationManager by lazy {
@@ -58,7 +59,6 @@ class TimerService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        pomodoroPreferences = PomodoroPreferences(this)
         initPendingIntents()
     }
 

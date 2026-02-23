@@ -57,9 +57,9 @@ class PomodoroViewModel
     constructor(
         private val timerStateHolder: TimerStateHolder,
         private val pomodoroRepository: PomodoroRepository,
+        private val pomodoroPreferences: PomodoroPreferences,
         @ApplicationContext private val context: Context,
     ) : ViewModel() {
-        private val pomodoroPreferences = PomodoroPreferences(context)
 
         private val sessionsFlow =
             pomodoroRepository.observeSessionsForDate(LocalDate.now())
