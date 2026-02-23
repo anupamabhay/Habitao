@@ -35,7 +35,7 @@ data class CreateRoutineState(
     val scheduledDays: Set<DayOfWeek> = emptySet(),
     val reminderEnabled: Boolean = false,
     val reminderTime: LocalTime? = null,
-    val completionThreshold: Float = 1.0f,
+    val customInterval: Int = 2,
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -52,7 +52,7 @@ sealed class CreateRoutineIntent {
     data class ToggleDay(val day: DayOfWeek) : CreateRoutineIntent()
     data class SetReminderEnabled(val enabled: Boolean) : CreateRoutineIntent()
     data class SetReminderTime(val time: LocalTime) : CreateRoutineIntent()
-    data class SetCompletionThreshold(val threshold: Float) : CreateRoutineIntent()
+    data class SetCustomInterval(val interval: Int) : CreateRoutineIntent()
     object SaveRoutine : CreateRoutineIntent()
     object ClearError : CreateRoutineIntent()
 }
@@ -126,8 +126,8 @@ class CreateRoutineViewModel @Inject constructor(
             is CreateRoutineIntent.SetReminderTime -> {
                 _state.update { it.copy(reminderTime = intent.time) }
             }
-            is CreateRoutineIntent.SetCompletionThreshold -> {
-                _state.update { it.copy(completionThreshold = intent.threshold) }
+            is CreateRoutineIntent.SetCustomInterval -> {
+                _state.update { it.copy(customInterval = intent.interval) }
             }
             is CreateRoutineIntent.SaveRoutine -> saveRoutine()
             is CreateRoutineIntent.ClearError -> {
@@ -171,9 +171,10 @@ class CreateRoutineViewModel @Inject constructor(
                 description = currentState.description.trim().takeIf { it.isNotBlank() },
                 repeatPattern = currentState.repeatPattern,
                 repeatDays = if (currentState.repeatPattern == RepeatPattern.WEEKLY) currentState.scheduledDays.toList() else null,
+                customInterval = if (currentState.repeatPattern == RepeatPattern.CUSTOM) currentState.customInterval else null,
                 startDate = today,
                 nextScheduledDate = today,
-                completionThreshold = currentState.completionThreshold,
+                completionThreshold = 1.0f,
                 reminderEnabled = currentState.reminderEnabled,
                 reminderTime = currentState.reminderTime
             )
