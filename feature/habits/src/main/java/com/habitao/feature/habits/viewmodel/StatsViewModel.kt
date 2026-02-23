@@ -7,6 +7,7 @@ import com.habitao.domain.model.StreakInfo
 import com.habitao.domain.repository.HabitRepository
 import com.habitao.domain.repository.PomodoroRepository
 import com.habitao.feature.pomodoro.service.TimerStateHolder
+import com.habitao.feature.pomodoro.service.PomodoroPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -53,6 +54,7 @@ class StatsViewModel
         private val habitRepository: HabitRepository,
         private val pomodoroRepository: PomodoroRepository,
         private val timerStateHolder: TimerStateHolder,
+        private val pomodoroPreferences: PomodoroPreferences,
     ) : ViewModel() {
         private val today = LocalDate.now()
         private val statsDataFlow = MutableStateFlow<List<HabitStatItem>>(emptyList())
@@ -114,6 +116,7 @@ class StatsViewModel
                 val todaysPomodoroSessions =
                     pomodoroSessions
                         .count { it.sessionType == PomodoroType.WORK && (it.actualDurationSeconds ?: 0) > 0 }
+                val todaysCompletedRounds = pomodoroPreferences.getTodaysRounds()
 
                 StatsState(
                     totalHabits = totalHabits,
@@ -123,7 +126,7 @@ class StatsViewModel
                     habitStats = statItems,
                     todaysFocusSeconds = todaysFocusSeconds,
                     todaysPomodoroSessions = todaysPomodoroSessions,
-                    todaysCompletedRounds = 0,
+                    todaysCompletedRounds = todaysCompletedRounds,
                     isLoading = isLoading,
                 )
             }.stateIn(

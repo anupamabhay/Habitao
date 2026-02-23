@@ -215,37 +215,38 @@ habitao/
 -  Project setup (multi-module Gradle structure)
 -  Database schema implementation (Room)
 -  Design system setup (MD3 tokens, theme)
-- [ ] Navigation infrastructure (Voyager) -- using simple state-based nav for now
-- [ ] CI/CD pipeline (GitHub Actions) -- deferred
+-  Navigation infrastructure (Jetpack Navigation)
+-  CI/CD pipeline (GitHub Actions)
 
-### Phase 2: Core Features - Habits (Weeks 3-4) -- IN PROGRESS
+### Phase 2: Core Features - Habits (Weeks 3-4) -- COMPLETE
 -  Habit CRUD operations (create, edit, delete with swipe)
-- [ ] Day view + Week view calendar
+-  Day view + Week view calendar (HorizontalPager)
 -  Three habit types: Simple, Measurable, Checklist
 -  Reminder notifications (AlarmManager + exact alarms)
 -  Checklist expand/collapse with item toggling
 -  Undo support (toggle done/undone, undo delete via snackbar)
 -  Home header with greeting, date, progress bar
-- [ ] Streak calculation (logic exists, UI pending)
+-  Streak calculation and display
 
-### Phase 3: Tasks & Routines (Weeks 5-6)
+### Phase 3: Pomodoro & Integration (Week 5) -- COMPLETE
+-  Pomodoro timer with foreground service
+-  Timer notifications and completion feedback (sound, haptic)
+-  Session history and daily round tracking
+-  Customizable settings (durations, auto-start, sounds)
+-  Unified Stats screen with Pomodoro data
+
+### Phase 4: Tasks & Routines (Weeks 6-7) -- IN PROGRESS
 - Task management with subtasks
 - Due date reminders
 - Routine creation with steps
 - Routine scheduling
 
-### Phase 4: Pomodoro & Integration (Week 7)
-- Pomodoro timer with foreground service
-- Timer notifications
-- Session history
-- Unified home screen
-
 ### Phase 5: Polish & Launch (Weeks 8-10)
 - Home screen widget
-- Statistics dashboard (basic charts)
+- Pomodoro UX enhancements (animations, full-screen mode, task association)
 - Dark mode refinement
 - E2E testing (Maestro)
-- Performance optimization
+- Performance optimization (Baseline Profiles)
 - Beta testing
 
 ### Phase 6: Release (Weeks 11-12)
