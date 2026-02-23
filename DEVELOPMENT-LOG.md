@@ -238,6 +238,14 @@ Test Coverage: TBD (next phase)
 
 ### Session Notes
 
+#### 2026-02-23: PR Review & Fixes
+- Addressed Copilot PR review comments for Pomodoro feature
+- Fixed sound playing for the *next* session by capturing session type before advancing
+- Ensured TimerService stops foreground execution when idle to clear sticky notifications
+- Updated foreground service type to `specialUse` (Android 14+ compliance) instead of `shortService`
+- Wired `todaysCompletedRounds` in StatsViewModel to actual preferences data
+- Merged planned features into existing documentation (`00-PROJECT-OVERVIEW.md`, `01-PRODUCT-REQUIREMENTS.md`)
+
 #### 2026-02-23: Planning & Research Session
 - Created PR #3 to merge feature/pomodoro into dev
 - Researched Pomodoro UX enhancements from Forest, TickTick, Focus To-Do, Be Focused

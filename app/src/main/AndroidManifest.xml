@@ -46,7 +46,11 @@
         <service
             android:name="com.habitao.feature.pomodoro.service.TimerService"
             android:exported="false"
-            android:foregroundServiceType="shortService" />
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Pomodoro Timer" />
+        </service>
 
     </application>
 

@@ -157,6 +157,7 @@ Habitao is a comprehensive productivity application for Android that combines ha
 | Tags & Labels | v1.1 | Organize tasks/habits with custom tags |
 | Projects | v1.1 | Group tasks into projects |
 | Duration-Based Tracking | v1.2 | Track time spent on habits (requires timer integration) |
+| Pomodoro UX Enhancements | v1.2 | Task association, full-screen desk clock mode, timer animations (growing plant/shrinking circle), ambient focus sounds |
 | Gamification | v1.2 | Achievements, badges, milestone celebrations |
 | Data Import | v1.2 | Import from TickTick, Todoist, Google Tasks |
 | Cloud Sync | v2.0 | Full sync implementation with conflict resolution |
@@ -205,6 +206,9 @@ Habitao is a comprehensive productivity application for Android that combines ha
 4.  Automatically start a 5-minute break timer
 5.  Associate the Pomodoro session with a specific task (v1.1)
 6.  See my total focus time for the day/week (v1.1)
+7.  Use a full-screen desk clock mode to stay focused without distractions (v1.2)
+8.  See engaging animations (like a growing plant) during my focus session (v1.2)
+9.  Listen to ambient white noise (rain, cafe) while the timer runs (v1.2)
 
 ### 4.5 Integration
 
