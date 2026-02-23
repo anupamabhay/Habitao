@@ -2,9 +2,15 @@ package com.habitao.feature.pomodoro.service
 
 import android.content.Context
 import android.content.SharedPreferences
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class PomodoroPreferences(context: Context) {
+@Singleton
+class PomodoroPreferences @Inject constructor(
+    @ApplicationContext context: Context
+) {
     val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
