@@ -19,9 +19,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
-/**
- * Available sorting options for the habits list.
- */
+// Sorting options for the habits list
 enum class SortOption {
     MANUAL,
     ALPHABETICAL,
@@ -30,9 +28,7 @@ enum class SortOption {
     BY_COMPLETION,
 }
 
-/**
- * State for Habits Screen (MVI Pattern)
- */
+// State for Habits screen
 data class HabitsState(
     val habits: List<Habit> = emptyList(),
     val logs: Map<String, HabitLog> = emptyMap(), // habitId -> log for selected date
@@ -44,9 +40,7 @@ data class HabitsState(
     val sortOption: SortOption = SortOption.MANUAL,
 )
 
-/**
- * Intents (User Actions) for Habits Screen
- */
+// Intents for Habits screen
 sealed class HabitsIntent {
     data class SelectDate(val date: LocalDate) : HabitsIntent()
 
@@ -78,10 +72,7 @@ class HabitsViewModel
         private val weeklyProgressFlow = MutableStateFlow<Map<String, Int>>(emptyMap())
         private val streakRefreshTrigger = MutableStateFlow(0L)
 
-        /**
-         * Observe habits reactively - auto-updates when database changes.
-         * This fixes the refresh bug where habits wouldn't appear after creation.
-         */
+        // Reactive habit observation - auto-updates on database changes
         val state: StateFlow<HabitsState> =
             combine(
                 selectedDateFlow,

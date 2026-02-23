@@ -140,4 +140,10 @@ androidTest-results/
 secrets/
 .env
 .env.local
-/%TEMP%
+
+# Temp directories and logs
+%TEMP%/
+logs/
+
+# Design reference files (use external design tools)
+docs/ui designs/

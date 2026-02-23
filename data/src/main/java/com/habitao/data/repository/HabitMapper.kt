@@ -18,9 +18,7 @@ import java.time.ZoneId
 
 // HABIT MAPPERS
 
-/**
- * Extension functions to convert between Entity and Domain models
- */
+// Entity <-> Domain model mappers
 fun HabitEntity.toDomainModel(): Habit {
     return Habit(
         id = id,

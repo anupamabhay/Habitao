@@ -5,10 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-/**
- * Room entity representing a habit log (daily progress).
- * Tracks completion status and progress for a specific habit on a specific date.
- */
+// Daily progress log entity for a habit on a specific date
 @Entity(
     tableName = "habit_logs",
     foreignKeys = [

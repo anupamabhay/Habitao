@@ -11,10 +11,7 @@ import com.habitao.data.local.entity.HabitEntity
 import com.habitao.data.local.entity.HabitLogEntity
 import com.habitao.data.local.entity.PomodoroSessionEntity
 
-/**
- * Room Database for Habitao
- * Contains habits, logs, routines, tasks, etc.
- */
+// Room Database for Habitao
 @Database(
     entities = [
         HabitEntity::class,

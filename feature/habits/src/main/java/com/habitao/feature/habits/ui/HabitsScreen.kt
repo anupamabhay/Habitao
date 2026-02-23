@@ -48,7 +48,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -379,16 +381,34 @@ private fun DateSelector(
     val middlePage = pageCount / 2
     val pagerState = rememberPagerState(initialPage = middlePage, pageCount = { pageCount })
     val baseWeekStart = remember(today) { today.with(DayOfWeek.MONDAY) }
+    val currentSelectedDate by rememberUpdatedState(selectedDate)
+
+    // Auto-select corresponding day when user scrolls to a different week
+    LaunchedEffect(pagerState) {
+        var previousPage = pagerState.settledPage
+        snapshotFlow { pagerState.settledPage }.collect { page ->
+            if (page != previousPage) {
+                previousPage = page
+                val weekOffset = (page - middlePage).toLong()
+                val newWeekStart = baseWeekStart.plusWeeks(weekOffset)
+                val dayOfWeekIndex = currentSelectedDate.dayOfWeek.value - 1
+                val newDate = newWeekStart.plusDays(dayOfWeekIndex.toLong())
+                if (newDate != currentSelectedDate) {
+                    onDateSelected(newDate)
+                }
+            }
+        }
+    }
 
     HorizontalPager(
         modifier = modifier.fillMaxWidth(),
         state = pagerState,
     ) { page ->
-        val weekStart = baseWeekStart.minusWeeks((page - middlePage).toLong())
+        val weekStart = baseWeekStart.plusWeeks((page - middlePage).toLong())
         val isCurrentWeek = page == middlePage
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
+            horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
         ) {
             repeat(7) { dayIndex ->
                 val date = weekStart.plusDays(dayIndex.toLong())
@@ -398,6 +418,7 @@ private fun DateSelector(
                     isToday = date == today,
                     isInCurrentWeek = isCurrentWeek,
                     onClick = { onDateSelected(date) },
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -411,6 +432,7 @@ private fun DateChip(
     isToday: Boolean,
     isInCurrentWeek: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val backgroundColor =
         if (isSelected) {
@@ -432,10 +454,7 @@ private fun DateChip(
         shape = AppShapes.dateChip,
         color = backgroundColor,
         contentColor = contentColor,
-        modifier =
-            Modifier
-                .width(52.dp)
-                .height(68.dp),
+        modifier = modifier.height(68.dp),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

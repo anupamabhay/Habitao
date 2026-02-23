@@ -1,26 +1,37 @@
 # Habitao
 
-Unified Productivity App for Android - Habits, Routines, Tasks, and Pomodoro Timer in one app.
+A unified productivity app for Android combining habit tracking, a Pomodoro focus timer, routines, and task management.
 
 ## Status
 
-**Current:** MVP Development Phase - Core habits functionality implemented  
-**Platform:** Android 8.0+ (API 26+)  
+**Current:** Active development (Habits + Pomodoro complete, Routines and Tasks planned)
+**Platform:** Android 8.0+ (API 26)
 **Architecture:** Clean Architecture + MVI with Jetpack Compose
 
-## Quick Start
+## Features
 
-```bash
-# Clone and open in Android Studio
-git clone <repo-url>
-cd Habitao
+### Habits
+- Three habit types: simple (yes/no), measurable (numeric targets), and checklist (sub-tasks)
+- Flexible scheduling: daily, specific days, X times per week, every X days
+- Streak tracking and weekly progress aggregation
+- Infinite-scrolling week calendar with snap-to-week navigation
+- Stats dashboard with completion rates and streak data
+- Per-habit reminders with sound and vibration
 
-# Build debug APK
-./gradlew assembleDebug
+### Pomodoro Timer
+- Foreground service timer with pause, resume, stop, and skip controls
+- Configurable work/break durations and session counts
+- Auto-start next session or break
+- System ringtone picker for completion sounds
+- Vibration feedback with configurable duration
+- Daily focus time tracking (sessions, rounds, total duration)
+- Completion notifications with alarm-priority sound
 
-# Run on connected device
-./gradlew installDebug
-```
+### Planned
+- Routines with ordered steps (morning, afternoon, evening)
+- Tasks with subtasks, priorities, and due dates
+- Home screen widgets
+- Full-screen focus mode with animations
 
 ## Tech Stack
 
@@ -29,95 +40,60 @@ cd Habitao
 | Language | Kotlin 2.0 |
 | UI | Jetpack Compose + Material Design 3 |
 | Architecture | Clean Architecture + MVI |
-| Database | Room 2.7 |
-| DI | Hilt 2.51 |
+| Database | Room |
+| DI | Hilt |
 | Navigation | Jetpack Navigation Compose |
 | Async | Kotlin Coroutines + Flow |
+| CI/CD | GitHub Actions |
 
 ## Project Structure
 
 ```
 habitao/
-├── app/                  # Application entry point
-├── feature/              # Feature modules
-│   ├── habits/           # Habit tracking
-│   ├── routines/         # Routine management
-│   ├── tasks/            # Task management
-│   └── pomodoro/         # Focus timer
-├── domain/               # Business logic (pure Kotlin)
-├── data/                 # Data layer (Room, repositories)
-├── core/                 # Shared utilities
-│   ├── common/           # Common utilities
-│   ├── ui/               # Design system, theme
-│   └── testing/          # Test utilities
-└── system/               # Android system integrations
-    ├── notifications/
-    ├── alarms/
-    ├── work/
-    └── widget/
+├── app/                  # Application entry point, DI, navigation
+├── domain/               # Business logic (pure Kotlin, no Android deps)
+├── data/                 # Room database, repository implementations
+├── core/
+│   ├── common/           # Shared utilities
+│   ├── ui/               # Design system, theme, shared components
+│   └── testing/          # Test utilities and fakes
+├── feature/
+│   ├── habits/           # Habit tracking UI and ViewModels
+│   ├── pomodoro/         # Focus timer UI, service, preferences
+│   ├── routines/         # Routine management (planned)
+│   └── tasks/            # Task management (planned)
+└── system/
+    ├── notifications/    # Notification channels, reminders, receivers
+    ├── alarms/           # Exact alarm scheduling
+    ├── work/             # Background work (WorkManager)
+    └── widget/           # Home screen widgets (planned)
 ```
 
-## Architecture
-
-```
-Presentation (Compose + ViewModel)
-        |
-        v
-Domain (Use Cases + Repository Interfaces)
-        |
-        v
-Data (Room + Repository Implementations)
-```
-
-- **MVI Pattern**: Unidirectional data flow with State, Intent, and ViewModel
-- **Clean Architecture**: Separation of concerns across layers
-- **Repository Pattern**: Abstract data sources from business logic
-
-## Features
-
-### Implemented
-- Habit list view with Material Design 3 theming
-- Create habit form with support for three habit types:
-  - Simple (Yes/No completion)
-  - Measurable (numeric targets with progress tracking)
-  - Checklist (sub-tasks that can be checked off)
-- Edit existing habits
-- Habit completion tracking with daily logs
-- Flexible scheduling (daily, specific days, interval-based)
-- Dynamic color support (Material You)
-- Empty state handling
-- Database schema for habits and logs
-
-### Planned
-- Routines with ordered steps
-- Tasks with subtasks and priorities
-- Pomodoro timer with notifications
-- Home screen widgets
-- Statistics and streaks
-- Habit reminders and notifications
-
-## Development
+## Building
 
 ### Requirements
 - Android Studio Ladybug or newer
 - JDK 17
 - Android SDK 35
 
-### Building
+### Commands
 ```bash
-./gradlew assembleDebug    # Debug build
-./gradlew assembleRelease  # Release build (requires signing)
-./gradlew test             # Run unit tests
+./gradlew assembleDebug        # Debug build
+./gradlew assembleRelease      # Release build (requires signing config)
+./gradlew testDebugUnitTest    # Unit tests
+./gradlew detekt               # Static analysis
+./gradlew ktlintFormat         # Code formatting
 ```
 
-### Git Workflow
+## Git Workflow
+
 - `main` - Production releases only
 - `dev` - Primary development branch
-- `feature/*` - Feature branches from dev
+- `feature/*` - Feature branches (merge to `dev` via PR)
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for full guidelines.
 
 ## Documentation
-
-Detailed documentation in `docs/`:
 
 - [Project Overview](./docs/00-PROJECT-OVERVIEW.md)
 - [Product Requirements](./docs/01-PRODUCT-REQUIREMENTS.md)
@@ -125,6 +101,7 @@ Detailed documentation in `docs/`:
 - [Technical Architecture](./docs/03-TECHNICAL-ARCHITECTURE.md)
 - [Security and Privacy](./docs/04-SECURITY-PRIVACY.md)
 - [Testing Strategy](./docs/05-TESTING-STRATEGY.md)
+- [CI/CD Setup](./docs/06-CICD-SETUP.md)
 
 ## License
 

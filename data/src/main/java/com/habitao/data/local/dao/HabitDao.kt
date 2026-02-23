@@ -10,9 +10,7 @@ import com.habitao.data.local.entity.HabitEntity
 import com.habitao.data.local.entity.HabitLogEntity
 import kotlinx.coroutines.flow.Flow
 
-/**
- * DAO for habit operations
- */
+// DAO for habit operations
 @Dao
 interface HabitDao {
     // ============== HABIT CRUD ==============
@@ -79,9 +77,7 @@ interface HabitDao {
     )
 }
 
-/**
- * DAO for habit log operations
- */
+// DAO for habit log operations
 @Dao
 interface HabitLogDao {
     // ============== LOG CRUD ==============
