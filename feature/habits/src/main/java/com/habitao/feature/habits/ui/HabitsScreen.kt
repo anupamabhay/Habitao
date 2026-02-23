@@ -483,7 +483,13 @@ private fun DateChip(
                         Modifier
                             .size(6.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
+                            .background(
+                                if (isSelected) {
+                                    MaterialTheme.colorScheme.onPrimary
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
+                            ),
                 )
             }
         }
