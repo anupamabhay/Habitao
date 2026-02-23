@@ -46,6 +46,8 @@ import com.habitao.feature.habits.ui.CreateHabitScreen
 import com.habitao.feature.habits.ui.HabitsScreen
 import com.habitao.feature.habits.ui.StatsScreen
 import com.habitao.feature.pomodoro.ui.PomodoroScreen
+import com.habitao.feature.routines.ui.CreateRoutineScreen
+import com.habitao.feature.tasks.ui.CreateTaskScreen
 import com.habitao.feature.routines.ui.RoutinesScreen
 import com.habitao.feature.tasks.ui.TasksScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -89,11 +91,11 @@ private enum class Tab(
     val unselectedIcon: ImageVector,
     val route: Any,
 ) {
+    STATS("Stats", Icons.Filled.BarChart, Icons.Outlined.BarChart, StatsRoute),
     HABITS("Habits", Icons.Filled.CheckCircle, Icons.Outlined.CheckCircleOutline, HabitsRoute),
+    TASKS("Tasks", Icons.Filled.TaskAlt, Icons.Outlined.TaskAlt, TasksRoute),
     ROUTINES("Routines", Icons.AutoMirrored.Filled.ListAlt, Icons.AutoMirrored.Outlined.ListAlt, RoutinesRoute),
     POMODORO("Pomodoro", Icons.Filled.Timer, Icons.Outlined.Timer, PomodoroRoute),
-    TASKS("Tasks", Icons.Filled.TaskAlt, Icons.Outlined.TaskAlt, TasksRoute),
-    STATS("Stats", Icons.Filled.BarChart, Icons.Outlined.BarChart, StatsRoute),
 }
 
 @AndroidEntryPoint
@@ -201,15 +203,17 @@ private fun HabitaoApp() {
 
             // -- Full-screen destinations (no bottom bar) --
             composable<CreateRoutineRoute> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Create Routine - Coming Soon")
-                }
+                CreateRoutineScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onRoutineCreated = { navController.popBackStack() },
+                )
             }
 
             composable<CreateTaskRoute> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Create Task - Coming Soon")
-                }
+                CreateTaskScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onTaskCreated = { navController.popBackStack() },
+                )
             }
 
             composable<CreateHabitRoute> {
