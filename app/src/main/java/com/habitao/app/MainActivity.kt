@@ -9,13 +9,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.CheckCircleOutline
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +46,8 @@ import com.habitao.feature.habits.ui.CreateHabitScreen
 import com.habitao.feature.habits.ui.HabitsScreen
 import com.habitao.feature.habits.ui.StatsScreen
 import com.habitao.feature.pomodoro.ui.PomodoroScreen
+import com.habitao.feature.routines.ui.RoutinesScreen
+import com.habitao.feature.tasks.ui.TasksScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
 
@@ -57,7 +63,16 @@ object PomodoroRoute
 object StatsRoute
 
 @Serializable
-object SettingsRoute
+object RoutinesRoute
+
+@Serializable
+object TasksRoute
+
+@Serializable
+object CreateRoutineRoute
+
+@Serializable
+object CreateTaskRoute
 
 @Serializable
 object CreateHabitRoute
@@ -74,10 +89,11 @@ private enum class Tab(
     val unselectedIcon: ImageVector,
     val route: Any,
 ) {
-    STATS("Stats", Icons.Filled.BarChart, Icons.Outlined.BarChart, StatsRoute),
     HABITS("Habits", Icons.Filled.CheckCircle, Icons.Outlined.CheckCircleOutline, HabitsRoute),
+    ROUTINES("Routines", Icons.AutoMirrored.Filled.ListAlt, Icons.AutoMirrored.Outlined.ListAlt, RoutinesRoute),
     POMODORO("Pomodoro", Icons.Filled.Timer, Icons.Outlined.Timer, PomodoroRoute),
-    SETTINGS("Settings", Icons.Filled.Settings, Icons.Outlined.Settings, SettingsRoute),
+    TASKS("Tasks", Icons.Filled.TaskAlt, Icons.Outlined.TaskAlt, TasksRoute),
+    STATS("Stats", Icons.Filled.BarChart, Icons.Outlined.BarChart, StatsRoute),
 }
 
 @AndroidEntryPoint
@@ -140,7 +156,7 @@ private fun HabitaoApp() {
 
         NavHost(
             navController = navController,
-            startDestination = StatsRoute,
+            startDestination = HabitsRoute,
         ) {
             // -- Tab destinations --
             composable<HabitsRoute> {
@@ -166,13 +182,36 @@ private fun HabitaoApp() {
                 }
             }
 
-            composable<SettingsRoute> {
-                SettingsPlaceholder(
-                    modifier = Modifier.padding(paddingValues),
-                )
+            composable<RoutinesRoute> {
+                Box(modifier = bottomPad) {
+                    RoutinesScreen(
+                        onAddRoutine = { navController.navigate(CreateRoutineRoute) },
+                    )
+                }
+            }
+
+            composable<TasksRoute> {
+                Box(modifier = bottomPad) {
+                    TasksScreen(
+                        onAddTask = { navController.navigate(CreateTaskRoute) },
+                        onEditTask = { /* TODO */ },
+                    )
+                }
             }
 
             // -- Full-screen destinations (no bottom bar) --
+            composable<CreateRoutineRoute> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Create Routine - Coming Soon")
+                }
+            }
+
+            composable<CreateTaskRoute> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Create Task - Coming Soon")
+                }
+            }
+
             composable<CreateHabitRoute> {
                 CreateHabitScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -222,20 +261,5 @@ private fun HabitaoNavigationBar(
                 label = { Text(tab.label) },
             )
         }
-    }
-}
-
-@Composable
-private fun SettingsPlaceholder(modifier: Modifier = Modifier) {
-    Box(
-        modifier =
-            modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = "Settings coming soon",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
