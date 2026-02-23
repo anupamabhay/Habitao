@@ -19,9 +19,7 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Singleton
 
-/**
- * Hilt module for data layer dependencies
- */
+// Hilt module for data layer dependencies
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {

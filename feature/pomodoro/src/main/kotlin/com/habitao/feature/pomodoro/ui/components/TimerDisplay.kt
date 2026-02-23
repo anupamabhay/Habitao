@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
@@ -22,8 +23,10 @@ fun TimerDisplay(
     sessionType: PomodoroType,
     modifier: Modifier = Modifier,
 ) {
-    val safeTotalSeconds = totalSeconds.coerceAtLeast(1L)
-    val progress = (remainingSeconds.toFloat() / safeTotalSeconds.toFloat()).coerceIn(0f, 1f)
+    val progress = remember(remainingSeconds, totalSeconds) {
+        val safeTotalSeconds = totalSeconds.coerceAtLeast(1L)
+        (remainingSeconds.toFloat() / safeTotalSeconds.toFloat()).coerceIn(0f, 1f)
+    }
     val accentColor =
         if (sessionType == PomodoroType.WORK) {
             MaterialTheme.colorScheme.primary

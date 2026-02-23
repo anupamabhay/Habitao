@@ -3,6 +3,7 @@ package com.habitao.feature.pomodoro.viewmodel
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.PomodoroType
@@ -56,9 +57,9 @@ class PomodoroViewModel
     constructor(
         private val timerStateHolder: TimerStateHolder,
         private val pomodoroRepository: PomodoroRepository,
+        private val pomodoroPreferences: PomodoroPreferences,
         @ApplicationContext private val context: Context,
     ) : ViewModel() {
-        private val pomodoroPreferences = PomodoroPreferences(context)
 
         private val sessionsFlow =
             pomodoroRepository.observeSessionsForDate(LocalDate.now())
@@ -178,6 +179,10 @@ class PomodoroViewModel
                 Intent(context, TimerService::class.java).apply {
                     this.action = action
                 }
-            context.startService(intent)
+            if (action == TimerService.ACTION_START && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
         }
     }

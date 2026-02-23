@@ -43,7 +43,8 @@ class TimerService : LifecycleService() {
 
     private var timerJob: Job? = null
     private lateinit var sharedPreferences: SharedPreferences
-    private lateinit var pomodoroPreferences: PomodoroPreferences
+    @Inject
+    lateinit var pomodoroPreferences: PomodoroPreferences
     private var completionMediaPlayer: MediaPlayer? = null
     private val soundHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private val notificationManager by lazy {
@@ -58,7 +59,6 @@ class TimerService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        pomodoroPreferences = PomodoroPreferences(this)
         initPendingIntents()
     }
 
@@ -163,8 +163,7 @@ class TimerService : LifecycleService() {
         )
         clearTimerPrefs()
         timerStateHolder.reset()
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
+        stopTimerService()
     }
 
     private fun handleSkip() {
@@ -186,6 +185,7 @@ class TimerService : LifecycleService() {
         clearTimerPrefs()
         timerStateHolder.updateTimerState(TimerState.IDLE)
         updateNotification(0L)
+        stopTimerService()
     }
 
     private fun startTimer(initialRemainingSeconds: Long) {
@@ -221,11 +221,13 @@ class TimerService : LifecycleService() {
             completedAt = completedAt,
         )
         clearTimerPrefs()
-        playCompletionFeedback()
+        val completedSessionType = timerStateHolder.currentSessionType.value
+        playCompletionFeedback(completedSessionType)
         showCompletionNotification()
         advanceSessionType()
 
         if (timerStateHolder.timerState.value == TimerState.IDLE) {
+            stopTimerService()
             return
         }
 
@@ -240,13 +242,14 @@ class TimerService : LifecycleService() {
         } else {
             timerStateHolder.updateTimerState(TimerState.IDLE)
             updateNotification(0L)
+            stopTimerService()
         }
     }
 
-    private fun playCompletionFeedback() {
+    private fun playCompletionFeedback(sessionType: PomodoroType) {
         lifecycleScope.launch(Dispatchers.Default) {
             vibrateCompletionPulse()
-            playDefaultCompletionSound()
+            playDefaultCompletionSound(sessionType)
         }
     }
 
@@ -273,10 +276,10 @@ class TimerService : LifecycleService() {
         vibrator.vibrate(effect)
     }
 
-    private fun playDefaultCompletionSound() {
+    private fun playDefaultCompletionSound(sessionType: PomodoroType) {
         stopCompletionSound()
         try {
-            val isWorkSession = timerStateHolder.currentSessionType.value == PomodoroType.WORK
+            val isWorkSession = sessionType == PomodoroType.WORK
             val uriString = if (isWorkSession) {
                 pomodoroPreferences.pomoEndingSoundUri
             } else {
@@ -322,6 +325,11 @@ class TimerService : LifecycleService() {
             } catch (_: Throwable) {}
         }
         completionMediaPlayer = null
+    }
+
+    private fun stopTimerService() {
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
     }
 
     private fun saveSession(
@@ -396,7 +404,7 @@ class TimerService : LifecycleService() {
             NOTIFICATION_ID,
             notification,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SHORT_SERVICE
+                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
             } else {
                 0
             },

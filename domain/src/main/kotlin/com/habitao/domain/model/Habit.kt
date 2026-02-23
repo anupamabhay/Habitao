@@ -4,13 +4,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
 
-/**
- * Domain model representing a habit.
- * Supports three tracking types:
- * - SIMPLE: Binary yes/no (e.g., Take medication, Make bed)
- * - MEASURABLE: Numeric with target (e.g., Drink 2000ml water, Read 30 minutes)
- * - CHECKLIST: Multiple sub-tasks (e.g., Morning routine with steps)
- */
+// Domain model representing a habit
 data class Habit(
     val id: String = UUID.randomUUID().toString(),
     val title: String,
@@ -41,9 +35,7 @@ data class Habit(
     val isArchived: Boolean = false,
     val sortOrder: Int = 0,
 ) {
-    /**
-     * Check if this habit is scheduled for a given date
-     */
+    // Check if this habit is scheduled for a given date
     fun isScheduledFor(date: LocalDate): Boolean {
         if (date < startDate) return false
         if (endDate != null && date > endDate) return false
@@ -56,11 +48,7 @@ data class Habit(
         }
     }
 
-    /**
-     * Get days until the next due date for EVERY_X_DAYS habits.
-     * Returns 0 if due today, positive if due in future days.
-     * For other frequency types, returns 0.
-     */
+    // Get days until the next due date for EVERY_X_DAYS habits
     fun getDaysUntilDue(date: LocalDate): Int {
         if (frequencyType != FrequencyType.EVERY_X_DAYS) return 0
         if (date < startDate) return java.time.temporal.ChronoUnit.DAYS.between(date, startDate).toInt()
@@ -70,9 +58,7 @@ data class Habit(
         return if (daysIntoCycle == 0) 0 else frequencyValue - daysIntoCycle
     }
 
-    /**
-     * Get human-readable frequency description
-     */
+    // Get human-readable frequency description
     fun getFrequencyDescription(): String {
         return when (frequencyType) {
             FrequencyType.DAILY -> "Every day"
@@ -88,9 +74,7 @@ data class Habit(
         }
     }
 
-    /**
-     * Get target description for display
-     */
+    // Get target description for display
     fun getTargetDescription(): String {
         return when (habitType) {
             HabitType.SIMPLE -> ""
@@ -104,27 +88,20 @@ data class Habit(
     }
 }
 
-/**
- * Type of habit tracking
- */
+// Type of habit tracking
 enum class HabitType {
     SIMPLE, // Binary yes/no completion
     MEASURABLE, // Numeric progress toward target
     CHECKLIST, // Multiple sub-tasks to complete
 }
 
-/**
- * For measurable habits: track "at least X" or "at most X"
- * AT_MOST is useful for breaking bad habits (e.g., "smoke at most 5 cigarettes")
- */
+// Target operator for measurable habits
 enum class TargetOperator {
     AT_LEAST,
     AT_MOST,
 }
 
-/**
- * Scheduling frequency type
- */
+// Scheduling frequency type
 enum class FrequencyType {
     DAILY, // Every day
     SPECIFIC_DAYS, // Mon, Wed, Fri (uses scheduledDays)
@@ -132,9 +109,7 @@ enum class FrequencyType {
     EVERY_X_DAYS, // Every 3 days (uses frequencyValue)
 }
 
-/**
- * Day of week enum with display helpers
- */
+// Day of week enum with display helpers
 enum class DayOfWeek(val shortName: String) {
     MONDAY("Mon"),
     TUESDAY("Tue"),
@@ -145,9 +120,7 @@ enum class DayOfWeek(val shortName: String) {
     SUNDAY("Sun"),
 }
 
-/**
- * Extension to convert Java DayOfWeek to domain DayOfWeek
- */
+// Extension to convert Java DayOfWeek to domain DayOfWeek
 fun java.time.DayOfWeek.toDomainDay(): DayOfWeek {
     return when (this) {
         java.time.DayOfWeek.MONDAY -> DayOfWeek.MONDAY
@@ -160,18 +133,14 @@ fun java.time.DayOfWeek.toDomainDay(): DayOfWeek {
     }
 }
 
-/**
- * Item in a checklist habit
- */
+// Item in a checklist habit
 data class ChecklistItem(
     val id: String = UUID.randomUUID().toString(),
     val text: String,
     val sortOrder: Int = 0,
 )
 
-/**
- * Legacy enum for backward compatibility
- */
+// Legacy enum for backward compatibility
 @Deprecated("Use HabitType instead")
 enum class TrackingType {
     COUNT,
@@ -186,9 +155,7 @@ enum class TrackingType {
         }
 }
 
-/**
- * Legacy enum for backward compatibility
- */
+// Legacy enum for backward compatibility
 @Deprecated("Use FrequencyType instead")
 enum class RepeatPattern {
     DAILY,
@@ -206,10 +173,7 @@ enum class RepeatPattern {
         }
 }
 
-/**
- * Domain model representing daily progress for a habit.
- * Tracks completion status and progress for a specific date.
- */
+// Daily progress log for a habit on a specific date
 data class HabitLog(
     val id: String = UUID.randomUUID().toString(),
     val habitId: String,
@@ -232,9 +196,7 @@ data class HabitLog(
     @Deprecated("Use targetValue instead", ReplaceWith("targetValue"))
     val goalCount: Int get() = targetValue
 
-    /**
-     * Calculate progress as a fraction (0.0 to 1.0)
-     */
+    // Calculate progress as a fraction (0.0 to 1.0)
     val progress: Float
         get() =
             if (targetValue > 0) {
@@ -244,9 +206,7 @@ data class HabitLog(
             }
 }
 
-/**
- * Information about habit streaks and statistics
- */
+// Information about habit streaks and statistics
 data class StreakInfo(
     val currentStreak: Int,
     val longestStreak: Int,
@@ -254,9 +214,7 @@ data class StreakInfo(
     val completionRate: Float = 0f, // 0.0 to 1.0
 )
 
-/**
- * Preset habit templates for quick creation
- */
+// Preset habit templates for quick creation
 data class HabitPreset(
     val title: String,
     val description: String? = null,
@@ -277,9 +235,7 @@ enum class PresetCategory {
     LEARNING,
 }
 
-/**
- * Built-in habit presets
- */
+// Built-in habit presets
 object HabitPresets {
     val all =
         listOf(

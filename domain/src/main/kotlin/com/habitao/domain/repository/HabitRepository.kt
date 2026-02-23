@@ -6,10 +6,7 @@ import com.habitao.domain.model.StreakInfo
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
-/**
- * Repository interface for habit operations
- * Part of Clean Architecture - Domain layer defines interface
- */
+// Repository interface for habit operations
 interface HabitRepository {
     // ============== CRUD OPERATIONS ==============
 

@@ -47,26 +47,20 @@ data class HabitEntity(
     val sortOrder: Int = 0,
 )
 
-/**
- * Habit type enum for database storage
- */
+// Habit type enum for database storage
 enum class HabitTypeEntity {
     SIMPLE, // Binary yes/no
     MEASURABLE, // Numeric with target
     CHECKLIST, // Multiple sub-tasks
 }
 
-/**
- * Target operator for measurable habits
- */
+// Target operator for measurable habits
 enum class TargetOperatorEntity {
     AT_LEAST,
     AT_MOST,
 }
 
-/**
- * Frequency type for scheduling
- */
+// Frequency type for scheduling
 enum class FrequencyTypeEntity {
     DAILY,
     SPECIFIC_DAYS,
@@ -74,9 +68,7 @@ enum class FrequencyTypeEntity {
     EVERY_X_DAYS,
 }
 
-/**
- * Legacy enums for backward compatibility during migration
- */
+// Legacy enums for backward compatibility
 @Deprecated("Use HabitTypeEntity instead")
 enum class TrackingType {
     COUNT,
