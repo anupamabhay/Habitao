@@ -4,7 +4,7 @@ Thank you for your interest in contributing to Habitao!
 
 ---
 
-## 🔀 Branching Strategy
+## Branching Strategy
 
 ### Branch Structure
 
@@ -67,16 +67,16 @@ main (protected, production-ready releases only)
 
 ### Rules
 
-- ✅ **Always** branch from `dev`
-- ✅ **Always** merge back to `dev` via Pull Request
-- ✅ **Never** commit directly to `dev` or `main`
-- ✅ **Never** merge without code review
-- ✅ Merge to `main` only for releases (with approval)
-- ❌ **No force pushes** to `dev` or `main`
+- **Always** branch from `dev`
+- **Always** merge back to `dev` via Pull Request
+- **Never** commit directly to `dev` or `main`
+- **Never** merge without code review
+- Merge to `main` only for releases (with approval)
+- **No force pushes** to `dev` or `main`
 
 ---
 
-## 📝 Commit Messages
+## Commit Messages
 
 ### Format
 
@@ -123,7 +123,7 @@ Fixes #89
 
 ---
 
-## 🧪 Testing Requirements
+## Testing Requirements
 
 ### Before Creating PR
 
@@ -142,7 +142,7 @@ Fixes #89
 
 ---
 
-## 🏗️ Code Style
+## Code Style
 
 ### Kotlin Style Guide
 
@@ -194,7 +194,7 @@ Run before committing:
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 ### Code Documentation
 
@@ -243,7 +243,7 @@ Use MVI (Model-View-Intent) pattern with StateFlow.
 
 ---
 
-## 🔍 Code Review Guidelines
+## Code Review Guidelines
 
 ### As a Reviewer
 
@@ -269,7 +269,7 @@ Use MVI (Model-View-Intent) pattern with StateFlow.
 
 ---
 
-## 🚀 Release Process
+## Release Process
 
 ### Version Numbering
 
@@ -316,7 +316,7 @@ Semantic Versioning: `MAJOR.MINOR.PATCH`
 
 ---
 
-## 📞 Getting Help
+## Getting Help
 
 - **Questions:** Open a GitHub Discussion
 - **Bugs:** Create an issue with `bug` label
@@ -324,10 +324,10 @@ Semantic Versioning: `MAJOR.MINOR.PATCH`
 
 ---
 
-## 📄 License
+## License
 
 By contributing, you agree that your contributions will be licensed under the same license as the project.
 
 ---
 
-**Happy Coding! 🎉**
+**Happy Coding!**

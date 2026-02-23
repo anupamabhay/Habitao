@@ -20,9 +20,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalTime
 import javax.inject.Inject
 
-/**
- * State for Create Habit form (MVI Pattern)
- */
+// State for Create Habit form
 data class CreateHabitState(
     // Edit mode
     val editingHabitId: String? = null,
@@ -53,9 +51,7 @@ data class CreateHabitState(
     val isEditMode: Boolean get() = editingHabitId != null
 }
 
-/**
- * Intents (User Actions) for Create Habit Screen
- */
+// Intents for Create Habit screen
 sealed class CreateHabitIntent {
     data class UpdateTitle(val title: String) : CreateHabitIntent()
 
@@ -130,17 +126,12 @@ class CreateHabitViewModel
             }
         }
 
-        /**
-         * Reset form to initial state. Called when entering the screen
-         * to prevent stale state from previous navigation.
-         */
+        // Reset form to prevent stale state from previous navigation
         private fun resetForm() {
             _state.value = CreateHabitState()
         }
 
-        /**
-         * Load an existing habit for editing.
-         */
+        // Load an existing habit for editing
         private fun loadHabitForEdit(habitId: String) {
             _state.update { it.copy(isLoadingHabit = true, editingHabitId = habitId) }
             viewModelScope.launch {

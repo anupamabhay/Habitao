@@ -20,9 +20,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
-/**
- * Stats for a single habit, combining identity with streak data.
- */
+// Stats for a single habit with streak data
 data class HabitStatItem(
     val habitId: String,
     val title: String,
@@ -32,9 +30,7 @@ data class HabitStatItem(
     val isCompletedToday: Boolean,
 )
 
-/**
- * State for the Stats screen.
- */
+// State for the Stats screen
 data class StatsState(
     val totalHabits: Int = 0,
     val completedToday: Int = 0,

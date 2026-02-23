@@ -2,7 +2,7 @@
 
 **Purpose:** Track implementation progress, document decisions, record solutions, and maintain context across development sessions.
 
-**Last Updated:** February 23, 2026 - Planning & Research
+**Last Updated:** February 23, 2026 - Bug Fixes, Security Audit & Cleanup
 
 ---
 
@@ -10,9 +10,9 @@
 
 **Goal:** Complete Pomodoro timer feature with full settings, session tracking, and cycle counting.
 
-**Branch:** `feature/pomodoro`
+**Branch:** `feature/calendar-optimization`
 
-**Status:** Pomodoro feature fully functional, settings UI redesigned, awaiting user testing
+**Status:** Critical bugs fixed, security audited, codebase cleaned for public release
 
 ---
 
@@ -167,7 +167,7 @@ None - all known bugs have been fixed, awaiting user verification.
 
 ---
 
-## 💡 Decisions & Solutions
+## Decisions & Solutions
 
 ### Architecture Decisions
 
@@ -196,7 +196,7 @@ None yet - will document as we encounter and solve issues.
 
 ---
 
-## 📊 Metrics & Progress
+## Metrics & Progress
 
 ### Code Statistics
 ```
@@ -217,7 +217,7 @@ Test Coverage: TBD (next phase)
 
 ---
 
-## 🔍 Code Review Notes
+## Code Review Notes
 
 ### Patterns to Follow
 1. **MVI State Management:** All ViewModels use StateFlow with immutable state
@@ -226,17 +226,31 @@ Test Coverage: TBD (next phase)
 4. **Tests:** Write tests BEFORE implementation (TDD where possible)
 
 ### Anti-Patterns to Avoid
-- ❌ Android imports in domain layer
-- ❌ Type suppression (`as any`, `@ts-ignore`)
-- ❌ Empty catch blocks
-- ❌ Hardcoded strings (use resources)
-- ❌ Mutable state in ViewModels
+- Avoid Android imports in domain layer
+- Avoid type suppression (`as any`, `@ts-ignore`)
+- Avoid empty catch blocks
+- Avoid hardcoded strings (use resources)
+- Avoid mutable state in ViewModels
 
 ---
 
-## 📝 Notes & Learnings
+## Notes & Learnings
 
 ### Session Notes
+
+#### 2026-02-23: Bug Fixes, Security Audit & Cleanup
+- Fixed calendar week-scrolling direction (minusWeeks -> plusWeeks)
+- Added snapshotFlow auto-selection on page scroll to update month header text
+- Fixed Sunday truncation by switching DateChip from fixed 52.dp width to Modifier.weight(1f)
+- Fixed Pomodoro crash: manifest had FOREGROUND_SERVICE_SHORT_SERVICE but service uses specialUse type
+- Changed to FOREGROUND_SERVICE_SPECIAL_USE permission and startForegroundService() for timer start
+- Security audit: no API keys, secrets, or sensitive data found in codebase
+- Updated .gitignore to cover %TEMP%/, logs/, and docs/ui designs/
+- Removed 6 placeholder stub files from modules with real code
+- Converted all verbose KDoc comments to brief inline comments across data, domain, and feature layers
+- Removed all emojis from CONTRIBUTING.md and DEVELOPMENT-LOG.md
+- Rewrote README.md to reflect current feature state and professional standards
+- Build verified: assembleDebug passes with 0 errors
 
 #### 2026-02-23: PR Review & Fixes
 - Addressed Copilot PR review comments for Pomodoro feature
@@ -320,7 +334,7 @@ Test Coverage: TBD (next phase)
 
 ---
 
-## 🚀 Future Enhancements (Post-MVP)
+## Future Enhancements (Post-MVP)
 
 ### Deferred Features
 - Month calendar view (v1.1)
@@ -335,7 +349,7 @@ Test Coverage: TBD (next phase)
 
 ---
 
-## 📚 Reference Quick Links
+## Reference Quick Links
 
 ### Documentation
 - [Product Requirements](./docs/01-PRODUCT-REQUIREMENTS.md)
@@ -352,7 +366,7 @@ Test Coverage: TBD (next phase)
 
 ---
 
-## 🔄 Update Convention
+## Update Convention
 
 **When to Update:**
 - Start of each work session
