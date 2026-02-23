@@ -30,6 +30,8 @@ data class CreateTaskState(
     val dueDate: LocalDate? = null,
     val dueTime: LocalTime? = null,
     val priority: TaskPriority = TaskPriority.NONE,
+    val reminderEnabled: Boolean = false,
+    val reminderMinutesBefore: Int = 30,
     val subtasks: List<SubtaskItem> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -43,6 +45,8 @@ sealed class CreateTaskIntent {
     data class SetDueDate(val date: LocalDate?) : CreateTaskIntent()
     data class SetDueTime(val time: LocalTime?) : CreateTaskIntent()
     data class SetPriority(val priority: TaskPriority) : CreateTaskIntent()
+    data class SetReminderEnabled(val enabled: Boolean) : CreateTaskIntent()
+    data class SetReminderMinutesBefore(val minutes: Int) : CreateTaskIntent()
     object AddSubtask : CreateTaskIntent()
     data class RemoveSubtask(val id: String) : CreateTaskIntent()
     data class UpdateSubtaskText(val id: String, val text: String) : CreateTaskIntent()
@@ -81,6 +85,12 @@ class CreateTaskViewModel @Inject constructor(
             }
             is CreateTaskIntent.SetPriority -> {
                 _state.update { it.copy(priority = intent.priority) }
+            }
+            is CreateTaskIntent.SetReminderEnabled -> {
+                _state.update { it.copy(reminderEnabled = intent.enabled) }
+            }
+            is CreateTaskIntent.SetReminderMinutesBefore -> {
+                _state.update { it.copy(reminderMinutesBefore = intent.minutes) }
             }
             is CreateTaskIntent.AddSubtask -> {
                 _state.update { 
@@ -130,6 +140,8 @@ class CreateTaskViewModel @Inject constructor(
                             dueDate = task.dueDate,
                             dueTime = task.dueTime,
                             priority = task.priority,
+                            reminderEnabled = task.reminderEnabled,
+                            reminderMinutesBefore = task.reminderMinutesBefore,
                             isLoading = false
                         )
                     }
@@ -164,7 +176,9 @@ class CreateTaskViewModel @Inject constructor(
                 description = currentState.description.trim().takeIf { it.isNotEmpty() },
                 dueDate = currentState.dueDate,
                 dueTime = currentState.dueTime,
-                priority = currentState.priority
+                priority = currentState.priority,
+                reminderEnabled = currentState.reminderEnabled,
+                reminderMinutesBefore = currentState.reminderMinutesBefore
             )
 
             val result = if (currentTaskId != null) {

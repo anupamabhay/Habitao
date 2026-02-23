@@ -1,6 +1,8 @@
 package com.habitao.feature.tasks.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Keyboard
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -41,6 +44,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
@@ -175,6 +179,25 @@ fun CreateTaskScreen(
 }
 
 @Composable
+private fun SectionCard(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
 private fun CreateTaskForm(
     state: CreateTaskState,
     onIntent: (CreateTaskIntent) -> Unit,
@@ -188,12 +211,12 @@ private fun CreateTaskForm(
             .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // Basic Info Section
-        FormSection(title = "Basics") {
+        // Card 1: Title + Description
+        SectionCard {
             OutlinedTextField(
                 value = state.title,
                 onValueChange = { onIntent(CreateTaskIntent.SetTitle(it)) },
@@ -224,8 +247,8 @@ private fun CreateTaskForm(
             )
         }
 
-        // Schedule Section
-        FormSection(title = "Schedule") {
+        // Card 2: Schedule
+        SectionCard {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -244,16 +267,68 @@ private fun CreateTaskForm(
             }
         }
 
-        // Priority Section
-        FormSection(title = "Priority") {
+        // Card 3: Priority
+        SectionCard {
             PrioritySelector(
                 selectedPriority = state.priority,
                 onPrioritySelected = { onIntent(CreateTaskIntent.SetPriority(it)) }
             )
         }
 
-        // Subtasks Section
-        FormSection(title = "Subtasks") {
+        // Card 4: Reminder
+        SectionCard {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Reminder",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Switch(
+                    checked = state.reminderEnabled,
+                    onCheckedChange = { onIntent(CreateTaskIntent.SetReminderEnabled(it)) }
+                )
+            }
+
+            AnimatedVisibility(visible = state.reminderEnabled) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val options = listOf(
+                        0 to "At time",
+                        10 to "10 min",
+                        30 to "30 min",
+                        60 to "1 hour"
+                    )
+                    options.forEach { (minutes, label) ->
+                        FilterChip(
+                            selected = state.reminderMinutesBefore == minutes,
+                            onClick = { onIntent(CreateTaskIntent.SetReminderMinutesBefore(minutes)) },
+                            label = { Text(label) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Card 5: Subtasks
+        SectionCard {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 state.subtasks.forEach { subtask ->
                     SubtaskRow(
@@ -275,22 +350,6 @@ private fun CreateTaskForm(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-
-@Composable
-private fun FormSection(
-    title: String,
-    content: @Composable () -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        content()
     }
 }
 
