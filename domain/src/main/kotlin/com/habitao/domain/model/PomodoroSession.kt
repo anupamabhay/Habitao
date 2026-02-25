@@ -7,6 +7,8 @@ data class PomodoroSession(
     val sessionType: PomodoroType,
     val workDurationSeconds: Int = 1500,
     val breakDurationSeconds: Int = 300,
+    val linkedTaskId: String? = null,
+    val linkedHabitId: String? = null,
     val startedAt: Long,
     val completedAt: Long? = null,
     val wasInterrupted: Boolean = false,
