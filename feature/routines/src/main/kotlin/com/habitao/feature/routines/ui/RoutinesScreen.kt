@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
@@ -66,6 +67,7 @@ import com.habitao.feature.routines.viewmodel.RoutinesViewModel
 @Composable
 fun RoutinesScreen(
     onAddRoutine: () -> Unit,
+    onEditRoutine: (String) -> Unit,
     viewModel: RoutinesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -106,6 +108,7 @@ fun RoutinesScreen(
             onToggleStep = { routineId, stepId, isCompleted ->
                 viewModel.processIntent(RoutinesIntent.ToggleStep(routineId, stepId, isCompleted))
             },
+            onEditRoutine = onEditRoutine,
             modifier = Modifier.padding(paddingValues),
         )
     }
@@ -115,6 +118,7 @@ fun RoutinesScreen(
 private fun RoutinesContent(
     state: RoutinesState,
     onToggleStep: (String, String, Boolean) -> Unit,
+    onEditRoutine: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -151,6 +155,7 @@ private fun RoutinesContent(
                             onToggleStep = { stepId, isCompleted ->
                                 onToggleStep(routine.id, stepId, isCompleted)
                             },
+                            onEditRoutine = { onEditRoutine(routine.id) },
                         )
                     }
                 }
@@ -165,6 +170,7 @@ private fun RoutineCard(
     steps: List<RoutineStep>,
     log: RoutineLog?,
     onToggleStep: (String, Boolean) -> Unit,
+    onEditRoutine: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -208,7 +214,14 @@ private fun RoutineCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                
+
+                IconButton(onClick = onEditRoutine) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit routine",
+                    )
+                }
+
                 IconButton(onClick = { expanded = !expanded }) {
                     Icon(
                         imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
@@ -242,8 +255,14 @@ private fun RoutineCard(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clip(MaterialTheme.shapes.medium)
                                 .clickable { onToggleStep(step.id, !isCompleted) }
-                                .padding(vertical = Dimensions.elementSpacingSmall),
+                                .padding(
+                                    start = Dimensions.sectionSpacing,
+                                    end = Dimensions.elementSpacing,
+                                    top = Dimensions.elementSpacingSmall,
+                                    bottom = Dimensions.elementSpacingSmall
+                                ),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Checkbox(

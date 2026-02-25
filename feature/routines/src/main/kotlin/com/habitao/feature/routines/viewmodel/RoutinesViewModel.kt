@@ -117,10 +117,30 @@ class RoutinesViewModel @Inject constructor(
 
     private fun createRoutine(routine: Routine, steps: List<RoutineStep>) {
         viewModelScope.launch {
-            routineRepository.createRoutine(routine, steps)
-                .onFailure { error ->
-                    errorFlow.value = error.message ?: "Failed to create routine"
-                }
+            val saveResult = routineRepository.getRoutineById(routine.id).fold(
+                onSuccess = { existingRoutine ->
+                    routineRepository.updateRoutine(
+                        routine.copy(
+                            createdAt = existingRoutine.createdAt,
+                            startDate = existingRoutine.startDate,
+                            nextScheduledDate = existingRoutine.nextScheduledDate,
+                            updatedAt = System.currentTimeMillis(),
+                        ),
+                        steps,
+                    )
+                },
+                onFailure = { error ->
+                    if (error.message == "Routine not found") {
+                        routineRepository.createRoutine(routine, steps)
+                    } else {
+                        Result.failure(error)
+                    }
+                },
+            )
+
+            saveResult.onFailure { error ->
+                errorFlow.value = error.message ?: "Failed to save routine"
+            }
         }
     }
 

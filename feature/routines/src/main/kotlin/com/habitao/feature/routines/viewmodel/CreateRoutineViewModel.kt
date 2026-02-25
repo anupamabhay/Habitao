@@ -37,7 +37,9 @@ data class CreateRoutineState(
     val reminderTime: LocalTime? = null,
     val customInterval: Int = 2,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val isSaving: Boolean = false,
+    val error: String? = null,
+    val isEditMode: Boolean = false,
 )
 
 sealed class CreateRoutineIntent {
@@ -53,6 +55,8 @@ sealed class CreateRoutineIntent {
     data class SetReminderEnabled(val enabled: Boolean) : CreateRoutineIntent()
     data class SetReminderTime(val time: LocalTime) : CreateRoutineIntent()
     data class SetCustomInterval(val interval: Int) : CreateRoutineIntent()
+    data class LoadRoutine(val routineId: String) : CreateRoutineIntent()
+    object ResetForm : CreateRoutineIntent()
     object SaveRoutine : CreateRoutineIntent()
     object ClearError : CreateRoutineIntent()
 }
@@ -67,6 +71,10 @@ class CreateRoutineViewModel @Inject constructor(
 
     private val _savedEvent = MutableSharedFlow<Unit>()
     val savedEvent: SharedFlow<Unit> = _savedEvent.asSharedFlow()
+
+    private var currentRoutineId: String? = null
+    private var existingRoutine: Routine? = null
+    private var existingStepsById: Map<String, RoutineStep> = emptyMap()
 
     fun processIntent(intent: CreateRoutineIntent) {
         when (intent) {
@@ -129,10 +137,79 @@ class CreateRoutineViewModel @Inject constructor(
             is CreateRoutineIntent.SetCustomInterval -> {
                 _state.update { it.copy(customInterval = intent.interval) }
             }
+            is CreateRoutineIntent.LoadRoutine -> loadRoutine(intent.routineId)
+            is CreateRoutineIntent.ResetForm -> resetForm()
             is CreateRoutineIntent.SaveRoutine -> saveRoutine()
             is CreateRoutineIntent.ClearError -> {
                 _state.update { it.copy(error = null) }
             }
+        }
+    }
+
+    private fun resetForm() {
+        currentRoutineId = null
+        existingRoutine = null
+        existingStepsById = emptyMap()
+        _state.value = CreateRoutineState()
+    }
+
+    private fun loadRoutine(routineId: String) {
+        currentRoutineId = routineId
+        existingRoutine = null
+        existingStepsById = emptyMap()
+        _state.value = CreateRoutineState(isLoading = true, isEditMode = true)
+
+        viewModelScope.launch {
+            routineRepository.getRoutineById(routineId).fold(
+                onSuccess = { routine ->
+                    routineRepository.getRoutineSteps(routineId).fold(
+                        onSuccess = { steps ->
+                            existingRoutine = routine
+                            existingStepsById = steps.associateBy { it.id }
+
+                            _state.update {
+                                it.copy(
+                                    title = routine.title,
+                                    description = routine.description.orEmpty(),
+                                    steps = steps.sortedBy { step -> step.stepOrder }.map { step ->
+                                        RoutineStepItem(
+                                            id = step.id,
+                                            title = step.title,
+                                            estimatedMinutes = step.estimatedDurationMinutes,
+                                        )
+                                    },
+                                    repeatPattern = routine.repeatPattern,
+                                    scheduledDays = routine.repeatDays?.toSet() ?: emptySet(),
+                                    reminderEnabled = routine.reminderEnabled,
+                                    reminderTime = routine.reminderTime,
+                                    customInterval = routine.customInterval ?: 2,
+                                    isLoading = false,
+                                    error = null,
+                                    isEditMode = true,
+                                )
+                            }
+                        },
+                        onFailure = { error ->
+                            _state.update {
+                                it.copy(
+                                    isLoading = false,
+                                    error = error.message ?: "Failed to load routine steps",
+                                    isEditMode = true,
+                                )
+                            }
+                        }
+                    )
+                },
+                onFailure = { error ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            error = error.message ?: "Failed to load routine",
+                            isEditMode = true,
+                        )
+                    }
+                }
+            )
         }
     }
 
@@ -159,13 +236,24 @@ class CreateRoutineViewModel @Inject constructor(
             return
         }
 
-        _state.update { it.copy(isLoading = true, error = null) }
+        _state.update { it.copy(isSaving = true, error = null) }
 
         viewModelScope.launch {
-            val routineId = UUID.randomUUID().toString()
+            val now = System.currentTimeMillis()
+            val editingRoutineId = currentRoutineId
+            val routineId = editingRoutineId ?: UUID.randomUUID().toString()
             val today = LocalDate.now()
 
-            val routine = Routine(
+            val routine = existingRoutine?.copy(
+                title = currentState.title.trim(),
+                description = currentState.description.trim().takeIf { it.isNotBlank() },
+                repeatPattern = currentState.repeatPattern,
+                repeatDays = if (currentState.repeatPattern == RepeatPattern.WEEKLY) currentState.scheduledDays.toList() else null,
+                customInterval = if (currentState.repeatPattern == RepeatPattern.CUSTOM) currentState.customInterval else null,
+                reminderEnabled = currentState.reminderEnabled,
+                reminderTime = currentState.reminderTime,
+                updatedAt = now,
+            ) ?: Routine(
                 id = routineId,
                 title = currentState.title.trim(),
                 description = currentState.description.trim().takeIf { it.isNotBlank() },
@@ -180,22 +268,34 @@ class CreateRoutineViewModel @Inject constructor(
             )
 
             val routineSteps = currentState.steps.mapIndexed { index, item ->
-                RoutineStep(
+                existingStepsById[item.id]?.copy(
+                    routineId = routine.id,
+                    stepOrder = index,
+                    title = item.title.trim(),
+                    estimatedDurationMinutes = item.estimatedMinutes,
+                    updatedAt = now,
+                ) ?: RoutineStep(
                     id = item.id,
-                    routineId = routineId,
+                    routineId = routine.id,
                     stepOrder = index,
                     title = item.title.trim(),
                     estimatedDurationMinutes = item.estimatedMinutes
                 )
             }
 
-            routineRepository.createRoutine(routine, routineSteps).fold(
+            val result = if (editingRoutineId != null) {
+                routineRepository.updateRoutine(routine, routineSteps)
+            } else {
+                routineRepository.createRoutine(routine, routineSteps)
+            }
+
+            result.fold(
                 onSuccess = {
-                    _state.update { it.copy(isLoading = false) }
+                    _state.update { it.copy(isSaving = false) }
                     _savedEvent.emit(Unit)
                 },
                 onFailure = { exception ->
-                    _state.update { it.copy(isLoading = false, error = exception.message ?: "Failed to save routine") }
+                    _state.update { it.copy(isSaving = false, error = exception.message ?: "Failed to save routine") }
                 }
             )
         }

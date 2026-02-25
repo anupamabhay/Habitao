@@ -21,7 +21,8 @@ import javax.inject.Inject
 
 data class SubtaskItem(
     val id: String,
-    val text: String
+    val text: String,
+    val priority: TaskPriority = TaskPriority.NONE
 )
 
 data class CreateTaskState(
@@ -50,6 +51,7 @@ sealed class CreateTaskIntent {
     object AddSubtask : CreateTaskIntent()
     data class RemoveSubtask(val id: String) : CreateTaskIntent()
     data class UpdateSubtaskText(val id: String, val text: String) : CreateTaskIntent()
+    data class UpdateSubtaskPriority(val id: String, val priority: TaskPriority) : CreateTaskIntent()
     object SaveTask : CreateTaskIntent()
     data class LoadTask(val taskId: String) : CreateTaskIntent()
     object ClearError : CreateTaskIntent()
@@ -95,7 +97,11 @@ class CreateTaskViewModel @Inject constructor(
             is CreateTaskIntent.AddSubtask -> {
                 _state.update { 
                     it.copy(
-                        subtasks = it.subtasks + SubtaskItem(id = UUID.randomUUID().toString(), text = "")
+                        subtasks = it.subtasks + SubtaskItem(
+                            id = UUID.randomUUID().toString(),
+                            text = "",
+                            priority = TaskPriority.NONE
+                        )
                     ) 
                 }
             }
@@ -113,6 +119,19 @@ class CreateTaskViewModel @Inject constructor(
                             if (subtask.id == intent.id) subtask.copy(text = intent.text) else subtask
                         }
                     ) 
+                }
+            }
+            is CreateTaskIntent.UpdateSubtaskPriority -> {
+                _state.update {
+                    it.copy(
+                        subtasks = it.subtasks.map { subtask ->
+                            if (subtask.id == intent.id) {
+                                subtask.copy(priority = intent.priority)
+                            } else {
+                                subtask
+                            }
+                        }
+                    )
                 }
             }
             is CreateTaskIntent.SaveTask -> saveTask()
@@ -199,7 +218,7 @@ class CreateTaskViewModel @Inject constructor(
                             parentTaskId = taskId,
                             dueDate = currentState.dueDate,
                             dueTime = currentState.dueTime,
-                            priority = currentState.priority
+                            priority = subtask.priority
                         )
                         val subtaskResult = taskRepository.createTask(subtaskModel)
                         if (subtaskResult.isFailure) {

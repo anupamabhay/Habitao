@@ -90,11 +90,20 @@ import java.time.format.DateTimeFormatter
 fun CreateRoutineScreen(
     onNavigateBack: () -> Unit,
     onRoutineCreated: () -> Unit,
+    routineId: String? = null,
     viewModel: CreateRoutineViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    LaunchedEffect(routineId) {
+        if (routineId != null) {
+            viewModel.processIntent(CreateRoutineIntent.LoadRoutine(routineId))
+        } else {
+            viewModel.processIntent(CreateRoutineIntent.ResetForm)
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.savedEvent.collect {
@@ -115,7 +124,7 @@ fun CreateRoutineScreen(
             LargeTopAppBar(
                 title = {
                     Text(
-                        text = "New Routine",
+                        text = if (state.isEditMode) "Edit Routine" else "New Routine",
                         fontWeight = FontWeight.Bold,
                     )
                 },
@@ -143,7 +152,7 @@ fun CreateRoutineScreen(
             ) {
                 Button(
                     onClick = { viewModel.processIntent(CreateRoutineIntent.SaveRoutine) },
-                    enabled = !state.isLoading,
+                    enabled = !state.isLoading && !state.isSaving,
                     shape = MaterialTheme.shapes.large,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -154,7 +163,12 @@ fun CreateRoutineScreen(
                         .height(56.dp),
                 ) {
                     Text(
-                        text = if (state.isLoading) "Saving..." else "Create Routine",
+                        text = when {
+                            state.isLoading -> "Loading..."
+                            state.isSaving -> "Saving..."
+                            state.isEditMode -> "Save Changes"
+                            else -> "Create Routine"
+                        },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )

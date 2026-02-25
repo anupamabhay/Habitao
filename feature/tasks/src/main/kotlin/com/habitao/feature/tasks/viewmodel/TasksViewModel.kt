@@ -76,22 +76,32 @@ class TasksViewModel @Inject constructor(
             TaskFilter.INCOMPLETE -> tasks.filter { !it.isCompleted }
         }
 
-        val activeTasks = filteredTasks.filterNot { it.isCompleted }
-        val completed = filteredTasks.filter { it.isCompleted }
+        val allTopLevelTasks = filteredTasks.filter { it.parentTaskId == null }
+        val allSubTasksByParent = filteredTasks.filter { it.parentTaskId != null }.groupBy { it.parentTaskId!! }
 
-        val topLevelTasks = activeTasks.filter { it.parentTaskId == null }
-        val subTasks = activeTasks.filter { it.parentTaskId != null }.groupBy { it.parentTaskId!! }
-        val completedTasks = completed.filter { it.parentTaskId == null }
-        val completedSubTasksByParent = completed.filter { it.parentTaskId != null }.groupBy { it.parentTaskId!! }
+        // A parent task is fully completed ONLY if it is marked completed AND all its subtasks are marked completed
+        val fullyCompletedParentIds = allTopLevelTasks.filter { parent ->
+            parent.isCompleted && (allSubTasksByParent[parent.id]?.all { it.isCompleted } ?: true)
+        }.map { it.id }.toSet()
 
-        val completedParentIds = completedTasks.map { it.id }.toSet()
-        val completedSubTasks = completedSubTasksByParent
-            .filterKeys { it in completedParentIds }
+        val activeTopLevelTasks = allTopLevelTasks.filterNot { it.id in fullyCompletedParentIds }
+        val completedTopLevelTasks = allTopLevelTasks.filter { it.id in fullyCompletedParentIds }
+
+        // Subtasks of active parents stay with the active parent (even if the subtask itself is completed)
+        val activeSubTasks = allSubTasksByParent.filterKeys { parentId -> 
+            activeTopLevelTasks.any { it.id == parentId } 
+        }
+
+        val completedSubTasks = allSubTasksByParent
+            .filterKeys { it in fullyCompletedParentIds }
             .mapValues { (_, value) -> sortTasks(value, sortOrder) }
-        val orphanCompletedSubTasks = completedSubTasksByParent
-            .filterKeys { it !in completedParentIds }
+
+        val knownParentIds = allTopLevelTasks.map { it.id }.toSet()
+        val orphanCompletedSubTasks = allSubTasksByParent
+            .filterKeys { it !in knownParentIds }
             .values
             .flatten()
+            .filter { it.isCompleted }
 
         val today = LocalDate.now()
         val tomorrow = today.plusDays(1)
@@ -101,7 +111,7 @@ class TasksViewModel @Inject constructor(
         val tomorrowTasks = mutableListOf<Task>()
         val upcomingTasks = mutableListOf<Task>()
 
-        topLevelTasks.forEach { task ->
+        activeTopLevelTasks.forEach { task ->
             val dueDate = task.dueDate
             if (dueDate == null) {
                 upcomingTasks.add(task)
@@ -121,8 +131,8 @@ class TasksViewModel @Inject constructor(
             todayTasks = sortTasks(todayTasks, sortOrder),
             tomorrowTasks = sortTasks(tomorrowTasks, sortOrder),
             upcomingTasks = sortTasks(upcomingTasks, sortOrder),
-            subTasks = subTasks.mapValues { (_, value) -> sortTasks(value, sortOrder) },
-            completedTasks = sortTasks(completedTasks, sortOrder),
+            subTasks = activeSubTasks.mapValues { (_, value) -> sortTasks(value, sortOrder) },
+            completedTasks = sortTasks(completedTopLevelTasks, sortOrder),
             completedSubTasks = completedSubTasks,
             orphanCompletedSubTasks = sortTasks(orphanCompletedSubTasks, sortOrder),
             isLoading = false,
@@ -149,8 +159,26 @@ class TasksViewModel @Inject constructor(
 
     private fun createTask(task: Task) {
         viewModelScope.launch {
-            taskRepository.createTask(task).onFailure {
-                errorFlow.value = it.message ?: "Failed to create task"
+            val saveResult = taskRepository.getTaskById(task.id).fold(
+                onSuccess = { existingTask ->
+                    taskRepository.updateTask(
+                        task.copy(
+                            createdAt = existingTask.createdAt,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    )
+                },
+                onFailure = { error ->
+                    if (error.message == "Task not found") {
+                        taskRepository.createTask(task)
+                    } else {
+                        Result.failure(error)
+                    }
+                }
+            )
+
+            saveResult.onFailure {
+                errorFlow.value = it.message ?: "Failed to save task"
             }
         }
     }

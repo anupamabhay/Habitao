@@ -68,7 +68,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun TasksScreen(
     onAddTask: () -> Unit,
-    onEditTask: (String) -> Unit = {},
+    onEditTask: (String) -> Unit,
     viewModel: TasksViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -278,7 +278,7 @@ private fun TasksContent(
                                     task = task,
                                     onToggleComplete = { onToggleComplete(task.id, it) },
                                     onClick = { onTaskClick(task.id) },
-                                    isSubtask = true,
+                                    isSubtask = false,
                                     showSubtaskChevron = false,
                                     onToggleExpanded = null,
                                     isExpanded = true
@@ -397,7 +397,7 @@ private fun TaskItemWithSubtasks(
         )
 
         if (subtasks.isNotEmpty() && isExpanded) {
-            Column(modifier = Modifier.padding(start = 28.dp)) {
+            Column {
                 subtasks.forEach { subtask ->
                     TaskRow(
                         task = subtask,
@@ -430,25 +430,13 @@ private fun TaskRow(
             .clip(MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
             .padding(
-                horizontal = if (isSubtask) Dimensions.elementSpacingSmall else Dimensions.elementSpacing,
-                vertical = Dimensions.elementSpacingSmall
+                start = if (isSubtask) 48.dp else Dimensions.elementSpacing,
+                end = Dimensions.elementSpacing,
+                top = Dimensions.elementSpacingSmall,
+                bottom = Dimensions.elementSpacingSmall
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (showSubtaskChevron && onToggleExpanded != null) {
-            IconButton(
-                onClick = onToggleExpanded,
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(
-                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
-                    contentDescription = if (isExpanded) "Collapse subtasks" else "Expand subtasks",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.width(4.dp))
-        }
-
         Checkbox(
             checked = task.isCompleted,
             onCheckedChange = onToggleComplete
@@ -481,6 +469,20 @@ private fun TaskRow(
                     text = date.format(DateTimeFormatter.ofPattern("MMM d, yyyy")),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        if (showSubtaskChevron && onToggleExpanded != null) {
+            Spacer(modifier = Modifier.width(Dimensions.elementSpacingSmall))
+            IconButton(
+                onClick = onToggleExpanded,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
+                    contentDescription = if (isExpanded) "Collapse subtasks" else "Expand subtasks",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
