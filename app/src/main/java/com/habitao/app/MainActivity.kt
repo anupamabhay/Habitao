@@ -71,10 +71,10 @@ object RoutinesRoute
 object TasksRoute
 
 @Serializable
-object CreateRoutineRoute
+data class CreateRoutineRoute(val routineId: String? = null)
 
 @Serializable
-object CreateTaskRoute
+data class CreateTaskRoute(val taskId: String? = null)
 
 @Serializable
 object CreateHabitRoute
@@ -187,7 +187,10 @@ private fun HabitaoApp() {
             composable<RoutinesRoute> {
                 Box(modifier = bottomPad) {
                     RoutinesScreen(
-                        onAddRoutine = { navController.navigate(CreateRoutineRoute) },
+                        onAddRoutine = { navController.navigate(CreateRoutineRoute()) },
+                        onEditRoutine = { routineId ->
+                            navController.navigate(CreateRoutineRoute(routineId = routineId))
+                        },
                     )
                 }
             }
@@ -195,24 +198,30 @@ private fun HabitaoApp() {
             composable<TasksRoute> {
                 Box(modifier = bottomPad) {
                     TasksScreen(
-                        onAddTask = { navController.navigate(CreateTaskRoute) },
-                        onEditTask = { /* TODO */ },
+                        onAddTask = { navController.navigate(CreateTaskRoute()) },
+                        onEditTask = { taskId ->
+                            navController.navigate(CreateTaskRoute(taskId = taskId))
+                        },
                     )
                 }
             }
 
             // -- Full-screen destinations (no bottom bar) --
-            composable<CreateRoutineRoute> {
+            composable<CreateRoutineRoute> { backStackEntry ->
+                val route = backStackEntry.toRoute<CreateRoutineRoute>()
                 CreateRoutineScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onRoutineCreated = { navController.popBackStack() },
+                    routineId = route.routineId,
                 )
             }
 
-            composable<CreateTaskRoute> {
+            composable<CreateTaskRoute> { backStackEntry ->
+                val route = backStackEntry.toRoute<CreateTaskRoute>()
                 CreateTaskScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onTaskCreated = { navController.popBackStack() },
+                    taskId = route.taskId,
                 )
             }
 
