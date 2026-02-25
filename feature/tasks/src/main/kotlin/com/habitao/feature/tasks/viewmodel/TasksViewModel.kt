@@ -3,6 +3,7 @@ package com.habitao.feature.tasks.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.Task
+import com.habitao.domain.model.TaskPriority
 import com.habitao.domain.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,15 +23,25 @@ enum class TaskFilter {
     INCOMPLETE
 }
 
+enum class TaskSortOrder {
+    DATE,
+    PRIORITY,
+    ALPHABETICAL
+}
+
 data class TasksState(
     val overdueTasks: List<Task> = emptyList(),
     val todayTasks: List<Task> = emptyList(),
     val tomorrowTasks: List<Task> = emptyList(),
     val upcomingTasks: List<Task> = emptyList(),
     val subTasks: Map<String, List<Task>> = emptyMap(),
+    val completedTasks: List<Task> = emptyList(),
+    val completedSubTasks: Map<String, List<Task>> = emptyMap(),
+    val orphanCompletedSubTasks: List<Task> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
-    val filter: TaskFilter = TaskFilter.INCOMPLETE
+    val filter: TaskFilter = TaskFilter.ALL,
+    val sortOrder: TaskSortOrder = TaskSortOrder.DATE
 )
 
 sealed class TasksIntent {
@@ -39,6 +50,7 @@ sealed class TasksIntent {
     data class DeleteTask(val taskId: String) : TasksIntent()
     data class ToggleComplete(val taskId: String, val isCompleted: Boolean) : TasksIntent()
     data class SetFilter(val filter: TaskFilter) : TasksIntent()
+    data class SetSortOrder(val sortOrder: TaskSortOrder) : TasksIntent()
 }
 
 @HiltViewModel
@@ -47,23 +59,39 @@ class TasksViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val errorFlow = MutableStateFlow<String?>(null)
-    private val filterFlow = MutableStateFlow(TaskFilter.INCOMPLETE)
+    private val filterFlow = MutableStateFlow(TaskFilter.ALL)
+    private val sortOrderFlow = MutableStateFlow(TaskSortOrder.DATE)
 
     val state: StateFlow<TasksState> = combine(
         taskRepository.observeAllTasks()
             .map { result -> result.getOrElse { emptyList() } }
             .catch { emit(emptyList()) },
         errorFlow,
-        filterFlow
-    ) { tasks, error, filter ->
+        filterFlow,
+        sortOrderFlow
+    ) { tasks, error, filter, sortOrder ->
         val filteredTasks = when (filter) {
             TaskFilter.ALL -> tasks
             TaskFilter.COMPLETED -> tasks.filter { it.isCompleted }
             TaskFilter.INCOMPLETE -> tasks.filter { !it.isCompleted }
         }
 
-        val topLevelTasks = filteredTasks.filter { it.parentTaskId == null }
-        val subTasks = filteredTasks.filter { it.parentTaskId != null }.groupBy { it.parentTaskId!! }
+        val activeTasks = filteredTasks.filterNot { it.isCompleted }
+        val completed = filteredTasks.filter { it.isCompleted }
+
+        val topLevelTasks = activeTasks.filter { it.parentTaskId == null }
+        val subTasks = activeTasks.filter { it.parentTaskId != null }.groupBy { it.parentTaskId!! }
+        val completedTasks = completed.filter { it.parentTaskId == null }
+        val completedSubTasksByParent = completed.filter { it.parentTaskId != null }.groupBy { it.parentTaskId!! }
+
+        val completedParentIds = completedTasks.map { it.id }.toSet()
+        val completedSubTasks = completedSubTasksByParent
+            .filterKeys { it in completedParentIds }
+            .mapValues { (_, value) -> sortTasks(value, sortOrder) }
+        val orphanCompletedSubTasks = completedSubTasksByParent
+            .filterKeys { it !in completedParentIds }
+            .values
+            .flatten()
 
         val today = LocalDate.now()
         val tomorrow = today.plusDays(1)
@@ -89,14 +117,18 @@ class TasksViewModel @Inject constructor(
         }
 
         TasksState(
-            overdueTasks = overdueTasks.sortedBy { it.dueDate },
-            todayTasks = todayTasks.sortedBy { it.dueDate },
-            tomorrowTasks = tomorrowTasks.sortedBy { it.dueDate },
-            upcomingTasks = upcomingTasks.sortedBy { it.dueDate },
-            subTasks = subTasks,
+            overdueTasks = sortTasks(overdueTasks, sortOrder),
+            todayTasks = sortTasks(todayTasks, sortOrder),
+            tomorrowTasks = sortTasks(tomorrowTasks, sortOrder),
+            upcomingTasks = sortTasks(upcomingTasks, sortOrder),
+            subTasks = subTasks.mapValues { (_, value) -> sortTasks(value, sortOrder) },
+            completedTasks = sortTasks(completedTasks, sortOrder),
+            completedSubTasks = completedSubTasks,
+            orphanCompletedSubTasks = sortTasks(orphanCompletedSubTasks, sortOrder),
             isLoading = false,
             error = error,
-            filter = filter
+            filter = filter,
+            sortOrder = sortOrder
         )
     }.stateIn(
         scope = viewModelScope,
@@ -111,6 +143,7 @@ class TasksViewModel @Inject constructor(
             is TasksIntent.DeleteTask -> deleteTask(intent.taskId)
             is TasksIntent.ToggleComplete -> toggleComplete(intent.taskId, intent.isCompleted)
             is TasksIntent.SetFilter -> setFilter(intent.filter)
+            is TasksIntent.SetSortOrder -> setSortOrder(intent.sortOrder)
         }
     }
 
@@ -156,6 +189,41 @@ class TasksViewModel @Inject constructor(
 
     private fun setFilter(filter: TaskFilter) {
         filterFlow.value = filter
+    }
+
+    private fun setSortOrder(sortOrder: TaskSortOrder) {
+        sortOrderFlow.value = sortOrder
+    }
+
+    private fun sortTasks(tasks: List<Task>, sortOrder: TaskSortOrder): List<Task> {
+        return when (sortOrder) {
+            TaskSortOrder.DATE -> tasks.sortedWith(
+                compareBy<Task> { it.dueDate ?: LocalDate.MAX }
+                    .thenBy { priorityRank(it.priority) }
+                    .thenBy { it.title.lowercase() }
+            )
+
+            TaskSortOrder.PRIORITY -> tasks.sortedWith(
+                compareBy<Task> { priorityRank(it.priority) }
+                    .thenBy { it.dueDate ?: LocalDate.MAX }
+                    .thenBy { it.title.lowercase() }
+            )
+
+            TaskSortOrder.ALPHABETICAL -> tasks.sortedWith(
+                compareBy<Task> { it.title.lowercase() }
+                    .thenBy { it.dueDate ?: LocalDate.MAX }
+                    .thenBy { priorityRank(it.priority) }
+            )
+        }
+    }
+
+    private fun priorityRank(priority: TaskPriority): Int {
+        return when (priority) {
+            TaskPriority.HIGH -> 0
+            TaskPriority.MEDIUM -> 1
+            TaskPriority.LOW -> 2
+            TaskPriority.NONE -> 3
+        }
     }
 
     fun clearError() {
