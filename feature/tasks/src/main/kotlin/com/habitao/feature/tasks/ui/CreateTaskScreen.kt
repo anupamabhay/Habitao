@@ -1,6 +1,7 @@
 package com.habitao.feature.tasks.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -20,23 +21,22 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -45,11 +45,13 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
@@ -66,9 +68,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.TaskPriority
 import com.habitao.feature.tasks.viewmodel.CreateTaskIntent
 import com.habitao.feature.tasks.viewmodel.CreateTaskState
@@ -90,7 +94,7 @@ fun CreateTaskScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     LaunchedEffect(taskId) {
         if (taskId != null) {
@@ -116,59 +120,53 @@ fun CreateTaskScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
+            TopAppBar(
                 title = {
                     Text(
                         text = if (state.isEditMode) "Edit Task" else "New Task",
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            Icons.Default.Close,
+                            contentDescription = "Close",
                         )
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface,
                 ),
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = MaterialTheme.colorScheme.surface,
-        bottomBar = {
-            Surface(
-                tonalElevation = 3.dp,
-                shadowElevation = 8.dp,
+        containerColor = MaterialTheme.colorScheme.background,
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { viewModel.processIntent(CreateTaskIntent.SaveTask) },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Dimensions.screenPaddingHorizontal),
+                shape = RoundedCornerShape(100)
             ) {
-                Button(
-                    onClick = { viewModel.processIntent(CreateTaskIntent.SaveTask) },
-                    enabled = !state.isSaving,
-                    shape = MaterialTheme.shapes.large,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 12.dp)
-                        .height(56.dp),
-                ) {
-                    Text(
-                        text = when {
-                            state.isSaving -> "Saving..."
-                            state.isEditMode -> "Save Changes"
-                            else -> "Create Task"
-                        },
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
+                Text(
+                    text = when {
+                        state.isSaving -> "Saving..."
+                        state.isEditMode -> "Save Changes"
+                        else -> "Create Task"
+                    },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
         },
+        floatingActionButtonPosition = FabPosition.Center
     ) { paddingValues ->
         CreateTaskForm(
             state = state,
@@ -179,79 +177,73 @@ fun CreateTaskScreen(
 }
 
 @Composable
-private fun SectionCard(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            content()
-        }
-    }
-}
-
-@Composable
 private fun CreateTaskForm(
     state: CreateTaskState,
     onIntent: (CreateTaskIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val inputShape = RoundedCornerShape(12.dp)
+    val inputShape = RoundedCornerShape(16.dp)
+    val inputColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+    )
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(horizontal = Dimensions.screenPaddingHorizontal),
+        verticalArrangement = Arrangement.spacedBy(Dimensions.sectionSpacing),
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Card 1: Title + Description
-        SectionCard {
+        // Basics Section
+        Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge)) {
             OutlinedTextField(
                 value = state.title,
                 onValueChange = { onIntent(CreateTaskIntent.SetTitle(it)) },
-                label = { Text("Task name") },
-                placeholder = { Text("e.g., Buy groceries, Call mom") },
+                placeholder = { 
+                    Text(
+                        "What would you like to do?",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    ) 
+                },
+                textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium),
                 singleLine = true,
                 shape = inputShape,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                ),
+                colors = inputColors,
                 modifier = Modifier.fillMaxWidth(),
             )
 
             OutlinedTextField(
                 value = state.description,
                 onValueChange = { onIntent(CreateTaskIntent.SetDescription(it)) },
-                label = { Text("Description (optional)") },
-                placeholder = { Text("Add details...") },
-                minLines = 2,
+                placeholder = { Text("Add description or subtasks...") },
+                leadingIcon = {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Notes,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                minLines = 3,
                 maxLines = 5,
                 shape = inputShape,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                ),
+                colors = inputColors,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
 
-        // Card 2: Schedule
-        SectionCard {
+        // Schedule Section
+        Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)) {
+            SectionHeader("Schedule")
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge)
             ) {
                 DatePickerField(
                     date = state.dueDate,
@@ -267,89 +259,197 @@ private fun CreateTaskForm(
             }
         }
 
-        // Card 3: Priority
-        SectionCard {
-            PrioritySelector(
-                selectedPriority = state.priority,
-                onPrioritySelected = { onIntent(CreateTaskIntent.SetPriority(it)) }
-            )
-        }
-
-        // Card 4: Reminder
-        SectionCard {
+        // Priority Section
+        Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)) {
+            SectionHeader("Priority")
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Notifications,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Reminder",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                TaskPriority.entries.forEach { priority ->
+                    PriorityChip(
+                        priority = priority,
+                        isSelected = state.priority == priority,
+                        onClick = { onIntent(CreateTaskIntent.SetPriority(priority)) }
                     )
                 }
-                Switch(
-                    checked = state.reminderEnabled,
-                    onCheckedChange = { onIntent(CreateTaskIntent.SetReminderEnabled(it)) }
-                )
             }
+        }
 
-            AnimatedVisibility(visible = state.reminderEnabled) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val options = listOf(
-                        0 to "At time",
-                        10 to "10 min",
-                        30 to "30 min",
-                        60 to "1 hour"
-                    )
-                    options.forEach { (minutes, label) ->
-                        FilterChip(
-                            selected = state.reminderMinutesBefore == minutes,
-                            onClick = { onIntent(CreateTaskIntent.SetReminderMinutesBefore(minutes)) },
-                            label = { Text(label) }
+        // Reminder Section (Metadata List style)
+        Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)) {
+            SectionHeader("Reminders")
+            Surface(
+                shape = inputShape,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Notifications,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "Enable Reminder",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Switch(
+                            checked = state.reminderEnabled,
+                            onCheckedChange = { onIntent(CreateTaskIntent.SetReminderEnabled(it)) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                            )
                         )
+                    }
+
+                    AnimatedVisibility(visible = state.reminderEnabled) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val options = listOf(
+                                0 to "At time",
+                                10 to "10 min",
+                                30 to "30 min",
+                                60 to "1 hour"
+                            )
+                            options.forEach { (minutes, label) ->
+                                FilterChip(
+                                    selected = state.reminderMinutesBefore == minutes,
+                                    onClick = { onIntent(CreateTaskIntent.SetReminderMinutesBefore(minutes)) },
+                                    label = { Text(label) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                        selectedLabelColor = MaterialTheme.colorScheme.primary,
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = state.reminderMinutesBefore == minutes,
+                                        borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                                        selectedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
 
-        // Card 5: Subtasks
-        SectionCard {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                state.subtasks.forEach { subtask ->
-                    SubtaskRow(
-                        text = subtask.text,
-                        onTextChange = { onIntent(CreateTaskIntent.UpdateSubtaskText(subtask.id, it)) },
-                        onRemove = { onIntent(CreateTaskIntent.RemoveSubtask(subtask.id)) }
-                    )
-                }
+        // Subtasks Section
+        Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)) {
+            SectionHeader("Subtasks")
+            
+            state.subtasks.forEach { subtask ->
+                SubtaskRow(
+                    text = subtask.text,
+                    onTextChange = { onIntent(CreateTaskIntent.UpdateSubtaskText(subtask.id, it)) },
+                    onRemove = { onIntent(CreateTaskIntent.RemoveSubtask(subtask.id)) }
+                )
+            }
 
-                TextButton(
-                    onClick = { onIntent(CreateTaskIntent.AddSubtask) },
-                    modifier = Modifier.fillMaxWidth()
+            Surface(
+                onClick = { onIntent(CreateTaskIntent.AddSubtask) },
+                shape = inputShape,
+                color = Color.Transparent,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
+                    Icon(
+                        Icons.Default.Add, 
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Add subtask")
+                    Text(
+                        "Add subtask",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Dimensions.fabClearance + 32.dp))
+    }
+}
+
+@Composable
+private fun SectionHeader(text: String) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelSmall.copy(
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp
+        ),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 4.dp)
+    )
+}
+
+@Composable
+private fun PriorityChip(
+    priority: TaskPriority,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val priorityColor = when (priority) {
+        TaskPriority.NONE -> MaterialTheme.colorScheme.onSurfaceVariant
+        TaskPriority.LOW -> Color(0xFF4CAF50)
+        TaskPriority.MEDIUM -> Color(0xFFFF9800)
+        TaskPriority.HIGH -> Color(0xFFF44336)
+    }
+    
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(100),
+        color = if (isSelected) priorityColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+        border = BorderStroke(1.dp, if (isSelected) priorityColor.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(priorityColor)
+            )
+            Text(
+                text = priority.name.lowercase().replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.labelLarge,
+                color = if (isSelected) priorityColor else MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }
 
@@ -364,8 +464,9 @@ private fun DatePickerField(
 
     Surface(
         onClick = { showDialog = true },
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
         modifier = modifier
     ) {
         Row(
@@ -379,7 +480,7 @@ private fun DatePickerField(
                 tint = if (date != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = date?.format(DateTimeFormatter.ofPattern("MMM d, yyyy")) ?: "Set date",
+                text = date?.format(DateTimeFormatter.ofPattern("MMM d, yyyy")) ?: "Date",
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (date != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -431,8 +532,9 @@ private fun TimePickerField(
 
     Surface(
         onClick = { showDialog = true },
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
         modifier = modifier
     ) {
         Row(
@@ -446,7 +548,7 @@ private fun TimePickerField(
                 tint = if (time != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = time?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "Set time",
+                text = time?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "Time",
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (time != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -545,86 +647,26 @@ private fun TimePickerField(
 }
 
 @Composable
-private fun PrioritySelector(
-    selectedPriority: TaskPriority,
-    onPrioritySelected: (TaskPriority) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        TaskPriority.entries.forEach { priority ->
-            val isSelected = selectedPriority == priority
-            val priorityColor = when (priority) {
-                TaskPriority.NONE -> MaterialTheme.colorScheme.onSurfaceVariant
-                TaskPriority.LOW -> Color(0xFF4CAF50) // Green
-                TaskPriority.MEDIUM -> Color(0xFFFF9800) // Orange
-                TaskPriority.HIGH -> Color(0xFFF44336) // Red
-            }
-
-            FilterChip(
-                selected = isSelected,
-                onClick = { onPrioritySelected(priority) },
-                label = { 
-                    Text(
-                        text = priority.name.lowercase().replaceFirstChar { it.uppercase() },
-                        style = MaterialTheme.typography.labelMedium
-                    ) 
-                },
-                leadingIcon = {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(priorityColor)
-                    )
-                },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                ),
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
 private fun SubtaskRow(
     text: String,
     onTextChange: (String) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(8.dp),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            OutlinedTextField(
-                value = text,
-                onValueChange = onTextChange,
-                singleLine = true,
-                placeholder = { Text("Subtask description") },
-                textStyle = MaterialTheme.typography.bodyMedium,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
-            )
-
+    OutlinedTextField(
+        value = text,
+        onValueChange = onTextChange,
+        singleLine = true,
+        placeholder = { Text("Subtask description") },
+        textStyle = MaterialTheme.typography.bodyMedium,
+        shape = RoundedCornerShape(16.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+        ),
+        trailingIcon = {
             IconButton(
                 onClick = onRemove,
                 modifier = Modifier.size(32.dp),
@@ -636,6 +678,7 @@ private fun SubtaskRow(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
-    }
+        },
+        modifier = modifier.fillMaxWidth()
+    )
 }

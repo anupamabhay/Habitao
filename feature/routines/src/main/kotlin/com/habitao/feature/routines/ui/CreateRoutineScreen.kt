@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -36,7 +37,6 @@ import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -49,12 +49,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
@@ -71,7 +69,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
@@ -79,6 +76,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.RepeatPattern
 import com.habitao.feature.routines.viewmodel.CreateRoutineIntent
 import com.habitao.feature.routines.viewmodel.CreateRoutineState
@@ -152,7 +150,7 @@ fun CreateRoutineScreen(
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 12.dp)
+                        .padding(horizontal = Dimensions.screenPaddingHorizontal, vertical = 12.dp)
                         .height(56.dp),
                 ) {
                     Text(
@@ -173,6 +171,34 @@ fun CreateRoutineScreen(
 }
 
 @Composable
+private fun SectionCard(
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    content: @Composable () -> Unit
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(Dimensions.cardPadding),
+            verticalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing)
+        ) {
+            if (title != null) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            content()
+        }
+    }
+}
+
+@Composable
 private fun CreateRoutineForm(
     state: CreateRoutineState,
     onIntent: (CreateRoutineIntent) -> Unit,
@@ -185,13 +211,13 @@ private fun CreateRoutineForm(
             .fillMaxSize()
             .imePadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+            .padding(horizontal = Dimensions.screenPaddingHorizontal),
+        verticalArrangement = Arrangement.spacedBy(Dimensions.sectionSpacing),
     ) {
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // Basic Info Section
-        FormSection(title = "Basics") {
+        // Card 1: Title + Description
+        SectionCard {
             OutlinedTextField(
                 value = state.title,
                 onValueChange = { onIntent(CreateRoutineIntent.SetTitle(it)) },
@@ -212,7 +238,7 @@ private fun CreateRoutineForm(
                 label = { Text("Description (optional)") },
                 placeholder = { Text("What is this routine for?") },
                 minLines = 2,
-                maxLines = 3,
+                maxLines = 5,
                 shape = inputShape,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -222,9 +248,9 @@ private fun CreateRoutineForm(
             )
         }
 
-        // Steps Section
-        FormSection(title = "Steps") {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Card 2: Steps
+        SectionCard(title = "Steps") {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)) {
                 state.steps.forEachIndexed { index, step ->
                     RoutineStepRow(
                         index = index,
@@ -240,23 +266,19 @@ private fun CreateRoutineForm(
                     )
                 }
 
-                Button(
+                TextButton(
                     onClick = { onIntent(CreateRoutineIntent.AddStep) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Add Step")
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(Dimensions.elementSpacing))
                     Text("Add Step")
                 }
             }
         }
 
-        // Schedule Section
-        FormSection(title = "Schedule") {
+        // Card 3: Schedule
+        SectionCard(title = "Schedule") {
             RepeatPatternSelector(
                 selectedPattern = state.repeatPattern,
                 onPatternSelected = { onIntent(CreateRoutineIntent.SetRepeatPattern(it)) }
@@ -268,7 +290,7 @@ private fun CreateRoutineForm(
                 exit = fadeOut() + shrinkVertically(),
             ) {
                 Column {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
                     DaySelector(
                         selectedDays = state.scheduledDays,
                         onDayToggled = { onIntent(CreateRoutineIntent.ToggleDay(it)) },
@@ -282,17 +304,16 @@ private fun CreateRoutineForm(
                 exit = fadeOut() + shrinkVertically(),
             ) {
                 Column {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Repeat every",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge)
                     ) {
+                        Text(
+                            text = "Repeat every",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                         OutlinedTextField(
                             value = if (state.customInterval > 0) state.customInterval.toString() else "",
                             onValueChange = { 
@@ -314,49 +335,52 @@ private fun CreateRoutineForm(
                         )
                         Text(
                             text = "days",
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
             }
         }
 
-        // Reminders Section
-        FormSection(title = "Reminders") {
-            ReminderSection(
-                reminderEnabled = state.reminderEnabled,
-                reminderTime = state.reminderTime,
-                onReminderEnabledChange = { onIntent(CreateRoutineIntent.SetReminderEnabled(it)) },
-                onReminderTimeChange = { onIntent(CreateRoutineIntent.SetReminderTime(it)) },
-            )
+        // Card 4: Reminder
+        SectionCard {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Reminder",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Switch(
+                    checked = state.reminderEnabled,
+                    onCheckedChange = { onIntent(CreateRoutineIntent.SetReminderEnabled(it)) }
+                )
+            }
+
+            AnimatedVisibility(visible = state.reminderEnabled) {
+                ReminderTimeField(
+                    time = state.reminderTime,
+                    onTimeSelected = { onIntent(CreateRoutineIntent.SetReminderTime(it)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-
-@Composable
-private fun FormSection(
-    title: String,
-    content: @Composable () -> Unit,
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            content()
-        }
+        Spacer(modifier = Modifier.height(Dimensions.fabClearance))
     }
 }
 
@@ -378,34 +402,64 @@ private fun RoutineStepRow(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "${index + 1}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${index + 1}",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    Text(
+                        text = "Step ${index + 1}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                
+                Row(horizontalArrangement = Arrangement.End) {
+                    IconButton(onClick = onMoveUp, enabled = !isFirst, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move Up", modifier = Modifier.size(20.dp), tint = if (!isFirst) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f))
+                    }
+                    IconButton(onClick = onMoveDown, enabled = !isLast, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move Down", modifier = Modifier.size(20.dp), tint = if (!isLast) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f))
+                    }
+                    IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Remove", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+                    }
+                }
             }
-            
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)
+            ) {
                 OutlinedTextField(
                     value = title,
                     onValueChange = onTitleChange,
-                    placeholder = { Text("Step title") },
+                    placeholder = { Text("Step description") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.weight(1f),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = Color.Transparent,
@@ -417,10 +471,10 @@ private fun RoutineStepRow(
                 OutlinedTextField(
                     value = duration?.toString() ?: "",
                     onValueChange = { onDurationChange(it.toIntOrNull()) },
-                    placeholder = { Text("Duration (min)") },
+                    placeholder = { Text("Min") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.width(80.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = Color.Transparent,
@@ -428,18 +482,6 @@ private fun RoutineStepRow(
                         unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                     )
                 )
-            }
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                IconButton(onClick = onMoveUp, enabled = !isFirst, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Move Up")
-                }
-                IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
-                }
-                IconButton(onClick = onMoveDown, enabled = !isLast, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Move Down")
-                }
             }
         }
     }
@@ -486,7 +528,7 @@ private fun DaySelector(
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
         FlowRow(
@@ -528,213 +570,127 @@ private fun DaySelector(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ReminderSection(
-    reminderEnabled: Boolean,
-    reminderTime: LocalTime?,
-    onReminderEnabledChange: (Boolean) -> Unit,
-    onReminderTimeChange: (LocalTime) -> Unit,
+private fun ReminderTimeField(
+    time: LocalTime?,
+    onTimeSelected: (LocalTime) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    var showTimePicker by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
 
     Surface(
+        onClick = { showDialog = true },
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        modifier = modifier
     ) {
-        Column(
+        Row(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Notifications,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-
-                    Column {
-                        Text(
-                            text = "Remind me",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            text = "Get notified based on schedule",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-
-                Switch(
-                    checked = reminderEnabled,
-                    onCheckedChange = onReminderEnabledChange,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.primary,
-                        checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                    ),
+                Icon(
+                    imageVector = Icons.Outlined.Schedule,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Time",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
-
-            AnimatedVisibility(
-                visible = reminderEnabled,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically(),
-            ) {
-                Surface(
-                    onClick = { showTimePicker = true },
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Schedule,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Text(
-                                text = "Reminder time",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-
-                        Text(
-                            text = reminderTime?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "9:00 AM",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                }
-            }
+            Text(
+                text = time?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "9:00 AM",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 
-    if (showTimePicker) {
-        TimePickerDialog(
-            initialTime = reminderTime ?: LocalTime.of(9, 0),
-            onTimeSelected = {
-                onReminderTimeChange(it)
-                showTimePicker = false
-            },
-            onDismiss = { showTimePicker = false },
+    if (showDialog) {
+        val initialTime = time ?: LocalTime.of(9, 0)
+        val timePickerState = rememberTimePickerState(
+            initialHour = initialTime.hour,
+            initialMinute = initialTime.minute,
+            is24Hour = false
         )
-    }
-}
+        var showKeyboardInput by remember { mutableStateOf(false) }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TimePickerDialog(
-    initialTime: LocalTime,
-    onTimeSelected: (LocalTime) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val timePickerState = rememberTimePickerState(
-        initialHour = initialTime.hour,
-        initialMinute = initialTime.minute,
-        is24Hour = false,
-    )
-
-    var showKeyboardInput by remember { mutableStateOf(false) }
-
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp,
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+        Dialog(onDismissRequest = { showDialog = false }) {
+            Surface(
+                shape = RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(
-                        text = "Select time",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "Select time",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        IconButton(onClick = { showKeyboardInput = !showKeyboardInput }) {
+                            Icon(
+                                imageVector = if (showKeyboardInput) Icons.Outlined.Schedule else Icons.Outlined.Keyboard,
+                                contentDescription = "Toggle input mode",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    val timePickerColors = TimePickerDefaults.colors(
+                        clockDialColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        selectorColor = MaterialTheme.colorScheme.primary,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        periodSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        periodSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
-                    IconButton(onClick = { showKeyboardInput = !showKeyboardInput }) {
-                        Icon(
-                            imageVector = if (showKeyboardInput) Icons.Outlined.Schedule else Icons.Outlined.Keyboard,
-                            contentDescription = if (showKeyboardInput) "Switch to dial input" else "Switch to keyboard input",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+
+                    if (showKeyboardInput) {
+                        TimeInput(
+                            state = timePickerState,
+                            colors = timePickerColors
+                        )
+                    } else {
+                        TimePicker(
+                            state = timePickerState,
+                            colors = timePickerColors
                         )
                     }
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                val timePickerColors = TimePickerDefaults.colors(
-                    clockDialColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    selectorColor = MaterialTheme.colorScheme.primary,
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    periodSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    periodSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-
-                if (showKeyboardInput) {
-                    TimeInput(
-                        state = timePickerState,
-                        colors = timePickerColors,
-                    )
-                } else {
-                    TimePicker(
-                        state = timePickerState,
-                        colors = timePickerColors,
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 20.dp),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel")
-                    }
-                    TextButton(
-                        onClick = {
-                            onTimeSelected(LocalTime.of(timePickerState.hour, timePickerState.minute))
-                        },
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 20.dp),
+                        horizontalArrangement = Arrangement.End,
                     ) {
-                        Text("OK")
+                        TextButton(onClick = { showDialog = false }) {
+                            Text("Cancel")
+                        }
+                        TextButton(
+                            onClick = {
+                                onTimeSelected(LocalTime.of(timePickerState.hour, timePickerState.minute))
+                                showDialog = false
+                            },
+                        ) {
+                            Text("OK")
+                        }
                     }
                 }
             }
