@@ -346,6 +346,8 @@ class TimerService : LifecycleService() {
                 sessionType = sessionType,
                 workDurationSeconds = pomodoroPreferences.workDurationMinutes * 60,
                 breakDurationSeconds = pomodoroPreferences.shortBreakDurationMinutes * 60,
+                linkedTaskId = timerStateHolder.linkedTaskId.value,
+                linkedHabitId = timerStateHolder.linkedHabitId.value,
                 startedAt = startedAt,
                 completedAt = completedAt,
                 wasInterrupted = wasInterrupted,

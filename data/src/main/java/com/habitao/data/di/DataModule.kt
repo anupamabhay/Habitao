@@ -59,6 +59,7 @@ object DatabaseModule {
             HabitaoDatabase::class.java,
             HabitaoDatabase.DATABASE_NAME,
         )
+            .addMigrations(HabitaoDatabase.MIGRATION_4_5)
             .fallbackToDestructiveMigration() // TODO: Add proper migrations
             .build()
     }

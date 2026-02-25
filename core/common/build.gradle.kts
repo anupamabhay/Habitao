@@ -40,6 +40,9 @@ dependencies {
     // Kotlin
     implementation(libs.kotlin.stdlib)
 
+    // DataStore
+    implementation(libs.datastore.preferences)
+
     // Coroutines (core only - no Android)
     implementation(libs.kotlinx.coroutines.core)
 
