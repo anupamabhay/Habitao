@@ -22,7 +22,8 @@ import javax.inject.Inject
 data class SubtaskItem(
     val id: String,
     val text: String,
-    val priority: TaskPriority = TaskPriority.NONE
+    val priority: TaskPriority = TaskPriority.NONE,
+    val existingTaskId: String? = null,
 )
 
 data class CreateTaskState(
@@ -37,7 +38,8 @@ data class CreateTaskState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val isEditMode: Boolean = false,
-    val isSaving: Boolean = false
+    val isSaving: Boolean = false,
+    val parentTaskId: String? = null,
 )
 
 sealed class CreateTaskIntent {
@@ -70,6 +72,7 @@ class CreateTaskViewModel @Inject constructor(
     val savedEvent: SharedFlow<Unit> = _savedEvent.asSharedFlow()
 
     private var currentTaskId: String? = null
+    private var loadedTask: Task? = null
 
     fun processIntent(intent: CreateTaskIntent) {
         when (intent) {
@@ -95,30 +98,31 @@ class CreateTaskViewModel @Inject constructor(
                 _state.update { it.copy(reminderMinutesBefore = intent.minutes) }
             }
             is CreateTaskIntent.AddSubtask -> {
-                _state.update { 
+                _state.update {
                     it.copy(
                         subtasks = it.subtasks + SubtaskItem(
                             id = UUID.randomUUID().toString(),
                             text = "",
-                            priority = TaskPriority.NONE
+                            priority = TaskPriority.NONE,
+                            existingTaskId = null,
                         )
-                    ) 
+                    )
                 }
             }
             is CreateTaskIntent.RemoveSubtask -> {
-                _state.update { 
+                _state.update {
                     it.copy(
                         subtasks = it.subtasks.filter { subtask -> subtask.id != intent.id }
-                    ) 
+                    )
                 }
             }
             is CreateTaskIntent.UpdateSubtaskText -> {
-                _state.update { 
+                _state.update {
                     it.copy(
                         subtasks = it.subtasks.map { subtask ->
                             if (subtask.id == intent.id) subtask.copy(text = intent.text) else subtask
                         }
-                    ) 
+                    )
                 }
             }
             is CreateTaskIntent.UpdateSubtaskPriority -> {
@@ -141,6 +145,7 @@ class CreateTaskViewModel @Inject constructor(
             }
             is CreateTaskIntent.ResetForm -> {
                 currentTaskId = null
+                loadedTask = null
                 _state.value = CreateTaskState()
             }
         }
@@ -152,6 +157,8 @@ class CreateTaskViewModel @Inject constructor(
         viewModelScope.launch {
             taskRepository.getTaskById(taskId).fold(
                 onSuccess = { task ->
+                    loadedTask = task
+                    val subtaskItems = loadSubtasks(taskId)
                     _state.update {
                         it.copy(
                             title = task.title,
@@ -161,7 +168,9 @@ class CreateTaskViewModel @Inject constructor(
                             priority = task.priority,
                             reminderEnabled = task.reminderEnabled,
                             reminderMinutesBefore = task.reminderMinutesBefore,
-                            isLoading = false
+                            parentTaskId = task.parentTaskId,
+                            subtasks = subtaskItems,
+                            isLoading = false,
                         )
                     }
                 },
@@ -177,6 +186,22 @@ class CreateTaskViewModel @Inject constructor(
         }
     }
 
+    private suspend fun loadSubtasks(parentId: String): List<SubtaskItem> {
+        return taskRepository.getSubtasksByParentId(parentId).fold(
+            onSuccess = { tasks ->
+                tasks.map { task ->
+                    SubtaskItem(
+                        id = task.id,
+                        text = task.title,
+                        priority = task.priority,
+                        existingTaskId = task.id,
+                    )
+                }
+            },
+            onFailure = { emptyList() }
+        )
+    }
+
     private fun saveTask() {
         val currentState = _state.value
         if (currentState.title.isBlank()) {
@@ -188,16 +213,25 @@ class CreateTaskViewModel @Inject constructor(
 
         viewModelScope.launch {
             val taskId = currentTaskId ?: UUID.randomUUID().toString()
-            
+            val existing = loadedTask
+
             val task = Task(
                 id = taskId,
                 title = currentState.title.trim(),
                 description = currentState.description.trim().takeIf { it.isNotEmpty() },
+                parentTaskId = currentState.parentTaskId,
                 dueDate = currentState.dueDate,
                 dueTime = currentState.dueTime,
                 priority = currentState.priority,
                 reminderEnabled = currentState.reminderEnabled,
-                reminderMinutesBefore = currentState.reminderMinutesBefore
+                reminderMinutesBefore = currentState.reminderMinutesBefore,
+                isCompleted = existing?.isCompleted ?: false,
+                completedAt = existing?.completedAt,
+                createdAt = existing?.createdAt ?: System.currentTimeMillis(),
+                updatedAt = System.currentTimeMillis(),
+                tags = existing?.tags ?: emptyList(),
+                sortOrder = existing?.sortOrder ?: 0,
+                syncStatus = existing?.syncStatus ?: com.habitao.domain.model.SyncStatus.LOCAL,
             )
 
             val result = if (currentTaskId != null) {
@@ -208,36 +242,11 @@ class CreateTaskViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = {
-                    val validSubtasks = currentState.subtasks.filter { it.text.isNotBlank() }
-                    var allSubtasksSaved = true
-                    
-                    for (subtask in validSubtasks) {
-                        val subtaskModel = Task(
-                            id = UUID.randomUUID().toString(),
-                            title = subtask.text.trim(),
-                            parentTaskId = taskId,
-                            dueDate = currentState.dueDate,
-                            dueTime = currentState.dueTime,
-                            priority = subtask.priority
-                        )
-                        val subtaskResult = taskRepository.createTask(subtaskModel)
-                        if (subtaskResult.isFailure) {
-                            allSubtasksSaved = false
-                            break
-                        }
+                    if (currentState.parentTaskId == null) {
+                        saveSubtasks(taskId, currentState)
                     }
-
-                    if (allSubtasksSaved) {
-                        _state.update { it.copy(isSaving = false) }
-                        _savedEvent.emit(Unit)
-                    } else {
-                        _state.update { 
-                            it.copy(
-                                isSaving = false, 
-                                error = "Failed to save some subtasks"
-                            ) 
-                        }
-                    }
+                    _state.update { it.copy(isSaving = false) }
+                    _savedEvent.emit(Unit)
                 },
                 onFailure = { error ->
                     _state.update {
@@ -248,6 +257,45 @@ class CreateTaskViewModel @Inject constructor(
                     }
                 }
             )
+        }
+    }
+
+    private suspend fun saveSubtasks(parentId: String, currentState: CreateTaskState) {
+        val uiSubtasks = currentState.subtasks.filter { it.text.isNotBlank() }
+        val existingSubtaskIds = uiSubtasks.mapNotNull { it.existingTaskId }.toSet()
+
+        // Delete subtasks removed from UI
+        taskRepository.getSubtasksByParentId(parentId).onSuccess { dbSubtasks ->
+            for (dbSubtask in dbSubtasks) {
+                if (dbSubtask.id !in existingSubtaskIds) {
+                    taskRepository.deleteTask(dbSubtask.id)
+                }
+            }
+        }
+
+        // Update existing or create new subtasks
+        for (subtask in uiSubtasks) {
+            if (subtask.existingTaskId != null) {
+                taskRepository.getTaskById(subtask.existingTaskId).onSuccess { existingTask ->
+                    val updated = existingTask.copy(
+                        title = subtask.text.trim(),
+                        priority = subtask.priority,
+                        parentTaskId = parentId,
+                        updatedAt = System.currentTimeMillis(),
+                    )
+                    taskRepository.updateTask(updated)
+                }
+            } else {
+                val newSubtask = Task(
+                    id = UUID.randomUUID().toString(),
+                    title = subtask.text.trim(),
+                    parentTaskId = parentId,
+                    dueDate = currentState.dueDate,
+                    dueTime = currentState.dueTime,
+                    priority = subtask.priority,
+                )
+                taskRepository.createTask(newSubtask)
+            }
         }
     }
 }

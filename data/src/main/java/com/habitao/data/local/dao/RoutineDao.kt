@@ -60,6 +60,15 @@ interface RoutineDao {
     @Query("SELECT * FROM routine_logs WHERE routineId = :routineId AND date = :dateMillis")
     fun observeRoutineLog(routineId: String, dateMillis: Long): Flow<RoutineLogEntity?>
 
+    @Query("SELECT * FROM routine_logs WHERE date >= :startMillis AND date < :endMillis")
+    fun observeRoutineLogsForDateRange(startMillis: Long, endMillis: Long): Flow<List<RoutineLogEntity>>
+
+    @Query("SELECT COUNT(*) FROM routine_logs WHERE date = :dateMillis AND isCompleted = 1")
+    suspend fun getCompletedRoutinesCount(dateMillis: Long): Int
+
+    @Query("SELECT COUNT(*) FROM routines")
+    suspend fun getTotalRoutinesCount(): Int
+
     @Transaction
     suspend fun createRoutineWithSteps(routine: RoutineEntity, steps: List<RoutineStepEntity>) {
         insertRoutine(routine)

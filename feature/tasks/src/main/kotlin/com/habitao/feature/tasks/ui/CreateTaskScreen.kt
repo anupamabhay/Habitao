@@ -20,17 +20,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,8 +43,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -51,8 +51,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
@@ -73,8 +71,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -83,7 +81,6 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -198,93 +195,18 @@ private fun CreateTaskForm(
     modifier: Modifier = Modifier,
 ) {
     val inputShape = RoundedCornerShape(16.dp)
-    val inputColors = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = MaterialTheme.colorScheme.primary,
-        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-    )
 
     var subtaskIdToFocus by remember { mutableStateOf<String?>(null) }
-    var editingSubtaskId by remember { mutableStateOf<String?>(null) }
-    var pendingNewSubtask by remember { mutableStateOf(false) }
-    var pendingInsertAfterId by remember { mutableStateOf<String?>(null) }
-    var subtaskOrder by remember { mutableStateOf<List<String>>(emptyList()) }
     var previousSubtaskIds by remember { mutableStateOf<List<String>>(emptyList()) }
 
     val currentSubtaskIds = state.subtasks.map { it.id }
 
     LaunchedEffect(currentSubtaskIds) {
-        if (currentSubtaskIds.isEmpty() && previousSubtaskIds.isNotEmpty()) {
-            pendingNewSubtask = false
-            pendingInsertAfterId = null
-            editingSubtaskId = null
-            subtaskIdToFocus = null
-            subtaskOrder = emptyList()
-        }
-
         val addedIds = currentSubtaskIds.filterNot { it in previousSubtaskIds }
-        val baseOrder = if (subtaskOrder.isEmpty()) {
-            previousSubtaskIds
-        } else {
-            subtaskOrder
-        }
-        val cleanedOrder = baseOrder.filter { it in currentSubtaskIds }
-
-        var updatedOrder = cleanedOrder
-
         if (addedIds.isNotEmpty()) {
-            updatedOrder = if (
-                pendingNewSubtask &&
-                pendingInsertAfterId != null &&
-                cleanedOrder.contains(pendingInsertAfterId)
-            ) {
-                val insertIndex = cleanedOrder.indexOf(pendingInsertAfterId) + 1
-                val mutable = cleanedOrder.toMutableList()
-                addedIds.forEachIndexed { index, id ->
-                    val targetIndex = (insertIndex + index).coerceAtMost(mutable.size)
-                    mutable.add(targetIndex, id)
-                }
-                mutable
-            } else {
-                cleanedOrder + addedIds
-            }
-
-            if (pendingNewSubtask) {
-                val focusId = addedIds.last()
-                subtaskIdToFocus = focusId
-                editingSubtaskId = focusId
-                pendingNewSubtask = false
-            }
-        }
-
-        if (editingSubtaskId != null && !currentSubtaskIds.contains(editingSubtaskId)) {
-            editingSubtaskId = null
-        }
-
-        if (subtaskIdToFocus != null && !currentSubtaskIds.contains(subtaskIdToFocus)) {
-            subtaskIdToFocus = null
-        }
-
-        subtaskOrder = if (updatedOrder.isEmpty()) {
-            currentSubtaskIds
-        } else {
-            updatedOrder
+            subtaskIdToFocus = addedIds.last()
         }
         previousSubtaskIds = currentSubtaskIds
-        if (addedIds.isNotEmpty() || pendingInsertAfterId !in currentSubtaskIds) {
-            pendingInsertAfterId = null
-        }
-    }
-
-    val subtaskMap = remember(state.subtasks) { state.subtasks.associateBy { it.id } }
-    val orderedSubtasks = if (subtaskOrder.isEmpty()) {
-        state.subtasks
-    } else {
-        val ordered = subtaskOrder.mapNotNull { subtaskMap[it] }
-        if (ordered.size == state.subtasks.size) ordered else {
-            ordered + state.subtasks.filter { it.id !in subtaskOrder }
-        }
     }
 
     Column(
@@ -297,43 +219,51 @@ private fun CreateTaskForm(
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Basics Section
+        // Basics Section (Borderless)
         Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge)) {
-            OutlinedTextField(
+            BasicTextField(
                 value = state.title,
                 onValueChange = { onIntent(CreateTaskIntent.SetTitle(it)) },
-                placeholder = { 
-                    Text(
-                        "What would you like to do?",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    ) 
-                },
-                textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium),
-                singleLine = true,
-                shape = inputShape,
-                colors = inputColors,
+                textStyle = MaterialTheme.typography.headlineSmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Medium
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth(),
+                decorationBox = { innerTextField ->
+                    if (state.title.isEmpty()) {
+                        Text(
+                            text = "What would you like to do?",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                    innerTextField()
+                }
             )
 
-            OutlinedTextField(
+            BasicTextField(
                 value = state.description,
                 onValueChange = { onIntent(CreateTaskIntent.SetDescription(it)) },
-                placeholder = { Text("Add description or subtasks...") },
-                leadingIcon = {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Notes,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                minLines = 3,
-                maxLines = 5,
-                shape = inputShape,
-                colors = inputColors,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth(),
+                decorationBox = { innerTextField ->
+                    if (state.description.isEmpty()) {
+                        Text(
+                            text = "Add description...",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                    innerTextField()
+                }
             )
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Schedule Section
         Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)) {
@@ -375,7 +305,7 @@ private fun CreateTaskForm(
             }
         }
 
-        // Reminder Section (Metadata List style)
+        // Reminder Section
         Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)) {
             SectionHeader("Reminders")
             Surface(
@@ -457,38 +387,19 @@ private fun CreateTaskForm(
         Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)) {
             SectionHeader("Subtasks")
             
-            orderedSubtasks.forEach { subtask ->
+            state.subtasks.forEach { subtask ->
                 key(subtask.id) {
                     SubtaskRow(
                         text = subtask.text,
                         priority = subtask.priority,
-                        isEditing = editingSubtaskId == subtask.id,
-                        onEdit = {
-                            editingSubtaskId = subtask.id
-                            subtaskIdToFocus = subtask.id
-                        },
                         onTextChange = { onIntent(CreateTaskIntent.UpdateSubtaskText(subtask.id, it)) },
                         onPriorityChange = { onIntent(CreateTaskIntent.UpdateSubtaskPriority(subtask.id, it)) },
-                        onRemove = {
-                            if (editingSubtaskId == subtask.id) {
-                                editingSubtaskId = null
-                            }
-                            onIntent(CreateTaskIntent.RemoveSubtask(subtask.id))
-                        },
-                        onSubmit = {
-                            pendingNewSubtask = true
-                            pendingInsertAfterId = subtask.id
-                            onIntent(CreateTaskIntent.AddSubtask)
-                        },
+                        onRemove = { onIntent(CreateTaskIntent.RemoveSubtask(subtask.id)) },
+                        onSubmit = { onIntent(CreateTaskIntent.AddSubtask) },
                         shouldRequestFocus = subtask.id == subtaskIdToFocus,
                         onFocusRequested = {
                             if (subtaskIdToFocus == subtask.id) {
                                 subtaskIdToFocus = null
-                            }
-                        },
-                        onEditingFinished = {
-                            if (editingSubtaskId == subtask.id) {
-                                editingSubtaskId = null
                             }
                         }
                     )
@@ -496,11 +407,7 @@ private fun CreateTaskForm(
             }
 
             Surface(
-                onClick = {
-                    pendingNewSubtask = true
-                    pendingInsertAfterId = null
-                    onIntent(CreateTaskIntent.AddSubtask)
-                },
+                onClick = { onIntent(CreateTaskIntent.AddSubtask) },
                 shape = inputShape,
                 color = Color.Transparent,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
@@ -538,7 +445,7 @@ private fun SectionHeader(text: String) {
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.sp
         ),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(horizontal = 4.dp)
     )
 }
@@ -786,15 +693,12 @@ private fun TimePickerField(
 private fun SubtaskRow(
     text: String,
     priority: TaskPriority,
-    isEditing: Boolean,
-    onEdit: () -> Unit,
     onTextChange: (String) -> Unit,
     onPriorityChange: (TaskPriority) -> Unit,
     onRemove: () -> Unit,
     onSubmit: () -> Unit,
     shouldRequestFocus: Boolean,
     onFocusRequested: () -> Unit,
-    onEditingFinished: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -806,86 +710,56 @@ private fun SubtaskRow(
         }
     }
 
-    val handleSubmit = {
-        onSubmit()
-    }
-
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .clickable(enabled = !isEditing, onClick = onEdit)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(6.dp)
-                .clip(CircleShape)
-                .background(
-                    if (priority == TaskPriority.NONE) {
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
-                    } else {
-                        priorityColor(priority)
-                    }
-                )
+        Checkbox(
+            checked = false,
+            onCheckedChange = null,
+            colors = CheckboxDefaults.colors(
+                uncheckedColor = MaterialTheme.colorScheme.outlineVariant
+            ),
+            modifier = Modifier.size(24.dp)
         )
 
-        if (isEditing) {
-            TextField(
-                value = text,
-                onValueChange = onTextChange,
-                singleLine = true,
-                placeholder = { Text("New subtask") },
-                textStyle = MaterialTheme.typography.bodyLarge,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { handleSubmit() }),
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(focusRequester)
-                    .onKeyEvent { event ->
-                        if (
-                            event.type == KeyEventType.KeyUp &&
-                            (event.key == Key.Enter || event.key == Key.NumPadEnter)
-                        ) {
-                            handleSubmit()
-                            true
-                        } else {
-                            false
-                        }
+        BasicTextField(
+            value = text,
+            onValueChange = onTextChange,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(onNext = { onSubmit() }),
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester)
+                .onKeyEvent { event ->
+                    if (
+                        event.type == KeyEventType.KeyUp &&
+                        (event.key == Key.Enter || event.key == Key.NumPadEnter)
+                    ) {
+                        onSubmit()
+                        true
+                    } else {
+                        false
                     }
-                    .onFocusChanged { focusState ->
-                        if (!focusState.isFocused) {
-                            onEditingFinished()
-                        }
-                    }
-            )
-        } else {
-            val displayText = text.ifBlank { "New subtask" }
-            val displayColor = if (text.isBlank()) {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            } else {
-                MaterialTheme.colorScheme.onSurface
+                },
+            decorationBox = { innerTextField ->
+                if (text.isEmpty()) {
+                    Text(
+                        text = "New subtask",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
+                innerTextField()
             }
-
-            Text(
-                text = displayText,
-                style = MaterialTheme.typography.bodyLarge,
-                color = displayColor,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(vertical = 8.dp)
-            )
-        }
+        )
 
         SubtaskPrioritySelector(
             selectedPriority = priority,

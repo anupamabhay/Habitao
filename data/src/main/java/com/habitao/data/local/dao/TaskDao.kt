@@ -36,4 +36,33 @@ interface TaskDao {
 
     @Query("SELECT * FROM tasks WHERE dueDate = :dateMillis ORDER BY sortOrder ASC")
     fun observeTasksForDate(dateMillis: Long): Flow<List<TaskEntity>>
+
+    @Query(
+        """
+        SELECT * FROM tasks
+        WHERE parentTaskId IS NULL
+        AND (
+            (dueDate IS NOT NULL AND dueDate >= :startMillis AND dueDate < :endMillis)
+            OR
+            (completedAt IS NOT NULL AND completedAt >= :startMillis AND completedAt < :endMillis)
+        )
+        ORDER BY sortOrder ASC
+        """,
+    )
+    fun observeTasksForDateRange(
+        startMillis: Long,
+        endMillis: Long,
+    ): Flow<List<TaskEntity>>
+
+    @Query("SELECT * FROM tasks WHERE parentTaskId = :parentId ORDER BY sortOrder ASC")
+    suspend fun getSubtasksByParentId(parentId: String): List<TaskEntity>
+
+    @Query("DELETE FROM tasks WHERE parentTaskId = :parentId")
+    suspend fun deleteSubtasksByParentId(parentId: String)
+
+    @Query("SELECT COUNT(*) FROM tasks WHERE parentTaskId IS NULL AND isCompleted = 1 AND completedAt >= :startMillis AND completedAt < :endMillis")
+    suspend fun getCompletedTaskCountInRange(startMillis: Long, endMillis: Long): Int
+
+    @Query("SELECT COUNT(*) FROM tasks WHERE parentTaskId IS NULL")
+    suspend fun getTotalTopLevelTaskCount(): Int
 }

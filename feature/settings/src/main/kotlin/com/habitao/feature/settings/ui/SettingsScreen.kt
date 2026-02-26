@@ -1,5 +1,6 @@
 package com.habitao.feature.settings.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,48 +15,68 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Loop
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RemoveCircle
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-
-private const val BOTTOM_TAB_COUNT = 4
 
 data class SettingsTabOption(
     val id: String,
     val label: String,
 )
+
+enum class SettingsView {
+    Main,
+    TabBar
+}
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,8 +84,295 @@ fun SettingsScreen(
     selectedBottomTabIds: List<String>,
     allTabs: List<SettingsTabOption>,
     defaultLaunchTabId: String,
+    maxVisibleTabs: Int,
+    themeMode: String,
     onBottomTabsChanged: (List<String>) -> Unit,
     onDefaultLaunchTabChanged: (String) -> Unit,
+    onMaxVisibleTabsChanged: (Int) -> Unit,
+    onThemeModeChanged: (String) -> Unit,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var currentView by remember { mutableStateOf(SettingsView.Main) }
+
+    AnimatedContent(targetState = currentView, label = "SettingsViewAnimation") { view ->
+        when (view) {
+            SettingsView.Main -> {
+                MainSettingsView(
+                    onNavigateBack = onNavigateBack,
+                    onNavigateToTabBar = { currentView = SettingsView.TabBar },
+                    themeMode = themeMode,
+                    onThemeModeChanged = onThemeModeChanged,
+                    modifier = modifier
+                )
+            }
+            SettingsView.TabBar -> {
+                TabBarSettingsView(
+                    selectedBottomTabIds = selectedBottomTabIds,
+                    allTabs = allTabs,
+                    maxVisibleTabs = maxVisibleTabs,
+                    onBottomTabsChanged = onBottomTabsChanged,
+                    onMaxVisibleTabsChanged = onMaxVisibleTabsChanged,
+                    onNavigateBack = { currentView = SettingsView.Main },
+                    modifier = modifier
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainSettingsView(
+    onNavigateBack: () -> Unit,
+    onNavigateToTabBar: () -> Unit,
+    themeMode: String,
+    onThemeModeChanged: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showThemeModeDialog by remember { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Settings") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+        ) {
+            item {
+                SettingsSection(title = "General") {
+                    SettingsListItem(
+                        icon = Icons.Default.Notifications,
+                        title = "Notifications",
+                        subtitle = "Manage reminders, streak alerts, and quiet hours.",
+                        onClick = { /* TODO */ },
+                        showDivider = true
+                    )
+                    SettingsListItem(
+                        icon = Icons.Default.ColorLens,
+                        title = "Theme",
+                        subtitle = themeModeDisplayName(themeMode),
+                        onClick = { showThemeModeDialog = true },
+                        showDivider = true
+                    )
+                    SettingsListItem(
+                        icon = Icons.Default.Folder,
+                        title = "Data Sync",
+                        subtitle = "Sync habits, routines, and tasks across devices.",
+                        onClick = { /* TODO */ },
+                        showDivider = true
+                    )
+                    SettingsListItem(
+                        icon = Icons.Default.Timer,
+                        title = "Focus & Pomodoro",
+                        subtitle = "Configure session length, breaks, and timer defaults.",
+                        onClick = { /* TODO */ },
+                        showDivider = true
+                    )
+                    SettingsListItem(
+                        icon = Icons.Default.ViewCarousel,
+                        title = "Tab Bar",
+                        subtitle = "Choose and reorder tabs shown in navigation.",
+                        onClick = onNavigateToTabBar,
+                        showDivider = false
+                    )
+                }
+            }
+            
+            item {
+                SettingsSection(title = "About") {
+                    SettingsListItem(
+                        icon = Icons.Default.Info,
+                        title = "About Habitao",
+                        subtitle = "Habitao is a habit, routine, and task tracker with Pomodoro focus to help you stay consistent and productive.",
+                        onClick = { /* TODO */ },
+                        showDivider = true
+                    )
+                    SettingsListItem(
+                        icon = Icons.Default.Settings,
+                        title = "Authors",
+                        subtitle = "Anupam Abhay and AI Agent",
+                        onClick = { /* TODO */ },
+                        showDivider = false
+                    )
+                }
+            }
+        }
+
+        if (showThemeModeDialog) {
+            ThemeModeDialog(
+                selectedThemeMode = themeMode,
+                onThemeSelected = { selectedMode ->
+                    onThemeModeChanged(selectedMode)
+                    showThemeModeDialog = false
+                },
+                onDismiss = { showThemeModeDialog = false },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemeModeDialog(
+    selectedThemeMode: String,
+    onThemeSelected: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Appearance") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ThemeModeOption(
+                    title = "System",
+                    isSelected = selectedThemeMode == "SYSTEM",
+                    onClick = { onThemeSelected("SYSTEM") },
+                )
+                ThemeModeOption(
+                    title = "Light",
+                    isSelected = selectedThemeMode == "LIGHT",
+                    onClick = { onThemeSelected("LIGHT") },
+                )
+                ThemeModeOption(
+                    title = "Dark",
+                    isSelected = selectedThemeMode == "DARK",
+                    onClick = { onThemeSelected("DARK") },
+                )
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
+}
+
+@Composable
+private fun ThemeModeOption(
+    title: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .selectable(
+                    selected = isSelected,
+                    role = Role.RadioButton,
+                    onClick = onClick,
+                ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = isSelected, onClick = null)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = title)
+    }
+}
+
+private fun themeModeDisplayName(themeMode: String): String {
+    return when (themeMode) {
+        "LIGHT" -> "Light"
+        "DARK" -> "Dark"
+        else -> "System"
+    }
+}
+
+@Composable
+fun SettingsSection(
+    title: String,
+    content: @Composable () -> Unit
+) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+        )
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            )
+        ) {
+            Column {
+                content()
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsListItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    onClick: () -> Unit,
+    showDivider: Boolean = true
+) {
+    Column {
+        ListItem(
+            headlineContent = { Text(title) },
+            supportingContent = subtitle?.let { { Text(it) } },
+            leadingContent = {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            trailingContent = {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Navigate",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            modifier = Modifier.clickable(onClick = onClick),
+            colors = ListItemDefaults.colors(
+                containerColor = Color.Transparent
+            )
+        )
+        if (showDivider) {
+            HorizontalDivider(
+                modifier = Modifier.padding(start = 56.dp, end = 16.dp),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun TabBarSettingsView(
+    selectedBottomTabIds: List<String>,
+    allTabs: List<SettingsTabOption>,
+    maxVisibleTabs: Int,
+    onBottomTabsChanged: (List<String>) -> Unit,
+    onMaxVisibleTabsChanged: (Int) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -75,8 +383,8 @@ fun SettingsScreen(
         (ordered + remaining).distinctBy { it.id }
     }
 
-    val enabledTabs = orderedTabs.take(BOTTOM_TAB_COUNT)
-    val disabledTabs = orderedTabs.drop(BOTTOM_TAB_COUNT)
+    val enabledTabs = orderedTabs.take(maxVisibleTabs)
+    val disabledTabs = orderedTabs.drop(maxVisibleTabs)
 
     Scaffold(
         topBar = {
@@ -85,7 +393,7 @@ fun SettingsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
                         )
                     }
@@ -179,7 +487,7 @@ fun SettingsScreen(
                                     onToggle = {
                                         val newList = orderedTabs.toMutableList()
                                         newList.remove(tab)
-                                        val insertIndex = minOf(BOTTOM_TAB_COUNT - 1, newList.size)
+                                        val insertIndex = minOf(maxVisibleTabs - 1, newList.size)
                                         newList.add(insertIndex, tab)
                                         onBottomTabsChanged(newList.map { it.id })
                                     },
@@ -210,8 +518,7 @@ fun SettingsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -219,11 +526,31 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                        Spacer(modifier = Modifier.weight(1f))
+                        IconButton(
+                            onClick = { onMaxVisibleTabsChanged(maxVisibleTabs - 1) },
+                            enabled = maxVisibleTabs > 3
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Remove,
+                                contentDescription = "Decrease max tabs"
+                            )
+                        }
                         Text(
-                            text = "$BOTTOM_TAB_COUNT >",
+                            text = "$maxVisibleTabs",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(horizontal = 8.dp)
                         )
+                        IconButton(
+                            onClick = { onMaxVisibleTabsChanged(maxVisibleTabs + 1) },
+                            enabled = maxVisibleTabs < 5
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Increase max tabs"
+                            )
+                        }
                     }
                 }
                 Text(
@@ -343,4 +670,3 @@ private fun getSubtitleForTab(label: String): String {
         else -> "Tab description."
     }
 }
-

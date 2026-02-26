@@ -2,7 +2,7 @@
 ## Habitao - High-Level Design
 
 **Version:** 1.0  
-**Last Updated:** February 13, 2026  
+**Last Updated:** February 27, 2026  
 **Architecture Pattern:** Clean Architecture + MVI (Model-View-Intent)  
 **Tech Stack:** Kotlin Multiplatform + Jetpack Compose
 
@@ -537,6 +537,14 @@ private fun loadHabits() {
     }
 }
 ```
+
+### 5.4 Recent Architecture Updates (February 2026)
+
+- **Stats aggregation pipeline:** Stats now combines habits, habit logs, routine logs, tasks, and Pomodoro sessions with date-range aware flow composition.
+- **Time-filtered analytics:** Day/Week/Month filters are mapped to explicit date windows and used consistently for both summary cards and chart datasets.
+- **Persisted graph preferences:** Graph visualization mode (`BAR` or `LINE`) is persisted through `AppSettingsManager` and applied on next app launch.
+- **Settings state expansion:** App settings now include configurable max visible tabs, theme mode, default launch tab, and stats graph preference.
+- **Routine presentation model:** Routine screens expose overview-level completion metrics to support concise, high-signal UI cards.
 
 ---
 

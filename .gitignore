@@ -147,3 +147,39 @@ logs/
 
 # Design reference files (use external design tools)
 docs/ui designs/
+
+# Kotlin and local tooling caches
+.kotlin/
+.sisyphus/
+
+# Generated documentation assets
+docs/output/
+
+# Root-level local image exports
+/*.jpg
+/*.jpeg
+/*.png
+
+# Additional local environment variants
+.env.*
+!.env.example
+
+# Sensitive credential and key material
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+*.jceks
+credentials*.json
+service-account*.json
+firebase-adminsdk*.json
+
+# Local databases and temporary editor files
+*.db
+*.sqlite
+*.sqlite3
+*.tmp
+*.temp
+*.orig

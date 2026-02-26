@@ -228,6 +228,18 @@ class HabitRepositoryImpl
                 .flowOn(dispatcher)
         }
 
+        override fun observeLogsForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<Result<List<HabitLog>>> {
+            val zone = java.time.ZoneId.systemDefault()
+            val startMillis = startDate.atStartOfDay(zone).toInstant().toEpochMilli()
+            val endMillis = endDate.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+            return habitLogDao.observeLogsBetweenDates(startMillis, endMillis)
+                .map { entities ->
+                    Result.success(entities.map { it.toDomainModel() })
+                }
+                .catch { e -> emit(Result.failure(e)) }
+                .flowOn(dispatcher)
+        }
+
         override suspend fun getWeeklyProgressForHabit(
             habitId: String,
             weekContainingDate: LocalDate,

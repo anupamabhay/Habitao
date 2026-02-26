@@ -2,7 +2,7 @@
 ## Habitao - Entity Design & Relationships
 
 **Version:** 1.0  
-**Last Updated:** February 13, 2026  
+**Last Updated:** February 27, 2026  
 **Database:** Room with SQLite  
 **ORM:** Jetpack Room (KMP-compatible)
 
@@ -445,6 +445,9 @@ data class AppSettings(
     // Theme
     val themeMode: ThemeMode = ThemeMode.SYSTEM, // LIGHT, DARK, SYSTEM
     val useDynamicColors: Boolean = true, // Material You dynamic colors
+    val statsGraphType: StatsGraphType = StatsGraphType.BAR, // BAR, LINE
+    val maxVisibleTabs: Int = 4, // Bottom navigation tabs shown at once
+    val defaultLaunchTab: String = "stats", // Default startup tab ID
     
     // Notifications
     val notificationsEnabled: Boolean = true,
@@ -472,6 +475,7 @@ data class AppSettings(
 )
 
 enum class ThemeMode { LIGHT, DARK, SYSTEM }
+enum class StatsGraphType { BAR, LINE }
 enum class SyncFrequency { MANUAL, HOURLY, DAILY, REAL_TIME }
 ```
 

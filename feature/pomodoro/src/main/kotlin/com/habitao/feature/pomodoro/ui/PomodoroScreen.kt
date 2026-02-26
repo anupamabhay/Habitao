@@ -115,7 +115,21 @@ fun PomodoroScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            // Session counter
+            val currentSession = (state.totalCompletedWorkSessions + 1).coerceAtMost(state.totalSessions)
+            val sessionCountText = if (state.totalCompletedWorkSessions >= state.totalSessions && state.timerState == TimerState.IDLE) {
+                "All sessions complete"
+            } else {
+                "Session $currentSession of ${state.totalSessions}"
+            }
+
+            Text(
+                text = sessionCountText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             TimerDisplay(
                 remainingSeconds = state.remainingSeconds,

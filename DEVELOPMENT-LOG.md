@@ -2,17 +2,17 @@
 
 **Purpose:** Track implementation progress, document decisions, record solutions, and maintain context across development sessions.
 
-**Last Updated:** February 23, 2026 - Bug Fixes, Security Audit & Cleanup
+**Last Updated:** February 27, 2026 - Stats Graph Fixes, Routine UI Redesign, and Settings Updates
 
 ---
 
-## Current Phase: Pomodoro Feature Implementation
+## Current Phase: Feature Hardening and UI Refinement
 
-**Goal:** Complete Pomodoro timer feature with full settings, session tracking, and cycle counting.
+**Goal:** Stabilize multi-feature UX with accurate analytics, improved routine workflows, and production-ready settings controls.
 
-**Branch:** `feature/calendar-optimization`
+**Branch:** `feature/routines-and-tasks`
 
-**Status:** Critical bugs fixed, security audited, codebase cleaned for public release
+**Status:** Stats, routines, and settings updates are implemented and currently under integration verification.
 
 ---
 
@@ -80,57 +80,43 @@
 
 ## In Progress
 
-### Pomodoro Feature (feature/pomodoro branch)
-**Status:** Core feature complete, settings redesigned, cycle tracking added
+### Cross-Feature UX and Analytics (feature/routines-and-tasks branch)
+**Status:** In active polish and verification
 
 #### Completed Work:
 | Feature | Description | Status |
 |---------|-------------|--------|
-| Timer Core | Foreground service, countdown, pause/resume/stop/skip | Complete |
-| ANR Fix | Cached PendingIntents, timer on Dispatchers.Default | Complete |
-| Session Counter | Correct session counting with reset after long break | Complete |
-| Confirmation Dialogs | AlertDialogs for Stop and Skip actions | Complete |
-| Completion Feedback | Sound, haptic vibration, high-priority notification | Complete |
-| Settings UI | Redesigned with M3 grouped cards, section headers, ringtone picker | Complete |
-| Customizable Durations | Work, short break, long break (1-180 min) | Complete |
-| Total Sessions | User-configurable work session count | Complete |
-| Auto-start | Auto-start next pomodoro, auto-start break, with cycle limit | Complete |
-| Sound Settings | System ringtone picker for pomo/break ending sounds | Complete |
-| Vibration Settings | Toggle + configurable duration | Complete |
-| Cycle (Round) Counter | Daily round tracking, resets each day | Complete |
-| Today's Focus | Shows exact duration (Hh Mm Ss format) + sessions + rounds | Complete |
-| Habit Reminder Sound | Added sound + vibration to habit reminder notifications | Complete |
-| Stats Screen | Redesigned with Pomodoro focus data alongside habit stats | Complete |
-| Sound Auto-Stop | MediaPlayer-based playback with 10s timeout, cleanup on lifecycle | Complete |
-| Stats Real-time | Focus time ticks up live while timer runs | Complete |
-| Stats Filters | Day/Week/Month segmented buttons update chart subtitle | Complete |
-| Scrollable Calendar | Habits calendar now scrolls infinitely (LazyRow ±1000 days) | Complete |
-| Nav Default Tab | Stats page is now the default/first tab | Complete |
+| Stats Graph Data Flow | Fixed activity graph binding to real habit/routine/task completion data | Complete |
+| Stats Graph Modes | Added bar/line graph switching with persistent user preference | Complete |
+| Stats Time Filters | Day/Week/Month filtering now drives chart range and labels correctly | Complete |
+| Routine Screen Redesign | Added overview card, icon badges, and cleaner progress hierarchy | Complete |
+| Routine Step UX | Added visual state backgrounds and refined completion progress styling | Complete |
+| Settings Main View | Added sectioned settings UI with dedicated General/About groups | Complete |
+| Theme Settings | Added theme mode selection (System/Light/Dark) with persistence | Complete |
+| Tab Bar Settings | Added configurable visible tab count (3-5) and tab list controls | Complete |
+| Settings Persistence | Extended AppSettingsManager with max tabs, theme mode, graph type | Complete |
 
 #### Key Decisions:
-- Used SharedPreferences for Pomodoro settings (simple sync reads needed by foreground service)
-- Sound picker defaults to "Default" (system alarm), user can explicitly choose "Silent"
-- "Round" = completing all configured work sessions (e.g., 5/5 = 1 round)
-- Separated vibrate toggle from sound picker (per competitor app research)
-- Used MediaPlayer instead of Ringtone for completion sounds (Ringtone loops alarm URIs infinitely)
-- 10-second timeout on completion sounds to prevent battery drain and ANR
+- Persist visualization preferences (graph type) in app settings to keep analytics behavior consistent across sessions.
+- Keep routine cards information-dense but scannable using overview metrics and compact per-item progress.
+- Split settings into dedicated sub-views to reduce cognitive load and support future growth.
 
 ---
 
 ## Next Up (Prioritized)
 
 ### After This Session
-1. **Routines Module** (Priority: High)
-   - Morning/afternoon/evening routine management
-   - Action items within routines
+1. **Integration Verification** (Priority: High)
+   - Validate Stats graph rendering across day/week/month datasets
+   - Validate settings persistence and restore behavior after app restart
 
-2. **Tasks Module** (Priority: High)
-   - Task management with priorities
-   - Due dates and categories
+2. **Routine and Task QA Pass** (Priority: High)
+   - Verify redesigned routine interaction states and completion flow
+   - Verify task date-range aggregation used by Stats
 
 3. **Test Coverage Improvement** (Priority: Medium)
-   - Unit tests for ViewModels
-   - Repository tests with fake DAOs
+   - Unit tests for StatsViewModel aggregation paths
+   - UI tests for settings sub-views and tab-limit controls
 
 ---
 
@@ -200,20 +186,18 @@ None yet - will document as we encounter and solve issues.
 
 ### Code Statistics
 ```
-Modules Implemented: 9/14 (app, domain, data, core/common, core/ui, feature/habits, feature/pomodoro, system/notifications, system/alarms)
-Features Complete: 2/4 (Habits complete, Pomodoro complete, Routines/Tasks pending)
+Modules Implemented: 11/14 (app, domain, data, core/common, core/ui, feature/habits, feature/pomodoro, feature/routines, feature/tasks, feature/settings, system/*)
+Features Complete: 4/4 core modules implemented (Habits, Pomodoro, Routines, Tasks) with ongoing refinement
 Test Coverage: TBD (next phase)
 ```
 
-### Recent Commits (feature/pomodoro branch)
-- `b5b1455` - feat: redesign Pomodoro settings UI and update Today's Focus format
-- `7e138e4` - fix: resolve Pomodoro UI issues, session count display, and add RingtonePicker
-- `2ec5e8e` - feat: add auto-start, custom sounds, and vibration settings
-- `f576f47` - fix: resolve ANR and session counter bugs in Pomodoro timer
-
-### Recent Commits (feature/ui-redesign branch)
-- `4127023` - fix: address 4 UI/UX bugs from user testing
-- `900c5d7` - fix: resolve all 5 habit tracking bugs
+### Recent Commits (feature/routines-and-tasks branch)
+- `198feee` - fix: resolve build errors in CreateTaskScreen imports
+- `92e658b` - feat: implement Settings page, tab customization, and Pomodoro enhancements
+- `540ccb9` - fix: resolve core task logic, UI alignment, and missing functionality
+- `a3a0b70` - feat: implement Tasks screen features and redesign Create screens
+- `2125145` - refactor: redesign Create Task and Create Routine screens for production UX
+- `043b9d5` - feat: implement Routines and Tasks modules with full data, domain, and UI layers
 
 ---
 
@@ -237,6 +221,17 @@ Test Coverage: TBD (next phase)
 ## Notes & Learnings
 
 ### Session Notes
+
+#### 2026-02-27: Stats, Routines, and Settings Updates
+- Fixed Stats activity graph to use real aggregated data from habits, routines, and tasks.
+- Added graph mode switching (bar/line) and persisted selection in app settings.
+- Connected Day/Week/Month filter state directly to chart range generation and labels.
+- Redesigned Routines screen with a summary overview card and refined per-routine progress presentation.
+- Updated routine rows with icon badges and clearer completion-state visuals.
+- Expanded Settings with dedicated General and About sections.
+- Added configurable tab visibility limit (3-5 tabs) and persisted theme mode.
+
+**Key Insight:** Analytics and configuration flows should be persisted and shared across screens to keep the user experience predictable.
 
 #### 2026-02-23: Bug Fixes, Security Audit & Cleanup
 - Fixed calendar week-scrolling direction (minusWeeks -> plusWeeks)

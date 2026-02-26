@@ -201,4 +201,35 @@ class RoutineRepositoryImpl @Inject constructor(
             .catch { e -> emit(Result.failure(e)) }
             .flowOn(dispatcher)
     }
+
+    override fun observeRoutineLogsForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<Result<List<RoutineLog>>> {
+        val zone = ZoneId.systemDefault()
+        val startMillis = startDate.atStartOfDay(zone).toInstant().toEpochMilli()
+        val endMillis = endDate.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        return routineDao.observeRoutineLogsForDateRange(startMillis, endMillis)
+            .map { entities ->
+                Result.success(entities.map { it.toDomainModel() })
+            }
+            .catch { e -> emit(Result.failure(e)) }
+            .flowOn(dispatcher)
+    }
+
+    override suspend fun getCompletedRoutinesCount(date: LocalDate): Result<Int> =
+        withContext(dispatcher) {
+            try {
+                val dateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                Result.success(routineDao.getCompletedRoutinesCount(dateMillis))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun getTotalRoutinesCount(): Result<Int> =
+        withContext(dispatcher) {
+            try {
+                Result.success(routineDao.getTotalRoutinesCount())
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }

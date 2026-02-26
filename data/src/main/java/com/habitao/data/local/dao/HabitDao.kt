@@ -141,6 +141,12 @@ interface HabitLogDao {
     @Query("SELECT * FROM habit_logs WHERE date = :date")
     fun observeLogsForDate(date: Long): Flow<List<HabitLogEntity>>
 
+    @Query("SELECT * FROM habit_logs WHERE date >= :startDate AND date < :endDate ORDER BY date DESC")
+    fun observeLogsBetweenDates(
+        startDate: Long,
+        endDate: Long,
+    ): Flow<List<HabitLogEntity>>
+
     // ============== STREAK CALCULATION ==============
 
     @Query(
