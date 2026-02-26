@@ -1,4 +1,4 @@
-﻿# Testing Strategy
+# Testing Strategy
 ## Habitao - Comprehensive Test Plan
 
 **Version:** 1.0  

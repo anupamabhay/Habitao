@@ -1,4 +1,4 @@
-﻿# Technical Architecture (HLD)
+# Technical Architecture (HLD)
 ## Habitao - High-Level Design
 
 **Version:** 1.0  

@@ -1,4 +1,4 @@
-﻿# Product Requirements Document (PRD)
+# Product Requirements Document (PRD)
 ## Habitao - Comprehensive Productivity App
 
 **Version:** 1.0  

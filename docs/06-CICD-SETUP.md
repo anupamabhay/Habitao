@@ -1,4 +1,4 @@
-﻿# CI/CD Pipeline Documentation
+# CI/CD Pipeline Documentation
 ## Habitao - Automated Testing & Deployment
 
 **Version:** 1.0  
