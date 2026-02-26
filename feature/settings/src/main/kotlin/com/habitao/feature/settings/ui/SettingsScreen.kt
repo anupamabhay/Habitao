@@ -4,55 +4,50 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Loop
+import androidx.compose.material.icons.filled.RemoveCircle
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.OpenInNew
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 private const val BOTTOM_TAB_COUNT = 4
@@ -73,23 +68,20 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val tabMap = remember(allTabs) { allTabs.associateBy(SettingsTabOption::id) }
-    val selectedTabOptions = remember(selectedBottomTabIds, tabMap) {
-        selectedBottomTabIds.mapNotNull(tabMap::get)
-    }
-    val hiddenTabOption = remember(selectedBottomTabIds, allTabs) {
-        val selectedSet = selectedBottomTabIds.toSet()
-        allTabs.firstOrNull { tab -> tab.id !in selectedSet }
+    val orderedTabs = remember(selectedBottomTabIds, allTabs) {
+        val idToTab = allTabs.associateBy { it.id }
+        val ordered = selectedBottomTabIds.mapNotNull { idToTab[it] }
+        val remaining = allTabs.filter { it.id !in selectedBottomTabIds }
+        (ordered + remaining).distinctBy { it.id }
     }
 
-    var notificationsEnabled by rememberSaveable { mutableStateOf(true) }
-    var dailyRemindersEnabled by rememberSaveable { mutableStateOf(true) }
-    var hiddenTabMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    val enabledTabs = orderedTabs.take(BOTTOM_TAB_COUNT)
+    val disabledTabs = orderedTabs.drop(BOTTOM_TAB_COUNT)
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text("Tab Bar") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -98,210 +90,147 @@ fun SettingsScreen(
                         )
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         LazyColumn(
-            modifier =
-                modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
-                ProfileHeaderCard()
-            }
-
-            item {
-                SettingsSection(title = "App Preferences") {
-                    SettingsRow(
-                        icon = Icons.Default.DarkMode,
-                        title = "Theme",
-                        subtitle = "System Default",
-                        trailingContent = {
-                            Icon(
-                                imageVector = Icons.Outlined.ChevronRight,
-                                contentDescription = null,
-                            )
-                        },
-                        onClick = {},
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
                     )
-                    HorizontalDivider()
-                    SettingsRow(
-                        icon = Icons.Default.Notifications,
-                        title = "Notifications",
-                        trailingContent = {
-                            Switch(
-                                checked = notificationsEnabled,
-                                onCheckedChange = { checked -> notificationsEnabled = checked },
+                ) {
+                    Column {
+                        enabledTabs.forEachIndexed { index, tab ->
+                            TabItemRow(
+                                tab = tab,
+                                isEnabled = true,
+                                canMoveUp = index > 0,
+                                canMoveDown = index < enabledTabs.size - 1,
+                                onToggle = {
+                                    val newList = orderedTabs.toMutableList()
+                                    newList.remove(tab)
+                                    newList.add(tab)
+                                    onBottomTabsChanged(newList.map { it.id })
+                                },
+                                onMoveUp = {
+                                    val newList = orderedTabs.toMutableList()
+                                    val temp = newList[index]
+                                    newList[index] = newList[index - 1]
+                                    newList[index - 1] = temp
+                                    onBottomTabsChanged(newList.map { it.id })
+                                },
+                                onMoveDown = {
+                                    val newList = orderedTabs.toMutableList()
+                                    val temp = newList[index]
+                                    newList[index] = newList[index + 1]
+                                    newList[index + 1] = temp
+                                    onBottomTabsChanged(newList.map { it.id })
+                                }
                             )
-                        },
-                    )
-                    HorizontalDivider()
-                    SettingsRow(
-                        icon = Icons.Default.Schedule,
-                        title = "Daily Reminders",
-                        subtitle = if (dailyRemindersEnabled) "09:00 AM" else "Disabled",
-                        trailingContent = {
-                            Switch(
-                                checked = dailyRemindersEnabled,
-                                onCheckedChange = { checked -> dailyRemindersEnabled = checked },
-                            )
-                        },
-                    )
+                            if (index < enabledTabs.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(start = 56.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
-            item {
-                SettingsSection(title = "Navigation") {
+            if (disabledTabs.isNotEmpty()) {
+                item {
                     Text(
-                        text = "Visible bottom tabs",
-                        style = MaterialTheme.typography.labelLarge,
+                        text = "Disabled",
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 4.dp)
                     )
+                }
 
-                    selectedTabOptions.forEachIndexed { index, tab ->
-                        TabReorderRow(
-                            tab = tab,
-                            canMoveUp = index > 0,
-                            canMoveDown = index < selectedTabOptions.lastIndex,
-                            onMoveUp = {
-                                onBottomTabsChanged(
-                                    moveTab(
-                                        tabIds = selectedTabOptions.map(SettingsTabOption::id),
-                                        fromIndex = index,
-                                        toIndex = index - 1,
-                                    ),
-                                )
-                            },
-                            onMoveDown = {
-                                onBottomTabsChanged(
-                                    moveTab(
-                                        tabIds = selectedTabOptions.map(SettingsTabOption::id),
-                                        fromIndex = index,
-                                        toIndex = index + 1,
-                                    ),
-                                )
-                            },
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer
                         )
-                    }
-
-                    HorizontalDivider(modifier = Modifier.padding(top = 4.dp))
-
-                    SettingsRow(
-                        icon = Icons.Default.SwapHoriz,
-                        title = "Hidden tab",
-                        subtitle = hiddenTabOption?.label ?: "None",
-                        trailingContent = {
-                            Box {
-                                IconButton(onClick = { hiddenTabMenuExpanded = true }) {
-                                    Icon(
-                                        imageVector = Icons.Default.SwapHoriz,
-                                        contentDescription = "Choose hidden tab",
+                    ) {
+                        Column {
+                            disabledTabs.forEachIndexed { index, tab ->
+                                TabItemRow(
+                                    tab = tab,
+                                    isEnabled = false,
+                                    canMoveUp = false,
+                                    canMoveDown = false,
+                                    onToggle = {
+                                        val newList = orderedTabs.toMutableList()
+                                        newList.remove(tab)
+                                        val insertIndex = minOf(BOTTOM_TAB_COUNT - 1, newList.size)
+                                        newList.add(insertIndex, tab)
+                                        onBottomTabsChanged(newList.map { it.id })
+                                    },
+                                    onMoveUp = {},
+                                    onMoveDown = {}
+                                )
+                                if (index < disabledTabs.size - 1) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 56.dp),
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                                     )
                                 }
-
-                                DropdownMenu(
-                                    expanded = hiddenTabMenuExpanded,
-                                    onDismissRequest = { hiddenTabMenuExpanded = false },
-                                ) {
-                                    allTabs.forEach { tab ->
-                                        DropdownMenuItem(
-                                            text = { Text(tab.label) },
-                                            onClick = {
-                                                hiddenTabMenuExpanded = false
-                                                onBottomTabsChanged(
-                                                    visibleTabsForHiddenSelection(
-                                                        hiddenTabId = tab.id,
-                                                        currentVisibleTabIds =
-                                                            selectedTabOptions.map(SettingsTabOption::id),
-                                                        allTabIds = allTabs.map(SettingsTabOption::id),
-                                                    ),
-                                                )
-                                            },
-                                        )
-                                    }
-                                }
                             }
-                        },
-                    )
-
-                    HorizontalDivider()
-
-                    Text(
-                        text = "Default launch tab",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    )
-
-                    allTabs.forEach { tab ->
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onDefaultLaunchTabChanged(tab.id) }
-                                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(
-                                selected = defaultLaunchTabId == tab.id,
-                                onClick = { onDefaultLaunchTabChanged(tab.id) },
-                            )
-                            Text(
-                                text = tab.label,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(start = 8.dp),
-                            )
                         }
                     }
                 }
             }
 
             item {
-                SettingsSection(title = "Data & Security") {
-                    SettingsRow(
-                        icon = Icons.Default.Cloud,
-                        title = "Cloud Sync",
-                        subtitle = "Last synced 2m ago",
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
                     )
-                    HorizontalDivider()
-                    SettingsRow(
-                        icon = Icons.Default.Download,
-                        title = "Export Data",
-                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Max number of tabs",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "$BOTTOM_TAB_COUNT >",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
-            }
-
-            item {
-                SettingsSection(title = "About") {
-                    SettingsRow(
-                        icon = Icons.Default.Info,
-                        title = "Version",
-                        subtitle = "1.0.2",
-                    )
-                    HorizontalDivider()
-                    SettingsRow(
-                        icon = Icons.Default.Settings,
-                        title = "Privacy Policy",
-                        trailingContent = {
-                            Icon(
-                                imageVector = Icons.Outlined.OpenInNew,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                }
-            }
-
-            item {
                 Text(
-                    text = "Habitao © 2026",
+                    text = "Over-limited tabs will be shown in More.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(start = 16.dp, top = 8.dp)
                 )
             }
         }
@@ -309,164 +238,109 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun ProfileHeaderCard(modifier: Modifier = Modifier) {
-    Card(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(52.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = CircleShape,
-                        ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "AD",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-
-            Column(
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .padding(start = 12.dp),
-            ) {
-                Text(
-                    text = "Alex Doe",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = "alex@example.com",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            IconButton(onClick = {}) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit profile",
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SettingsSection(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(content = content)
-        }
-    }
-}
-
-@Composable
-private fun SettingsRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String? = null,
-    trailingContent: @Composable (() -> Unit)? = null,
-    onClick: (() -> Unit)? = null,
-) {
-    val rowModifier =
-        if (onClick != null) {
-            Modifier.clickable(onClick = onClick)
-        } else {
-            Modifier
-        }
-
-    ListItem(
-        headlineContent = { Text(title) },
-        supportingContent = subtitle?.let { { Text(it) } },
-        leadingContent = {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-            )
-        },
-        trailingContent = trailingContent,
-        modifier = rowModifier,
-    )
-}
-
-@Composable
-private fun TabReorderRow(
+private fun TabItemRow(
     tab: SettingsTabOption,
+    isEnabled: Boolean,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
+    onToggle: () -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
 ) {
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = tab.label,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        IconButton(onClick = onMoveUp, enabled = canMoveUp) {
+        IconButton(
+            onClick = onToggle,
+            modifier = Modifier.size(24.dp)
+        ) {
             Icon(
-                imageVector = Icons.Default.KeyboardArrowUp,
-                contentDescription = "Move ${tab.label} up",
+                imageVector = if (isEnabled) Icons.Default.RemoveCircle else Icons.Default.AddCircle,
+                contentDescription = if (isEnabled) "Disable" else "Enable",
+                tint = if (isEnabled) Color(0xFFE57373) else Color(0xFF81C784)
             )
         }
-        IconButton(onClick = onMoveDown, enabled = canMoveDown) {
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
             Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = "Move ${tab.label} down",
+                imageVector = getIconForTab(tab.label),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(18.dp)
             )
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = tab.label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = getSubtitleForTab(tab.label),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
+        }
+
+        if (isEnabled) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(start = 8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowUp,
+                    contentDescription = "Move Up",
+                    tint = if (canMoveUp) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable(enabled = canMoveUp, onClick = onMoveUp)
+                )
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Move Down",
+                    tint = if (canMoveDown) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable(enabled = canMoveDown, onClick = onMoveDown)
+                )
+            }
         }
     }
 }
 
-private fun moveTab(
-    tabIds: List<String>,
-    fromIndex: Int,
-    toIndex: Int,
-): List<String> {
-    if (fromIndex !in tabIds.indices || toIndex !in tabIds.indices) {
-        return tabIds
+private fun getIconForTab(label: String): ImageVector {
+    return when(label.lowercase()) {
+        "tasks" -> Icons.Default.CheckCircle
+        "habits" -> Icons.Default.Loop
+        "routines" -> Icons.Default.GridView
+        "pomodoro" -> Icons.Default.Timer
+        "stats" -> Icons.Default.CalendarToday
+        else -> Icons.Default.Folder
     }
-
-    val mutableTabIds = tabIds.toMutableList()
-    val movedTab = mutableTabIds.removeAt(fromIndex)
-    mutableTabIds.add(toIndex, movedTab)
-    return mutableTabIds
 }
 
-private fun visibleTabsForHiddenSelection(
-    hiddenTabId: String,
-    currentVisibleTabIds: List<String>,
-    allTabIds: List<String>,
-): List<String> {
-    val targetVisibleTabs = allTabIds.filterNot { it == hiddenTabId }
-    val orderedVisibleTabs = currentVisibleTabIds.filter { it in targetVisibleTabs }
-    val missingVisibleTabs = targetVisibleTabs.filterNot { it in orderedVisibleTabs }
-    return (orderedVisibleTabs + missingVisibleTabs).take(BOTTOM_TAB_COUNT)
+private fun getSubtitleForTab(label: String): String {
+    return when(label.lowercase()) {
+        "tasks" -> "Manage your task with lists and filters."
+        "habits" -> "Develop a habit and keep track of it."
+        "routines" -> "Build daily routines step by step."
+        "pomodoro" -> "Use the Pomo timer or stopwatch to keep focus."
+        "stats" -> "View your progress and statistics."
+        else -> "Tab description."
+    }
 }
+

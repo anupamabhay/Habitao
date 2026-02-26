@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalTime
 import javax.inject.Inject
 
 enum class TaskFilter {
@@ -224,25 +225,27 @@ class TasksViewModel @Inject constructor(
     }
 
     private fun sortTasks(tasks: List<Task>, sortOrder: TaskSortOrder): List<Task> {
-        return when (sortOrder) {
-            TaskSortOrder.DATE -> tasks.sortedWith(
-                compareBy<Task> { it.dueDate ?: LocalDate.MAX }
-                    .thenBy { priorityRank(it.priority) }
-                    .thenBy { it.title.lowercase() }
-            )
+        val dateComparator = compareBy<Task> { it.dueDate ?: LocalDate.MAX }
+            .thenBy { it.dueTime ?: LocalTime.MAX }
+        val priorityComparator = compareBy<Task> { priorityRank(it.priority) }
+        val titleComparator = compareBy<Task> { it.title.trim().lowercase() }
 
-            TaskSortOrder.PRIORITY -> tasks.sortedWith(
-                compareBy<Task> { priorityRank(it.priority) }
-                    .thenBy { it.dueDate ?: LocalDate.MAX }
-                    .thenBy { it.title.lowercase() }
-            )
+        val comparator = when (sortOrder) {
+            TaskSortOrder.DATE -> dateComparator
+                .thenBy { priorityRank(it.priority) }
+                .thenBy { it.title.trim().lowercase() }
 
-            TaskSortOrder.ALPHABETICAL -> tasks.sortedWith(
-                compareBy<Task> { it.title.lowercase() }
-                    .thenBy { it.dueDate ?: LocalDate.MAX }
-                    .thenBy { priorityRank(it.priority) }
-            )
+            TaskSortOrder.PRIORITY -> priorityComparator
+                .thenBy { it.dueDate ?: LocalDate.MAX }
+                .thenBy { it.dueTime ?: LocalTime.MAX }
+                .thenBy { it.title.trim().lowercase() }
+
+            TaskSortOrder.ALPHABETICAL -> titleComparator
+                .thenBy { it.dueDate ?: LocalDate.MAX }
+                .thenBy { priorityRank(it.priority) }
         }
+
+        return tasks.sortedWith(comparator)
     }
 
     private fun priorityRank(priority: TaskPriority): Int {

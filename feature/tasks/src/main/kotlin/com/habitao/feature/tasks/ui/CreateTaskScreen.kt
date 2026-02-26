@@ -3,6 +3,7 @@ package com.habitao.feature.tasks.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +20,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
@@ -48,6 +51,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
@@ -68,9 +73,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -100,10 +113,9 @@ fun CreateTaskScreen(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     LaunchedEffect(taskId) {
+        viewModel.processIntent(CreateTaskIntent.ResetForm)
         if (taskId != null) {
             viewModel.processIntent(CreateTaskIntent.LoadTask(taskId))
-        } else {
-            viewModel.processIntent(CreateTaskIntent.ResetForm)
         }
     }
 
@@ -193,21 +205,86 @@ private fun CreateTaskForm(
         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
     )
 
-    var previousSubtaskCount by remember { mutableStateOf(state.subtasks.size) }
-    var pendingFocusNewSubtask by remember { mutableStateOf(false) }
     var subtaskIdToFocus by remember { mutableStateOf<String?>(null) }
+    var editingSubtaskId by remember { mutableStateOf<String?>(null) }
+    var pendingNewSubtask by remember { mutableStateOf(false) }
+    var pendingInsertAfterId by remember { mutableStateOf<String?>(null) }
+    var subtaskOrder by remember { mutableStateOf<List<String>>(emptyList()) }
+    var previousSubtaskIds by remember { mutableStateOf<List<String>>(emptyList()) }
 
-    LaunchedEffect(state.subtasks.size, pendingFocusNewSubtask) {
-        if (pendingFocusNewSubtask && state.subtasks.size > previousSubtaskCount) {
-            subtaskIdToFocus = state.subtasks.lastOrNull()?.id
-            pendingFocusNewSubtask = false
+    val currentSubtaskIds = state.subtasks.map { it.id }
+
+    LaunchedEffect(currentSubtaskIds) {
+        if (currentSubtaskIds.isEmpty() && previousSubtaskIds.isNotEmpty()) {
+            pendingNewSubtask = false
+            pendingInsertAfterId = null
+            editingSubtaskId = null
+            subtaskIdToFocus = null
+            subtaskOrder = emptyList()
         }
 
-        if (subtaskIdToFocus != null && state.subtasks.none { it.id == subtaskIdToFocus }) {
+        val addedIds = currentSubtaskIds.filterNot { it in previousSubtaskIds }
+        val baseOrder = if (subtaskOrder.isEmpty()) {
+            previousSubtaskIds
+        } else {
+            subtaskOrder
+        }
+        val cleanedOrder = baseOrder.filter { it in currentSubtaskIds }
+
+        var updatedOrder = cleanedOrder
+
+        if (addedIds.isNotEmpty()) {
+            updatedOrder = if (
+                pendingNewSubtask &&
+                pendingInsertAfterId != null &&
+                cleanedOrder.contains(pendingInsertAfterId)
+            ) {
+                val insertIndex = cleanedOrder.indexOf(pendingInsertAfterId) + 1
+                val mutable = cleanedOrder.toMutableList()
+                addedIds.forEachIndexed { index, id ->
+                    val targetIndex = (insertIndex + index).coerceAtMost(mutable.size)
+                    mutable.add(targetIndex, id)
+                }
+                mutable
+            } else {
+                cleanedOrder + addedIds
+            }
+
+            if (pendingNewSubtask) {
+                val focusId = addedIds.last()
+                subtaskIdToFocus = focusId
+                editingSubtaskId = focusId
+                pendingNewSubtask = false
+            }
+        }
+
+        if (editingSubtaskId != null && !currentSubtaskIds.contains(editingSubtaskId)) {
+            editingSubtaskId = null
+        }
+
+        if (subtaskIdToFocus != null && !currentSubtaskIds.contains(subtaskIdToFocus)) {
             subtaskIdToFocus = null
         }
 
-        previousSubtaskCount = state.subtasks.size
+        subtaskOrder = if (updatedOrder.isEmpty()) {
+            currentSubtaskIds
+        } else {
+            updatedOrder
+        }
+        previousSubtaskIds = currentSubtaskIds
+        if (addedIds.isNotEmpty() || pendingInsertAfterId !in currentSubtaskIds) {
+            pendingInsertAfterId = null
+        }
+    }
+
+    val subtaskMap = remember(state.subtasks) { state.subtasks.associateBy { it.id } }
+    val orderedSubtasks = if (subtaskOrder.isEmpty()) {
+        state.subtasks
+    } else {
+        val ordered = subtaskOrder.mapNotNull { subtaskMap[it] }
+        if (ordered.size == state.subtasks.size) ordered else {
+            ordered + state.subtasks.filter { it.id !in subtaskOrder }
+        }
     }
 
     Column(
@@ -380,18 +457,38 @@ private fun CreateTaskForm(
         Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)) {
             SectionHeader("Subtasks")
             
-            state.subtasks.forEach { subtask ->
+            orderedSubtasks.forEach { subtask ->
                 key(subtask.id) {
                     SubtaskRow(
                         text = subtask.text,
                         priority = subtask.priority,
+                        isEditing = editingSubtaskId == subtask.id,
+                        onEdit = {
+                            editingSubtaskId = subtask.id
+                            subtaskIdToFocus = subtask.id
+                        },
                         onTextChange = { onIntent(CreateTaskIntent.UpdateSubtaskText(subtask.id, it)) },
                         onPriorityChange = { onIntent(CreateTaskIntent.UpdateSubtaskPriority(subtask.id, it)) },
-                        onRemove = { onIntent(CreateTaskIntent.RemoveSubtask(subtask.id)) },
+                        onRemove = {
+                            if (editingSubtaskId == subtask.id) {
+                                editingSubtaskId = null
+                            }
+                            onIntent(CreateTaskIntent.RemoveSubtask(subtask.id))
+                        },
+                        onSubmit = {
+                            pendingNewSubtask = true
+                            pendingInsertAfterId = subtask.id
+                            onIntent(CreateTaskIntent.AddSubtask)
+                        },
                         shouldRequestFocus = subtask.id == subtaskIdToFocus,
                         onFocusRequested = {
                             if (subtaskIdToFocus == subtask.id) {
                                 subtaskIdToFocus = null
+                            }
+                        },
+                        onEditingFinished = {
+                            if (editingSubtaskId == subtask.id) {
+                                editingSubtaskId = null
                             }
                         }
                     )
@@ -400,7 +497,8 @@ private fun CreateTaskForm(
 
             Surface(
                 onClick = {
-                    pendingFocusNewSubtask = true
+                    pendingNewSubtask = true
+                    pendingInsertAfterId = null
                     onIntent(CreateTaskIntent.AddSubtask)
                 },
                 shape = inputShape,
@@ -688,11 +786,15 @@ private fun TimePickerField(
 private fun SubtaskRow(
     text: String,
     priority: TaskPriority,
+    isEditing: Boolean,
+    onEdit: () -> Unit,
     onTextChange: (String) -> Unit,
     onPriorityChange: (TaskPriority) -> Unit,
     onRemove: () -> Unit,
+    onSubmit: () -> Unit,
     shouldRequestFocus: Boolean,
     onFocusRequested: () -> Unit,
+    onEditingFinished: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -704,46 +806,103 @@ private fun SubtaskRow(
         }
     }
 
+    val handleSubmit = {
+        onSubmit()
+    }
+
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(enabled = !isEditing, onClick = onEdit)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        OutlinedTextField(
-            value = text,
-            onValueChange = onTextChange,
-            singleLine = true,
-            placeholder = { Text("Subtask description") },
-            textStyle = MaterialTheme.typography.bodyMedium,
-            shape = RoundedCornerShape(16.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-            ),
-            trailingIcon = {
-                IconButton(
-                    onClick = onRemove,
-                    modifier = Modifier.size(32.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Remove subtask",
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            },
+        Box(
             modifier = Modifier
-                .weight(1f)
-                .focusRequester(focusRequester)
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(
+                    if (priority == TaskPriority.NONE) {
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+                    } else {
+                        priorityColor(priority)
+                    }
+                )
         )
+
+        if (isEditing) {
+            TextField(
+                value = text,
+                onValueChange = onTextChange,
+                singleLine = true,
+                placeholder = { Text("New subtask") },
+                textStyle = MaterialTheme.typography.bodyLarge,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    cursorColor = MaterialTheme.colorScheme.primary
+                ),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { handleSubmit() }),
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester)
+                    .onKeyEvent { event ->
+                        if (
+                            event.type == KeyEventType.KeyUp &&
+                            (event.key == Key.Enter || event.key == Key.NumPadEnter)
+                        ) {
+                            handleSubmit()
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                    .onFocusChanged { focusState ->
+                        if (!focusState.isFocused) {
+                            onEditingFinished()
+                        }
+                    }
+            )
+        } else {
+            val displayText = text.ifBlank { "New subtask" }
+            val displayColor = if (text.isBlank()) {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            }
+
+            Text(
+                text = displayText,
+                style = MaterialTheme.typography.bodyLarge,
+                color = displayColor,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = 8.dp)
+            )
+        }
 
         SubtaskPrioritySelector(
             selectedPriority = priority,
             onPrioritySelected = onPriorityChange,
         )
+
+        IconButton(
+            onClick = onRemove,
+            modifier = Modifier.size(32.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Remove subtask",
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

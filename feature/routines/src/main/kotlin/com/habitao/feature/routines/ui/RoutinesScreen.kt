@@ -1,6 +1,10 @@
 package com.habitao.feature.routines.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,8 +20,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckBox
+import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -26,10 +33,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -49,9 +60,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.habitao.core.ui.theme.AppShapes
@@ -173,7 +187,7 @@ private fun RoutineCard(
     onEditRoutine: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(false) }
     
     val completedStepsCount = log?.completedStepIds?.size ?: 0
     val totalStepsCount = steps.size
@@ -182,12 +196,34 @@ private fun RoutineCard(
     } else {
         0f
     }
+    val isCompleted = totalStepsCount > 0 && completedStepsCount == totalStepsCount
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
+    val cardContainerColor by animateColorAsState(
+        targetValue =
+            if (isCompleted) {
+                MaterialTheme.colorScheme.secondaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            },
+        animationSpec = tween(durationMillis = 300),
+        label = "card_color",
+    )
+
+    ElevatedCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = { isExpanded = !isExpanded }),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = cardContainerColor,
+        ),
+        elevation = CardDefaults.elevatedCardElevation(
+            defaultElevation =
+                if (isCompleted) {
+                    Dimensions.cardElevationCompleted
+                } else {
+                    Dimensions.cardElevation
+                },
         ),
     ) {
         Column(
@@ -196,94 +232,176 @@ private fun RoutineCard(
                 .padding(Dimensions.cardPadding),
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = !expanded },
-                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = routine.title,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
+                        color =
+                            if (isCompleted) {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
                     )
-                    Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "$completedStepsCount of $totalStepsCount steps completed",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                            alpha = if (isCompleted) 0.5f else 1f,
+                        ),
                     )
                 }
 
-                IconButton(onClick = onEditRoutine) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit routine",
-                    )
-                }
+                Spacer(modifier = Modifier.width(Dimensions.elementSpacingLarge))
 
-                IconButton(onClick = { expanded = !expanded }) {
-                    Icon(
-                        imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (expanded) "Collapse" else "Expand",
-                    )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    FilledIconButton(
+                        onClick = onEditRoutine,
+                        modifier = Modifier.size(40.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit routine",
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+
+                    FilledIconToggleButton(
+                        checked = isExpanded,
+                        onCheckedChange = { isExpanded = it },
+                        modifier = Modifier.size(40.dp),
+                        colors = IconButtonDefaults.filledIconToggleButtonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                            checkedContainerColor = MaterialTheme.colorScheme.tertiary,
+                            checkedContentColor = MaterialTheme.colorScheme.onTertiary,
+                        ),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ExpandMore,
+                            contentDescription = if (isExpanded) "Collapse" else "Expand",
+                            modifier = Modifier
+                                .size(20.dp)
+                                .graphicsLayer {
+                                    rotationZ = if (isExpanded) 180f else 0f
+                                },
+                        )
+                    }
                 }
             }
 
             if (totalStepsCount > 0) {
-                Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
+                Spacer(modifier = Modifier.height(Dimensions.elementSpacingLarge))
                 LinearProgressIndicator(
                     progress = { progress },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(Dimensions.progressBarHeight)
                         .clip(AppShapes.progressBar),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.tertiary,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
                     strokeCap = StrokeCap.Round,
                 )
             }
 
-            AnimatedVisibility(visible = expanded) {
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(animationSpec = tween(durationMillis = 200)),
+                exit = shrinkVertically(animationSpec = tween(durationMillis = 200)),
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = Dimensions.elementSpacing),
+                    verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
                 ) {
                     steps.sortedBy { it.stepOrder }.forEach { step ->
-                        val isCompleted = log?.completedStepIds?.contains(step.id) == true
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(MaterialTheme.shapes.medium)
-                                .clickable { onToggleStep(step.id, !isCompleted) }
-                                .padding(
-                                    start = Dimensions.sectionSpacing,
-                                    end = Dimensions.elementSpacing,
-                                    top = Dimensions.elementSpacingSmall,
-                                    bottom = Dimensions.elementSpacingSmall
-                                ),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(
-                                checked = isCompleted,
-                                onCheckedChange = { onToggleStep(step.id, it) },
-                            )
-                            Spacer(modifier = Modifier.width(Dimensions.elementSpacing))
-                            Text(
-                                text = step.title,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (isCompleted) {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface
-                                },
-                            )
-                        }
+                        val isStepCompleted = log?.completedStepIds?.contains(step.id) == true
+                        RoutineStepRow(
+                            step = step,
+                            isCompleted = isStepCompleted,
+                            onToggle = { onToggleStep(step.id, !isStepCompleted) },
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RoutineStepRow(
+    step: RoutineStep,
+    isCompleted: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val textColor by animateColorAsState(
+        targetValue =
+            if (isCompleted) {
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+        animationSpec = tween(durationMillis = 150),
+        label = "step_text_color",
+    )
+
+    val iconTint by animateColorAsState(
+        targetValue =
+            if (isCompleted) {
+                MaterialTheme.colorScheme.tertiary
+            } else {
+                MaterialTheme.colorScheme.outline
+            },
+        animationSpec = tween(durationMillis = 150),
+        label = "step_icon_tint",
+    )
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onToggle)
+            .padding(horizontal = Dimensions.elementSpacing, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
+    ) {
+        Icon(
+            imageVector =
+                if (isCompleted) {
+                    Icons.Default.CheckBox
+                } else {
+                    Icons.Default.CheckBoxOutlineBlank
+                },
+            contentDescription = if (isCompleted) "Completed" else "Not completed",
+            modifier = Modifier.size(22.dp),
+            tint = iconTint,
+        )
+        Text(
+            text = step.title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = textColor,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
