@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Fullscreen
@@ -25,10 +26,9 @@ import androidx.compose.material.icons.outlined.CheckCircleOutline
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -71,23 +71,11 @@ fun PomodoroScreen(
     var showSkipDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showFocusSelector by remember { mutableStateOf(false) }
-    val sessionLabel =
-        when (state.currentSessionType) {
-            PomodoroType.WORK -> "Focus Time"
-            PomodoroType.SHORT_BREAK -> "Short Break"
-            PomodoroType.LONG_BREAK -> "Long Break"
-        }
-    val accentColor =
-        if (state.currentSessionType == PomodoroType.WORK) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.tertiary
-        }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Pomodoro") },
+                title = { /* Empty title to match TickTick */ },
                 actions = {
                     IconButton(onClick = onOpenFullScreen) {
                         Icon(
@@ -112,68 +100,32 @@ fun PomodoroScreen(
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
-            Text(
-                text = sessionLabel,
-                style = MaterialTheme.typography.titleMedium,
-                color = accentColor,
-                fontWeight = FontWeight.SemiBold,
-            )
+            TextButton(
+                onClick = { showFocusSelector = true },
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+            ) {
+                val focusText = state.selectedFocusOption?.title ?: "Focus"
+                Text(
+                    text = "$focusText >",
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             TimerDisplay(
                 remainingSeconds = state.remainingSeconds,
                 totalSeconds = state.totalSeconds,
                 sessionType = state.currentSessionType,
+                timerState = state.timerState,
+                modifier = Modifier.size(280.dp)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            FilledTonalButton(
-                onClick = { showFocusSelector = true },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(text = "Select Task/Habit to focus on")
-            }
-
-            state.selectedFocusOption?.let { selected ->
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "Linked ${selected.type.displayName.lowercase()}: ${selected.title}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    TextButton(onClick = { viewModel.processIntent(PomodoroIntent.ClearLinkedFocus) }) {
-                        Text(text = "Clear")
-                    }
-                }
-            }
-
-            val secondaryLabel = when (state.currentSessionType) {
-                PomodoroType.WORK -> {
-                    val currentSession = (state.totalCompletedWorkSessions + 1).coerceAtMost(state.totalSessions)
-                    "Session $currentSession of ${state.totalSessions}"
-                }
-                PomodoroType.SHORT_BREAK -> "Take a short break"
-                PomodoroType.LONG_BREAK -> "Take a long break"
-            }
-
-            Text(
-                text = secondaryLabel,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
             TimerControls(
                 timerState = state.timerState,
@@ -253,66 +205,6 @@ fun PomodoroScreen(
                     },
                     onDismiss = { showFocusSelector = false },
                 )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                ) {
-                    Text(
-                        text = "Today's Focus",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column {
-                            val focusLabel = formatFocusDuration(state.todaysFocusSeconds)
-                            Text(
-                                text = focusLabel,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Text(
-                                text = "Focus time",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = state.todaysRounds.toString(),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Text(
-                                text = "Rounds",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = state.todaysSessions.toString(),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Text(
-                                text = "Sessions",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
             }
         }
     }
@@ -481,18 +373,6 @@ private val FocusLinkType.displayName: String
             FocusLinkType.HABIT -> "Habit"
         }
 
-private fun formatFocusDuration(totalSeconds: Int): String {
-    val safeSeconds = totalSeconds.coerceAtLeast(0)
-    val hours = safeSeconds / 3600
-    val minutes = (safeSeconds % 3600) / 60
-    val seconds = safeSeconds % 60
-    return when {
-        hours > 0 -> "${hours}h ${minutes}m ${seconds}s"
-        minutes > 0 -> "${minutes}m ${seconds}s"
-        else -> "${seconds}s"
-    }
-}
-
 @Composable
 private fun TimerControls(
     timerState: TimerState,
@@ -505,47 +385,53 @@ private fun TimerControls(
 ) {
     when (timerState) {
         TimerState.IDLE -> {
-            FilledTonalButton(
+            Button(
                 onClick = onStart,
-                modifier = modifier.fillMaxWidth(),
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.PlayArrow,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
+                modifier = modifier
+                    .width(180.dp)
+                    .height(48.dp),
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(text = "Start")
+            ) {
+                Text(
+                    text = "Start",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
         TimerState.RUNNING -> {
             Row(
                 modifier = modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = onStop) {
+                IconButton(onClick = onStop, modifier = Modifier.padding(end = 16.dp)) {
                     Icon(
                         imageVector = Icons.Filled.Stop,
                         contentDescription = "Stop",
                     )
                 }
-                FilledTonalButton(
+                Button(
                     onClick = onPause,
-                    colors =
-                        ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        ),
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Pause,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                    modifier = Modifier
+                        .width(180.dp)
+                        .height(48.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(text = "Pause")
+                ) {
+                    Text(
+                        text = "Pause",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
-                IconButton(onClick = onSkip) {
+                IconButton(onClick = onSkip, modifier = Modifier.padding(start = 16.dp)) {
                     Icon(
                         imageVector = Icons.Filled.SkipNext,
                         contentDescription = "Skip",
@@ -556,31 +442,33 @@ private fun TimerControls(
         TimerState.PAUSED -> {
             Row(
                 modifier = modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = onStop) {
+                IconButton(onClick = onStop, modifier = Modifier.padding(end = 16.dp)) {
                     Icon(
                         imageVector = Icons.Filled.Stop,
                         contentDescription = "Stop",
                     )
                 }
-                FilledTonalButton(
+                Button(
                     onClick = onResume,
-                    colors =
-                        ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        ),
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                    modifier = Modifier
+                        .width(180.dp)
+                        .height(48.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(text = "Resume")
+                ) {
+                    Text(
+                        text = "Resume",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
-                IconButton(onClick = onSkip) {
+                IconButton(onClick = onSkip, modifier = Modifier.padding(start = 16.dp)) {
                     Icon(
                         imageVector = Icons.Filled.SkipNext,
                         contentDescription = "Skip",
@@ -589,11 +477,21 @@ private fun TimerControls(
             }
         }
         TimerState.FINISHED -> {
-            FilledTonalButton(
+            Button(
                 onClick = onStart,
-                modifier = modifier.fillMaxWidth(),
+                modifier = modifier
+                    .width(180.dp)
+                    .height(48.dp),
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
-                Text(text = "Start Next")
+                Text(
+                    text = "Start Next",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
