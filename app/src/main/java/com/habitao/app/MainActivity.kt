@@ -72,8 +72,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
-private const val BOTTOM_NAV_VISIBLE_TAB_COUNT = 4
-
 // -- Type-safe route definitions --
 
 @Serializable
@@ -181,9 +179,7 @@ class MainActivity : ComponentActivity() {
                 ),
         )
         setContent {
-            HabitaoTheme {
-                HabitaoApp(appSettingsManager = appSettingsManager)
-            }
+            HabitaoApp(appSettingsManager = appSettingsManager)
         }
     }
 }
@@ -207,8 +203,10 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
         return
     }
 
-    val selectedTabs = remember(settings.bottomNavTabs) {
-        resolveSelectedTabs(settings.bottomNavTabs)
+    HabitaoTheme(themeMode = settings.themeMode) {
+
+    val selectedTabs = remember(settings.bottomNavTabs, settings.maxVisibleTabs) {
+        resolveSelectedTabs(settings.bottomNavTabs, settings.maxVisibleTabs)
     }
     val hiddenTabs = remember(selectedTabs) {
         Tab.entries.filterNot(selectedTabs::contains)
@@ -270,25 +268,25 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
         }
     }
 
-    Scaffold(
-        bottomBar = {
-            if (showBottomBar) {
-                HabitaoNavigationBar(
-                    currentDestination = currentDestination,
-                    visibleTabs = selectedTabs,
-                    hiddenTabs = hiddenTabs,
-                    onTabSelected = navigateToTab,
-                    onMoreSelected = { showMoreSheet = true },
-                )
-            }
-        },
-    ) { paddingValues ->
-        val bottomPad = Modifier.padding(bottom = paddingValues.calculateBottomPadding())
+        Scaffold(
+            bottomBar = {
+                if (showBottomBar) {
+                    HabitaoNavigationBar(
+                        currentDestination = currentDestination,
+                        visibleTabs = selectedTabs,
+                        hiddenTabs = hiddenTabs,
+                        onTabSelected = navigateToTab,
+                        onMoreSelected = { showMoreSheet = true },
+                    )
+                }
+            },
+        ) { paddingValues ->
+            val bottomPad = Modifier.padding(bottom = paddingValues.calculateBottomPadding())
 
-        NavHost(
-            navController = navController,
-            startDestination = startDestinationTab.route,
-        ) {
+            NavHost(
+                navController = navController,
+                startDestination = startDestinationTab.route,
+            ) {
             // -- Tab destinations --
             composable<HabitsRoute> {
                 Box(modifier = bottomPad) {
@@ -337,26 +335,38 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
                 }
             }
 
-            composable<SettingsRoute> {
-                SettingsScreen(
-                    selectedBottomTabIds = selectedTabs.map(Tab::id),
-                    allTabs = allTabOptions,
-                    defaultLaunchTabId = defaultLaunchTab.id,
-                    onBottomTabsChanged = { tabIds ->
-                        val normalizedTabIds = resolveSelectedTabs(tabIds).map(Tab::id)
-                        coroutineScope.launch {
-                            appSettingsManager.setBottomNavTabs(normalizedTabIds)
-                        }
-                    },
-                    onDefaultLaunchTabChanged = { tabId ->
-                        val normalizedTabId = resolveDefaultLaunchTab(tabId).id
-                        coroutineScope.launch {
-                            appSettingsManager.setDefaultLaunchTab(normalizedTabId)
-                        }
-                    },
-                    onNavigateBack = { navController.popBackStack() },
-                )
-            }
+                composable<SettingsRoute> {
+                    SettingsScreen(
+                        selectedBottomTabIds = selectedTabs.map(Tab::id),
+                        allTabs = allTabOptions,
+                        defaultLaunchTabId = defaultLaunchTab.id,
+                        maxVisibleTabs = settings.maxVisibleTabs,
+                        themeMode = settings.themeMode,
+                        onBottomTabsChanged = { tabIds ->
+                            val normalizedTabIds = resolveSelectedTabs(tabIds, settings.maxVisibleTabs).map(Tab::id)
+                            coroutineScope.launch {
+                                appSettingsManager.setBottomNavTabs(normalizedTabIds)
+                            }
+                        },
+                        onDefaultLaunchTabChanged = { tabId ->
+                            val normalizedTabId = resolveDefaultLaunchTab(tabId).id
+                            coroutineScope.launch {
+                                appSettingsManager.setDefaultLaunchTab(normalizedTabId)
+                            }
+                        },
+                        onMaxVisibleTabsChanged = { count ->
+                            coroutineScope.launch {
+                                appSettingsManager.setMaxVisibleTabs(count)
+                            }
+                        },
+                        onThemeModeChanged = { themeMode ->
+                            coroutineScope.launch {
+                                appSettingsManager.setThemeMode(themeMode)
+                            }
+                        },
+                        onNavigateBack = { navController.popBackStack() },
+                    )
+                }
 
             // -- Full-screen destinations (no bottom bar) --
             composable<CreateRoutineRoute> { backStackEntry ->
@@ -397,6 +407,7 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
                 FullScreenClockScreen(
                     onClose = { navController.popBackStack() },
                 )
+            }
             }
         }
     }
@@ -491,10 +502,10 @@ private fun MoreMenuSheet(
     }
 }
 
-private fun resolveSelectedTabs(savedTabIds: List<String>): List<Tab> {
+private fun resolveSelectedTabs(savedTabIds: List<String>, maxTabs: Int = 4): List<Tab> {
     val preferredTabs = savedTabIds.mapNotNull(Tab::fromId).distinct()
     val remainingTabs = Tab.entries.filterNot(preferredTabs::contains)
-    return (preferredTabs + remainingTabs).take(BOTTOM_NAV_VISIBLE_TAB_COUNT)
+    return (preferredTabs + remainingTabs).take(maxTabs)
 }
 
 private fun resolveDefaultLaunchTab(savedTabId: String): Tab {

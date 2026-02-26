@@ -2,8 +2,8 @@
 ## Habitao - Comprehensive Productivity App
 
 **Version:** 1.0  
-**Last Updated:** February 13, 2026  
-**Status:** Planning Phase
+**Last Updated:** February 27, 2026  
+**Status:** Active Development
 
 ---
 
@@ -142,6 +142,14 @@ Habitao is a comprehensive productivity application for Android that combines ha
 | Data Persistence | All data saved locally, survives app restart | P0 |
 | Optional Cloud Sync | User account with cloud backup (architecture ready, implementation post-MVP) | P2 |
 | Data Export | Export to JSON/CSV | P2 |
+
+#### 3.1.7 Recently Implemented Updates (February 2026)
+| Area | Implemented Update | Impact |
+|------|---------------------|--------|
+| Statistics | Fixed chart data aggregation for habits, routines, and tasks across Day/Week/Month ranges | Accurate analytics and consistent trend reporting |
+| Statistics | Added graph mode selection (Bar/Line) with persisted preference | User-controlled analytics visualization |
+| Routines | Redesigned routine list and card UI with overview metrics and improved progress readability | Faster scanability and clearer completion feedback |
+| Settings | Added structured settings flow with theme mode, tab-bar configuration, and visible-tab limit controls | Better customization and navigation control |
 
 ---
 
@@ -333,8 +341,8 @@ Habitao is a comprehensive productivity application for Android that combines ha
 - **QA Lead:** [To be assigned]
 
 ### 10.2 Document Status
-- **Status:** DRAFT - Awaiting approval
-- **Next Review:** After architecture document completion
+- **Status:** Active - Baseline requirements with implementation updates tracked
+- **Next Review:** After integration QA for Stats, Routines, and Settings
 
 ---
 

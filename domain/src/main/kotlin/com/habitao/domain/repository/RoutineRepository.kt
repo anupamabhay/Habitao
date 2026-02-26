@@ -22,4 +22,7 @@ interface RoutineRepository {
     suspend fun logRoutineStep(routineId: String, stepId: String, date: LocalDate, isCompleted: Boolean): Result<Unit>
     suspend fun getRoutineLog(routineId: String, date: LocalDate): Result<RoutineLog?>
     fun observeRoutineLog(routineId: String, date: LocalDate): Flow<Result<RoutineLog?>>
+    fun observeRoutineLogsForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<Result<List<RoutineLog>>>
+    suspend fun getCompletedRoutinesCount(date: LocalDate): Result<Int>
+    suspend fun getTotalRoutinesCount(): Result<Int>
 }

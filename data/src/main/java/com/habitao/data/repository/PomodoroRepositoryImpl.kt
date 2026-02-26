@@ -47,6 +47,18 @@ class PomodoroRepositoryImpl
                 .flowOn(dispatcher)
         }
 
+        override fun observeSessionsForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<Result<List<PomodoroSession>>> {
+            val zoneId = ZoneId.systemDefault()
+            val startMillis = startDate.atStartOfDay(zoneId).toInstant().toEpochMilli()
+            val endMillis = endDate.plusDays(1).atStartOfDay(zoneId).toInstant().toEpochMilli()
+            return pomodoroSessionDao.observeSessionsForDateRange(startMillis, endMillis)
+                .map { entities ->
+                    runCatching { entities.map { it.toDomain() } }
+                }
+                .catch { e -> emit(Result.failure(e)) }
+                .flowOn(dispatcher)
+        }
+
         override suspend fun getTotalFocusTimeForDate(date: LocalDate): Result<Int> =
             withContext(dispatcher) {
                 runCatching {

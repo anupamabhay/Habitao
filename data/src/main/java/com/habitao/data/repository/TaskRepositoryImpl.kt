@@ -110,4 +110,54 @@ class TaskRepositoryImpl @Inject constructor(
             .catch { e -> emit(Result.failure(e)) }
             .flowOn(dispatcher)
     }
+
+    override fun observeTasksForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<Result<List<Task>>> {
+        val zone = ZoneId.systemDefault()
+        val startMillis = startDate.atStartOfDay(zone).toInstant().toEpochMilli()
+        val endMillis = endDate.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        return taskDao.observeTasksForDateRange(startMillis, endMillis)
+            .map { entities ->
+                Result.success(entities.map { it.toDomainModel() })
+            }
+            .catch { e -> emit(Result.failure(e)) }
+            .flowOn(dispatcher)
+    }
+
+    override suspend fun getSubtasksByParentId(parentId: String): Result<List<Task>> =
+        withContext(dispatcher) {
+            try {
+                val entities = taskDao.getSubtasksByParentId(parentId)
+                Result.success(entities.map { it.toDomainModel() })
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun deleteSubtasksByParentId(parentId: String): Result<Unit> =
+        withContext(dispatcher) {
+            try {
+                taskDao.deleteSubtasksByParentId(parentId)
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun getCompletedTaskCountInRange(startMillis: Long, endMillis: Long): Result<Int> =
+        withContext(dispatcher) {
+            try {
+                Result.success(taskDao.getCompletedTaskCountInRange(startMillis, endMillis))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun getTotalTopLevelTaskCount(): Result<Int> =
+        withContext(dispatcher) {
+            try {
+                Result.success(taskDao.getTotalTopLevelTaskCount())
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }

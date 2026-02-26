@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,18 +21,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,9 +39,8 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -99,7 +98,7 @@ fun RoutinesScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
+            TopAppBar(
                 title = { Text("Routines") },
                 scrollBehavior = scrollBehavior,
             )
@@ -158,6 +157,10 @@ private fun RoutinesContent(
                     ),
                     verticalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
                 ) {
+                    item(key = "routine_overview") {
+                        RoutineOverviewCard(state = state)
+                    }
+
                     items(
                         items = state.routines,
                         key = { it.id },
@@ -236,29 +239,50 @@ private fun RoutineCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top,
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = routine.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color =
-                            if (isCompleted) {
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            } else {
-                                MaterialTheme.colorScheme.onSurface
-                            },
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
+                ) {
+                    RoutineIconBadge(
+                        routineIcon = routine.icon,
+                        isCompleted = isCompleted,
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "$completedStepsCount of $totalStepsCount steps completed",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                            alpha = if (isCompleted) 0.5f else 1f,
-                        ),
-                    )
+
+                    Column {
+                        Text(
+                            text = routine.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color =
+                                if (isCompleted) {
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "$completedStepsCount of $totalStepsCount steps completed",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                alpha = if (isCompleted) 0.5f else 1f,
+                            ),
+                        )
+
+                        if (totalStepsCount > 0) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "${(progress * 100).toInt()}% complete",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(Dimensions.elementSpacingLarge))
@@ -312,10 +336,10 @@ private fun RoutineCard(
                     progress = { progress },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(Dimensions.progressBarHeight)
-                        .clip(AppShapes.progressBar),
-                    color = MaterialTheme.colorScheme.tertiary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        .height(3.dp)
+                        .clip(CircleShape),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                     strokeCap = StrokeCap.Round,
                 )
             }
@@ -374,10 +398,22 @@ private fun RoutineStepRow(
         label = "step_icon_tint",
     )
 
+    val rowBackgroundColor by animateColorAsState(
+        targetValue =
+            if (isCompleted) {
+                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.45f)
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+            },
+        animationSpec = tween(durationMillis = 150),
+        label = "step_row_background",
+    )
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
+            .background(color = rowBackgroundColor)
             .clickable(onClick = onToggle)
             .padding(horizontal = Dimensions.elementSpacing, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -402,6 +438,127 @@ private fun RoutineStepRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
+    }
+}
+
+@Composable
+private fun RoutineOverviewCard(
+    state: RoutinesState,
+    modifier: Modifier = Modifier,
+) {
+    val totalRoutines = state.routines.size
+    val completedRoutines = state.routines.count { routine ->
+        val routineSteps = state.steps[routine.id] ?: emptyList()
+        val completedStepsCount = state.logs[routine.id]?.completedStepIds?.size ?: 0
+        routineSteps.isNotEmpty() && completedStepsCount >= routineSteps.size
+    }
+
+    val completionRate =
+        if (totalRoutines > 0) {
+            completedRoutines.toFloat() / totalRoutines
+        } else {
+            0f
+        }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Dimensions.cardPadding),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Routine Progress",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "$completedRoutines of $totalRoutines routines complete",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                Text(
+                    text = "${(completionRate * 100).toInt()}%",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
+
+            LinearProgressIndicator(
+                progress = { completionRate },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(2.dp)
+                        .clip(CircleShape),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                strokeCap = StrokeCap.Round,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RoutineIconBadge(
+    routineIcon: String?,
+    isCompleted: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val containerColor =
+        if (isCompleted) {
+            MaterialTheme.colorScheme.tertiaryContainer
+        } else {
+            MaterialTheme.colorScheme.primaryContainer
+        }
+    val contentColor =
+        if (isCompleted) {
+            MaterialTheme.colorScheme.onTertiaryContainer
+        } else {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        }
+
+    Box(
+        modifier =
+            modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(containerColor),
+        contentAlignment = Alignment.Center,
+    ) {
+        val safeIcon = routineIcon?.trim().orEmpty()
+        if (safeIcon.isNotEmpty()) {
+            Text(
+                text = safeIcon.take(2),
+                style = MaterialTheme.typography.labelLarge,
+                color = contentColor,
+                fontWeight = FontWeight.Bold,
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.CheckBox,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(18.dp),
+            )
+        }
     }
 }
 
