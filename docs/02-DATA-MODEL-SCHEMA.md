@@ -1,4 +1,4 @@
-﻿# Data Model & Database Schema
+# Data Model & Database Schema
 ## Habitao - Entity Design & Relationships
 
 **Version:** 1.0  
