@@ -303,11 +303,14 @@ class StatsViewModel
                             taskStats = taskStats,
                         )
                     } else {
+                        val habitsCompletedByDate = habitLogs.filter { it.isCompleted }.groupingBy { it.date }.eachCount()
+                        val routinesCompletedByDate = routineLogs.filter { it.isCompleted }.groupingBy { it.date }.eachCount()
+
                         fetchDates.map { date ->
                             ActivityDataPoint(
                                 label = formatLabelForDate(date = date, timeFilter = timeFilter, isSingleDay = false),
-                                habitsCompleted = habitLogs.count { it.date == date && it.isCompleted },
-                                routinesCompleted = routineLogs.count { it.date == date && it.isCompleted },
+                                habitsCompleted = habitsCompletedByDate[date] ?: 0,
+                                routinesCompleted = routinesCompletedByDate[date] ?: 0,
                                 tasksCompleted = taskStats.completedByDate[date] ?: 0,
                             )
                         }

@@ -243,10 +243,22 @@ class CreateTaskViewModel @Inject constructor(
             result.fold(
                 onSuccess = {
                     if (currentState.parentTaskId == null) {
-                        saveSubtasks(taskId, currentState)
+                        try {
+                            saveSubtasks(taskId, currentState)
+                            _state.update { it.copy(isSaving = false) }
+                            _savedEvent.emit(Unit)
+                        } catch (e: Exception) {
+                            _state.update {
+                                it.copy(
+                                    isSaving = false,
+                                    error = e.message ?: "Failed to save subtasks"
+                                )
+                            }
+                        }
+                    } else {
+                        _state.update { it.copy(isSaving = false) }
+                        _savedEvent.emit(Unit)
                     }
-                    _state.update { it.copy(isSaving = false) }
-                    _savedEvent.emit(Unit)
                 },
                 onFailure = { error ->
                     _state.update {
@@ -264,26 +276,34 @@ class CreateTaskViewModel @Inject constructor(
         val uiSubtasks = currentState.subtasks.filter { it.text.isNotBlank() }
         val existingSubtaskIds = uiSubtasks.mapNotNull { it.existingTaskId }.toSet()
 
+        val dbSubtasksResult = taskRepository.getSubtasksByParentId(parentId)
+        if (dbSubtasksResult.isFailure) {
+            throw Exception("Failed to load existing subtasks")
+        }
+        val dbSubtasks = dbSubtasksResult.getOrNull() ?: emptyList()
+        val dbSubtasksMap = dbSubtasks.associateBy { it.id }
+
         // Delete subtasks removed from UI
-        taskRepository.getSubtasksByParentId(parentId).onSuccess { dbSubtasks ->
-            for (dbSubtask in dbSubtasks) {
-                if (dbSubtask.id !in existingSubtaskIds) {
-                    taskRepository.deleteTask(dbSubtask.id)
-                }
+        for (dbSubtask in dbSubtasks) {
+            if (dbSubtask.id !in existingSubtaskIds) {
+                val deleteResult = taskRepository.deleteTask(dbSubtask.id)
+                if (deleteResult.isFailure) throw Exception("Failed to delete subtask")
             }
         }
 
         // Update existing or create new subtasks
         for (subtask in uiSubtasks) {
             if (subtask.existingTaskId != null) {
-                taskRepository.getTaskById(subtask.existingTaskId).onSuccess { existingTask ->
+                val existingTask = dbSubtasksMap[subtask.existingTaskId]
+                if (existingTask != null) {
                     val updated = existingTask.copy(
                         title = subtask.text.trim(),
                         priority = subtask.priority,
                         parentTaskId = parentId,
                         updatedAt = System.currentTimeMillis(),
                     )
-                    taskRepository.updateTask(updated)
+                    val updateResult = taskRepository.updateTask(updated)
+                    if (updateResult.isFailure) throw Exception("Failed to update subtask")
                 }
             } else {
                 val newSubtask = Task(
@@ -294,7 +314,8 @@ class CreateTaskViewModel @Inject constructor(
                     dueTime = currentState.dueTime,
                     priority = subtask.priority,
                 )
-                taskRepository.createTask(newSubtask)
+                val createResult = taskRepository.createTask(newSubtask)
+                if (createResult.isFailure) throw Exception("Failed to create subtask")
             }
         }
     }

@@ -162,7 +162,7 @@ class TimerService : LifecycleService() {
             completedAt = null,
         )
         clearTimerPrefs()
-        timerStateHolder.reset()
+        timerStateHolder.resetTimerState()
         stopTimerService()
     }
 
@@ -377,7 +377,7 @@ class TimerService : LifecycleService() {
                     timerStateHolder.updateTotalSeconds(0L)
                     clearTimerPrefs()
                     updateNotification(0L)
-                    timerStateHolder.reset()
+                    timerStateHolder.resetTimerState()
                     return
                 }
 

@@ -81,7 +81,7 @@ class TimerStateHolder
             _linkedHabitId.value = null
         }
 
-        fun reset() {
+        fun resetTimerState() {
             _timerState.value = TimerState.IDLE
             _remainingSeconds.value = 0L
             _totalSeconds.value = 0L

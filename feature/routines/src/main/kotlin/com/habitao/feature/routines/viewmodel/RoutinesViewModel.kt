@@ -119,7 +119,7 @@ class RoutinesViewModel @Inject constructor(
         viewModelScope.launch {
             val saveResult = routineRepository.getRoutineById(routine.id).fold(
                 onSuccess = { existingRoutine ->
-                    routineRepository.updateRoutine(
+                    routineRepository.upsertRoutine(
                         routine.copy(
                             createdAt = existingRoutine.createdAt,
                             startDate = existingRoutine.startDate,
@@ -129,12 +129,8 @@ class RoutinesViewModel @Inject constructor(
                         steps,
                     )
                 },
-                onFailure = { error ->
-                    if (error.message == "Routine not found") {
-                        routineRepository.createRoutine(routine, steps)
-                    } else {
-                        Result.failure(error)
-                    }
+                onFailure = {
+                    routineRepository.upsertRoutine(routine, steps)
                 },
             )
 

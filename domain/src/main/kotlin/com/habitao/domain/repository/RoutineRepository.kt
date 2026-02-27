@@ -9,6 +9,7 @@ import java.time.LocalDate
 interface RoutineRepository {
     suspend fun createRoutine(routine: Routine, steps: List<RoutineStep>): Result<Unit>
     suspend fun updateRoutine(routine: Routine, steps: List<RoutineStep>): Result<Unit>
+    suspend fun upsertRoutine(routine: Routine, steps: List<RoutineStep>): Result<Unit>
     suspend fun deleteRoutine(routineId: String): Result<Unit>
     suspend fun getRoutineById(routineId: String): Result<Routine>
     fun observeRoutineById(routineId: String): Flow<Result<Routine>>
