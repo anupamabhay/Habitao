@@ -4,7 +4,7 @@ A unified productivity app for Android combining habit tracking, a Pomodoro focu
 
 ## Status
 
-**Current:** Active development (Habits + Pomodoro complete, Routines and Tasks planned)
+**Current:** Active development (Habits, Pomodoro, Routines, Tasks, and Settings complete)
 **Platform:** Android 8.0+ (API 26)
 **Architecture:** Clean Architecture + MVI with Jetpack Compose
 
@@ -26,12 +26,27 @@ A unified productivity app for Android combining habit tracking, a Pomodoro focu
 - Vibration feedback with configurable duration
 - Daily focus time tracking (sessions, rounds, total duration)
 - Completion notifications with alarm-priority sound
+- Full-screen focus mode with animations
+
+### Routines
+- Create and manage daily routines (e.g., Morning, Evening)
+- Add ordered steps to each routine
+- Track routine completion history
+- Link routines to specific times of day
+
+### Tasks
+- Create and manage one-off or recurring tasks
+- Add subtasks for complex tasks
+- Set priorities (Low, Medium, High) and due dates
+- Track task completion status
+
+### Settings
+- Customize default launch tab (Habits, Routines, Tasks, Pomodoro, Stats)
+- Manage app-wide preferences
 
 ### Planned
-- Routines with ordered steps (morning, afternoon, evening)
-- Tasks with subtasks, priorities, and due dates
 - Home screen widgets
-- Full-screen focus mode with animations
+- Cloud sync and backup
 
 ## Tech Stack
 
@@ -55,13 +70,15 @@ habitao/
 ├── data/                 # Room database, repository implementations
 ├── core/
 │   ├── common/           # Shared utilities
+│   ├── datastore/        # Preferences DataStore
 │   ├── ui/               # Design system, theme, shared components
 │   └── testing/          # Test utilities and fakes
 ├── feature/
 │   ├── habits/           # Habit tracking UI and ViewModels
 │   ├── pomodoro/         # Focus timer UI, service, preferences
-│   ├── routines/         # Routine management (planned)
-│   └── tasks/            # Task management (planned)
+│   ├── routines/         # Routine management UI and ViewModels
+│   ├── tasks/            # Task management UI and ViewModels
+│   └── settings/         # App settings UI and ViewModels
 └── system/
     ├── notifications/    # Notification channels, reminders, receivers
     ├── alarms/           # Exact alarm scheduling
