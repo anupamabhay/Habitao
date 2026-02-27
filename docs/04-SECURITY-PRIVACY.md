@@ -1,4 +1,4 @@
-﻿# Security & Privacy Design
+# Security & Privacy Design
 ## Habitao - Security Architecture & Data Protection
 
 **Version:** 1.0  

@@ -3,7 +3,7 @@
 **Project Name:** Habitao  
 **Type:** Native Android Productivity App  
 **Tech Stack:** Kotlin Multiplatform + Jetpack Compose  
-**Status:** Active Development - Core Habits MVP Functional  
+**Status:** Active Development - Habits, Pomodoro, Routines, Tasks, and Settings implemented with ongoing polish  
 **Target Release:** MVP in 8-12 weeks
 
 ---
@@ -32,6 +32,15 @@
 - **Pomodoro:** Focus timer with session tracking
 
 **Unique Value:** Native Android performance + Material Design 3 Expressive + Local-first privacy + Seamless integration of all productivity tools
+
+---
+
+##  Recent Implementation Updates (February 2026)
+
+- **Stats graph fixes:** Activity charts now use real aggregated habit, routine, and task completion data across Day/Week/Month filters.
+- **Stats visualization controls:** Users can switch between bar and line graphs, and the preference is persisted in app settings.
+- **Routine UI redesign:** Routine cards now include improved visual hierarchy, summary metrics, icon badges, and clearer progress states.
+- **Settings updates:** Added structured settings sections, theme mode selection, tab bar customization, and configurable visible tab count.
 
 ---
 
@@ -235,7 +244,7 @@ habitao/
 -  Customizable settings (durations, auto-start, sounds)
 -  Unified Stats screen with Pomodoro data
 
-### Phase 4: Tasks & Routines (Weeks 6-7) -- IN PROGRESS
+### Phase 4: Tasks & Routines (Weeks 6-7) -- IMPLEMENTED (POLISH IN PROGRESS)
 - Task management with subtasks
 - Due date reminders
 - Routine creation with steps
@@ -457,8 +466,8 @@ All planning documents are in the `docs/` directory:
 
 ---
 
-**Last Updated:** February 18, 2026  
-**Document Status:** Active Development - Habits MVP functional, test coverage and UI redesign next
+**Last Updated:** February 27, 2026  
+**Document Status:** Active Development - Core modules implemented, with current focus on refinement and production hardening
 
 ---
 

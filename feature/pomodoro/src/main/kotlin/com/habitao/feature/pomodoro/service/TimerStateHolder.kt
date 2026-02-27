@@ -36,6 +36,12 @@ class TimerStateHolder
         private val _totalCompletedWorkSessions = MutableStateFlow(0)
         val totalCompletedWorkSessions: StateFlow<Int> = _totalCompletedWorkSessions.asStateFlow()
 
+        private val _linkedTaskId = MutableStateFlow<String?>(null)
+        val linkedTaskId: StateFlow<String?> = _linkedTaskId.asStateFlow()
+
+        private val _linkedHabitId = MutableStateFlow<String?>(null)
+        val linkedHabitId: StateFlow<String?> = _linkedHabitId.asStateFlow()
+
         fun updateTimerState(state: TimerState) {
             _timerState.value = state
         }
@@ -60,7 +66,22 @@ class TimerStateHolder
             _totalCompletedWorkSessions.value = count
         }
 
-        fun reset() {
+        fun linkTask(taskId: String) {
+            _linkedTaskId.value = taskId
+            _linkedHabitId.value = null
+        }
+
+        fun linkHabit(habitId: String) {
+            _linkedHabitId.value = habitId
+            _linkedTaskId.value = null
+        }
+
+        fun clearLinkedFocus() {
+            _linkedTaskId.value = null
+            _linkedHabitId.value = null
+        }
+
+        fun resetTimerState() {
             _timerState.value = TimerState.IDLE
             _remainingSeconds.value = 0L
             _totalSeconds.value = 0L

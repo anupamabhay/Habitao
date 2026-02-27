@@ -54,6 +54,7 @@ include(":feature:habits")
 include(":feature:routines")
 include(":feature:tasks")
 include(":feature:pomodoro")
+include(":feature:settings")
 
 // =============================================================================
 // Module Build Conventions

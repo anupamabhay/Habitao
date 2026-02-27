@@ -7,7 +7,9 @@ import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.PomodoroType
+import com.habitao.domain.repository.HabitRepository
 import com.habitao.domain.repository.PomodoroRepository
+import com.habitao.domain.repository.TaskRepository
 import com.habitao.feature.pomodoro.service.PomodoroPreferences
 import com.habitao.feature.pomodoro.service.TimerService
 import com.habitao.feature.pomodoro.service.TimerState
@@ -25,6 +27,17 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
+enum class FocusLinkType {
+    TASK,
+    HABIT,
+}
+
+data class FocusLinkOption(
+    val id: String,
+    val title: String,
+    val type: FocusLinkType,
+)
+
 data class PomodoroState(
     val timerState: TimerState = TimerState.IDLE,
     val remainingSeconds: Long = 1500L,
@@ -37,6 +50,9 @@ data class PomodoroState(
     val todaysFocusSeconds: Int = 0,
     val todaysSessions: Int = 0,
     val todaysRounds: Int = 0,
+    val activeTaskOptions: List<FocusLinkOption> = emptyList(),
+    val activeHabitOptions: List<FocusLinkOption> = emptyList(),
+    val selectedFocusOption: FocusLinkOption? = null,
 )
 
 sealed class PomodoroIntent {
@@ -49,6 +65,12 @@ sealed class PomodoroIntent {
     data object StopTimer : PomodoroIntent()
 
     data object SkipToNext : PomodoroIntent()
+
+    data class LinkTask(val taskId: String) : PomodoroIntent()
+
+    data class LinkHabit(val habitId: String) : PomodoroIntent()
+
+    data object ClearLinkedFocus : PomodoroIntent()
 }
 
 @HiltViewModel
@@ -57,6 +79,8 @@ class PomodoroViewModel
     constructor(
         private val timerStateHolder: TimerStateHolder,
         private val pomodoroRepository: PomodoroRepository,
+        private val taskRepository: TaskRepository,
+        private val habitRepository: HabitRepository,
         private val pomodoroPreferences: PomodoroPreferences,
         @ApplicationContext private val context: Context,
     ) : ViewModel() {
@@ -84,9 +108,90 @@ class PomodoroViewModel
                 }
             }
 
+        private val tasksFlow =
+            taskRepository.observeAllTasks()
+                .map { result -> result.getOrElse { emptyList() } }
+                .catch { emit(emptyList()) }
+
+        private val habitsFlow =
+            habitRepository.observeAllHabits()
+                .map { result -> result.getOrElse { emptyList() } }
+                .catch { emit(emptyList()) }
+
+        private val focusSelectionFlow =
+            combine(
+                tasksFlow,
+                habitsFlow,
+                timerStateHolder.linkedTaskId,
+                timerStateHolder.linkedHabitId,
+            ) { tasks, habits, linkedTaskId, linkedHabitId ->
+                val activeTaskOptions =
+                    tasks
+                        .filter { task -> !task.isCompleted && task.deletedAt == null }
+                        .sortedBy { task -> task.title.lowercase() }
+                        .map { task ->
+                            FocusLinkOption(
+                                id = task.id,
+                                title = task.title,
+                                type = FocusLinkType.TASK,
+                            )
+                        }
+
+                val activeHabitOptions =
+                    habits
+                        .filterNot { habit -> habit.isArchived }
+                        .sortedBy { habit -> habit.title.lowercase() }
+                        .map { habit ->
+                            FocusLinkOption(
+                                id = habit.id,
+                                title = habit.title,
+                                type = FocusLinkType.HABIT,
+                            )
+                        }
+
+                val selectedFocusOption =
+                    when {
+                        linkedTaskId != null -> {
+                            tasks.firstOrNull { task -> task.id == linkedTaskId }?.let { task ->
+                                FocusLinkOption(
+                                    id = task.id,
+                                    title = task.title,
+                                    type = FocusLinkType.TASK,
+                                )
+                            } ?: FocusLinkOption(
+                                id = linkedTaskId,
+                                title = "Selected task",
+                                type = FocusLinkType.TASK,
+                            )
+                        }
+
+                        linkedHabitId != null -> {
+                            habits.firstOrNull { habit -> habit.id == linkedHabitId }?.let { habit ->
+                                FocusLinkOption(
+                                    id = habit.id,
+                                    title = habit.title,
+                                    type = FocusLinkType.HABIT,
+                                )
+                            } ?: FocusLinkOption(
+                                id = linkedHabitId,
+                                title = "Selected habit",
+                                type = FocusLinkType.HABIT,
+                            )
+                        }
+
+                        else -> null
+                    }
+
+                FocusSelectionSnapshot(
+                    activeTaskOptions = activeTaskOptions,
+                    activeHabitOptions = activeHabitOptions,
+                    selectedFocusOption = selectedFocusOption,
+                )
+            }
+
         private val sessionsCountFlow = combine(
             timerStateHolder.completedWorkSessions,
-            timerStateHolder.totalCompletedWorkSessions
+            timerStateHolder.totalCompletedWorkSessions,
         ) { cycle, total -> Pair(cycle, total) }
 
         private val timerCombinedFlow =
@@ -124,7 +229,8 @@ class PomodoroViewModel
                 todaysFocusSecondsFlow,
                 todaysSessionsFlow,
                 preferencesUpdateFlow,
-            ) { timer, todaysFocusSeconds, todaysSessions, _ ->
+                focusSelectionFlow,
+            ) { timer, todaysFocusSeconds, todaysSessions, _, focusSelection ->
                 val defaultTotalSeconds =
                     when (timer.currentSessionType) {
                         PomodoroType.WORK -> pomodoroPreferences.workDurationMinutes.toLong() * 60
@@ -148,12 +254,21 @@ class PomodoroViewModel
                     todaysFocusSeconds = todaysFocusSeconds,
                     todaysSessions = todaysSessions,
                     todaysRounds = pomodoroPreferences.getTodaysRounds(),
+                    activeTaskOptions = focusSelection.activeTaskOptions,
+                    activeHabitOptions = focusSelection.activeHabitOptions,
+                    selectedFocusOption = focusSelection.selectedFocusOption,
                 )
             }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = PomodoroState(),
             )
+
+        private data class FocusSelectionSnapshot(
+            val activeTaskOptions: List<FocusLinkOption>,
+            val activeHabitOptions: List<FocusLinkOption>,
+            val selectedFocusOption: FocusLinkOption?,
+        )
 
         private data class TimerSnapshot(
             val timerState: TimerState,
@@ -171,6 +286,9 @@ class PomodoroViewModel
                 PomodoroIntent.ResumeTimer -> sendServiceAction(TimerService.ACTION_RESUME)
                 PomodoroIntent.StopTimer -> sendServiceAction(TimerService.ACTION_STOP)
                 PomodoroIntent.SkipToNext -> sendServiceAction(TimerService.ACTION_SKIP)
+                is PomodoroIntent.LinkTask -> timerStateHolder.linkTask(intent.taskId)
+                is PomodoroIntent.LinkHabit -> timerStateHolder.linkHabit(intent.habitId)
+                PomodoroIntent.ClearLinkedFocus -> timerStateHolder.clearLinkedFocus()
             }
         }
 

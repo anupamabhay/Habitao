@@ -5,11 +5,17 @@ import androidx.room.Room
 import com.habitao.data.local.dao.HabitDao
 import com.habitao.data.local.dao.HabitLogDao
 import com.habitao.data.local.dao.PomodoroSessionDao
+import com.habitao.data.local.dao.RoutineDao
+import com.habitao.data.local.dao.TaskDao
 import com.habitao.data.local.database.HabitaoDatabase
 import com.habitao.data.repository.HabitRepositoryImpl
 import com.habitao.data.repository.PomodoroRepositoryImpl
+import com.habitao.data.repository.RoutineRepositoryImpl
+import com.habitao.data.repository.TaskRepositoryImpl
 import com.habitao.domain.repository.HabitRepository
 import com.habitao.domain.repository.PomodoroRepository
+import com.habitao.domain.repository.RoutineRepository
+import com.habitao.domain.repository.TaskRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -30,6 +36,14 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPomodoroRepository(impl: PomodoroRepositoryImpl): PomodoroRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRoutineRepository(impl: RoutineRepositoryImpl): RoutineRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTaskRepository(impl: TaskRepositoryImpl): TaskRepository
 }
 
 @Module
@@ -45,6 +59,7 @@ object DatabaseModule {
             HabitaoDatabase::class.java,
             HabitaoDatabase.DATABASE_NAME,
         )
+            .addMigrations(HabitaoDatabase.MIGRATION_4_5)
             .fallbackToDestructiveMigration() // TODO: Add proper migrations
             .build()
     }
@@ -62,6 +77,16 @@ object DatabaseModule {
     @Provides
     fun providePomodoroSessionDao(database: HabitaoDatabase): PomodoroSessionDao {
         return database.pomodoroSessionDao()
+    }
+
+    @Provides
+    fun provideRoutineDao(database: HabitaoDatabase): RoutineDao {
+        return database.routineDao()
+    }
+
+    @Provides
+    fun provideTaskDao(database: HabitaoDatabase): TaskDao {
+        return database.taskDao()
     }
 
     @Provides

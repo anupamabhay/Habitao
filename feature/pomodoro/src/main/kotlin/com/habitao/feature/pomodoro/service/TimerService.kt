@@ -162,7 +162,7 @@ class TimerService : LifecycleService() {
             completedAt = null,
         )
         clearTimerPrefs()
-        timerStateHolder.reset()
+        timerStateHolder.resetTimerState()
         stopTimerService()
     }
 
@@ -346,6 +346,8 @@ class TimerService : LifecycleService() {
                 sessionType = sessionType,
                 workDurationSeconds = pomodoroPreferences.workDurationMinutes * 60,
                 breakDurationSeconds = pomodoroPreferences.shortBreakDurationMinutes * 60,
+                linkedTaskId = timerStateHolder.linkedTaskId.value,
+                linkedHabitId = timerStateHolder.linkedHabitId.value,
                 startedAt = startedAt,
                 completedAt = completedAt,
                 wasInterrupted = wasInterrupted,
@@ -375,7 +377,7 @@ class TimerService : LifecycleService() {
                     timerStateHolder.updateTotalSeconds(0L)
                     clearTimerPrefs()
                     updateNotification(0L)
-                    timerStateHolder.reset()
+                    timerStateHolder.resetTimerState()
                     return
                 }
 
