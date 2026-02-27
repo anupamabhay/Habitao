@@ -103,6 +103,9 @@ fun SettingsScreen(
                     onNavigateToTabBar = { currentView = SettingsView.TabBar },
                     themeMode = themeMode,
                     onThemeModeChanged = onThemeModeChanged,
+                    defaultLaunchTabId = defaultLaunchTabId,
+                    allTabs = allTabs,
+                    onDefaultLaunchTabChanged = onDefaultLaunchTabChanged,
                     modifier = modifier
                 )
             }
@@ -128,9 +131,13 @@ fun MainSettingsView(
     onNavigateToTabBar: () -> Unit,
     themeMode: String,
     onThemeModeChanged: (String) -> Unit,
+    defaultLaunchTabId: String,
+    allTabs: List<SettingsTabOption>,
+    onDefaultLaunchTabChanged: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showThemeModeDialog by remember { mutableStateOf(false) }
+    var showDefaultLaunchTabDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -191,6 +198,13 @@ fun MainSettingsView(
                         title = "Tab Bar",
                         subtitle = "Choose and reorder tabs shown in navigation.",
                         onClick = onNavigateToTabBar,
+                        showDivider = true
+                    )
+                    SettingsListItem(
+                        icon = Icons.Default.CalendarToday,
+                        title = "Default Launch Tab",
+                        subtitle = allTabs.find { it.id == defaultLaunchTabId }?.label ?: "Habits",
+                        onClick = { showDefaultLaunchTabDialog = true },
                         showDivider = false
                     )
                 }
@@ -226,6 +240,18 @@ fun MainSettingsView(
                 onDismiss = { showThemeModeDialog = false },
             )
         }
+
+        if (showDefaultLaunchTabDialog) {
+            DefaultLaunchTabDialog(
+                selectedTabId = defaultLaunchTabId,
+                allTabs = allTabs,
+                onTabSelected = { selectedTabId ->
+                    onDefaultLaunchTabChanged(selectedTabId)
+                    showDefaultLaunchTabDialog = false
+                },
+                onDismiss = { showDefaultLaunchTabDialog = false },
+            )
+        }
     }
 }
 
@@ -240,17 +266,17 @@ private fun ThemeModeDialog(
         title = { Text("Appearance") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ThemeModeOption(
+                RadioOption(
                     title = "System",
                     isSelected = selectedThemeMode == "SYSTEM",
                     onClick = { onThemeSelected("SYSTEM") },
                 )
-                ThemeModeOption(
+                RadioOption(
                     title = "Light",
                     isSelected = selectedThemeMode == "LIGHT",
                     onClick = { onThemeSelected("LIGHT") },
                 )
-                ThemeModeOption(
+                RadioOption(
                     title = "Dark",
                     isSelected = selectedThemeMode == "DARK",
                     onClick = { onThemeSelected("DARK") },
@@ -267,7 +293,37 @@ private fun ThemeModeDialog(
 }
 
 @Composable
-private fun ThemeModeOption(
+private fun DefaultLaunchTabDialog(
+    selectedTabId: String,
+    allTabs: List<SettingsTabOption>,
+    onTabSelected: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Default Launch Tab") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                allTabs.forEach { tab ->
+                    RadioOption(
+                        title = tab.label,
+                        isSelected = selectedTabId == tab.id,
+                        onClick = { onTabSelected(tab.id) },
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
+}
+
+@Composable
+private fun RadioOption(
     title: String,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -600,7 +656,7 @@ private fun TabItemRow(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = getIconForTab(tab.label),
+                imageVector = getIconForTab(tab.id),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(18.dp)
@@ -616,7 +672,7 @@ private fun TabItemRow(
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text = getSubtitleForTab(tab.label),
+                text = getSubtitleForTab(tab.id),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1
@@ -649,8 +705,8 @@ private fun TabItemRow(
     }
 }
 
-private fun getIconForTab(label: String): ImageVector {
-    return when(label.lowercase()) {
+private fun getIconForTab(id: String): ImageVector {
+    return when(id) {
         "tasks" -> Icons.Default.CheckCircle
         "habits" -> Icons.Default.Loop
         "routines" -> Icons.Default.GridView
@@ -660,8 +716,8 @@ private fun getIconForTab(label: String): ImageVector {
     }
 }
 
-private fun getSubtitleForTab(label: String): String {
-    return when(label.lowercase()) {
+private fun getSubtitleForTab(id: String): String {
+    return when(id) {
         "tasks" -> "Manage your task with lists and filters."
         "habits" -> "Develop a habit and keep track of it."
         "routines" -> "Build daily routines step by step."

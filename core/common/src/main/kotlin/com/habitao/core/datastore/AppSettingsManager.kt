@@ -22,7 +22,7 @@ private val Context.appSettingsDataStore by preferencesDataStore(name = APP_SETT
 
 data class AppSettings(
     val bottomNavTabs: List<String> = emptyList(),
-    val defaultLaunchTab: String = "",
+    val defaultLaunchTab: String = "habits",
     val maxVisibleTabs: Int = DEFAULT_MAX_VISIBLE_TABS,
     val themeMode: String = DEFAULT_THEME_MODE,
     val statsGraphType: String = DEFAULT_STATS_GRAPH_TYPE,
@@ -45,7 +45,7 @@ class AppSettingsManager(
             .map { preferences ->
                 AppSettings(
                     bottomNavTabs = preferences.bottomNavTabs(),
-                    defaultLaunchTab = preferences[DEFAULT_LAUNCH_TAB_KEY].orEmpty(),
+                    defaultLaunchTab = preferences[DEFAULT_LAUNCH_TAB_KEY] ?: "habits",
                     maxVisibleTabs = preferences[MAX_VISIBLE_TABS_KEY] ?: DEFAULT_MAX_VISIBLE_TABS,
                     themeMode = preferences.themeMode(),
                     statsGraphType = preferences.statsGraphType(),

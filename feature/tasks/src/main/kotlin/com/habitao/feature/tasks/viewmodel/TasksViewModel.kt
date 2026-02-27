@@ -162,19 +162,15 @@ class TasksViewModel @Inject constructor(
         viewModelScope.launch {
             val saveResult = taskRepository.getTaskById(task.id).fold(
                 onSuccess = { existingTask ->
-                    taskRepository.updateTask(
+                    taskRepository.upsertTask(
                         task.copy(
                             createdAt = existingTask.createdAt,
                             updatedAt = System.currentTimeMillis()
                         )
                     )
                 },
-                onFailure = { error ->
-                    if (error.message == "Task not found") {
-                        taskRepository.createTask(task)
-                    } else {
-                        Result.failure(error)
-                    }
+                onFailure = {
+                    taskRepository.upsertTask(task)
                 }
             )
 

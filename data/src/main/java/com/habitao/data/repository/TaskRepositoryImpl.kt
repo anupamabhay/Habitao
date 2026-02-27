@@ -40,6 +40,16 @@ class TaskRepositoryImpl @Inject constructor(
             }
         }
 
+    override suspend fun upsertTask(task: Task): Result<Unit> =
+        withContext(dispatcher) {
+            try {
+                taskDao.insertTask(task.toEntity())
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
     override suspend fun deleteTask(taskId: String): Result<Unit> =
         withContext(dispatcher) {
             try {

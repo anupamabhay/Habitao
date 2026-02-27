@@ -50,6 +50,19 @@ class RoutineRepositoryImpl @Inject constructor(
             }
         }
 
+    override suspend fun upsertRoutine(routine: Routine, steps: List<RoutineStep>): Result<Unit> =
+        withContext(dispatcher) {
+            try {
+                routineDao.createRoutineWithSteps(
+                    routine.toEntity(),
+                    steps.map { it.toEntity() }
+                )
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
     override suspend fun deleteRoutine(routineId: String): Result<Unit> =
         withContext(dispatcher) {
             try {
