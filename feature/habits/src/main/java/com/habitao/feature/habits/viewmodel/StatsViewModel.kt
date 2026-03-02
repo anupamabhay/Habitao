@@ -15,6 +15,10 @@ import com.habitao.domain.repository.TaskRepository
 import com.habitao.feature.pomodoro.service.PomodoroPreferences
 import com.habitao.feature.pomodoro.service.TimerStateHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +26,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -200,20 +205,25 @@ class StatsViewModel
                         .map { it.habitId }
                         .toSet()
 
-                habits
-                    .map { habit ->
-                        val streak = loadStreakSafe(habit.id)
-                        HabitStatItem(
-                            habitId = habit.id,
-                            title = habit.title,
-                            currentStreak = streak.currentStreak,
-                            longestStreak = streak.longestStreak,
-                            totalCompletions = streak.totalCompletions,
-                            isCompletedToday = completedTodayIds.contains(habit.id),
-                        )
-                    }
-                    .filter { it.currentStreak >= 2 }
-                    .sortedByDescending { it.currentStreak }
+                coroutineScope {
+                    habits
+                        .map { habit ->
+                            async(Dispatchers.IO) {
+                                val streak = loadStreakSafe(habit.id)
+                                HabitStatItem(
+                                    habitId = habit.id,
+                                    title = habit.title,
+                                    currentStreak = streak.currentStreak,
+                                    longestStreak = streak.longestStreak,
+                                    totalCompletions = streak.totalCompletions,
+                                    isCompletedToday = completedTodayIds.contains(habit.id),
+                                )
+                            }
+                        }
+                        .awaitAll()
+                        .filter { it.currentStreak >= 2 }
+                        .sortedByDescending { it.currentStreak }
+                }
             }
 
         private val taskStatsFlow =
@@ -336,7 +346,9 @@ class StatsViewModel
                     graphType = graphType,
                     isLoading = false,
                 )
-            }.stateIn(
+            }
+            .flowOn(Dispatchers.Default)
+            .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = StatsState(),

@@ -52,6 +52,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.habitao.app.RequestAppPermissions
 import com.habitao.core.datastore.AppSettings
 import com.habitao.core.datastore.AppSettingsManager
 import com.habitao.core.ui.theme.HabitaoTheme
@@ -64,6 +65,8 @@ import com.habitao.feature.routines.ui.CreateRoutineScreen
 import com.habitao.feature.routines.ui.RoutineStatsScreen
 import com.habitao.feature.routines.ui.RoutinesScreen
 import com.habitao.feature.settings.ui.AboutScreen
+import com.habitao.feature.settings.ui.NotificationSettingsScreen
+import com.habitao.feature.settings.ui.PomodoroSettingsScreen
 import com.habitao.feature.settings.ui.SettingsScreen
 import com.habitao.feature.settings.ui.SettingsTabOption
 import com.habitao.feature.tasks.ui.CreateTaskScreen
@@ -98,6 +101,12 @@ object SettingsRoute
 
 @Serializable
 object AboutRoute
+
+@Serializable
+object NotificationSettingsRoute
+
+@Serializable
+object PomodoroSettingsRoute
 
 @Serializable
 object FullScreenClockRoute
@@ -200,6 +209,7 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
     }
 
     HabitaoTheme(themeMode = settings.themeMode) {
+    RequestAppPermissions()
 
     val selectedTabs = remember(settings.bottomNavTabs, settings.maxVisibleTabs) {
         resolveSelectedTabs(settings.bottomNavTabs, settings.maxVisibleTabs)
@@ -374,6 +384,8 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
                                 appSettingsManager.setThemeMode(themeMode)
                             }
                         },
+                        onNavigateToNotifications = { navController.navigate(NotificationSettingsRoute) },
+                        onNavigateToPomodoro = { navController.navigate(PomodoroSettingsRoute) },
                         onNavigateToAbout = { navController.navigate(AboutRoute) },
                         onNavigateBack = { navController.popBackStack() },
                     )
@@ -381,6 +393,14 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
 
                 composable<AboutRoute> {
                     AboutScreen(onNavigateBack = { navController.popBackStack() })
+                }
+
+                composable<NotificationSettingsRoute> {
+                    NotificationSettingsScreen(onNavigateBack = { navController.popBackStack() })
+                }
+
+                composable<PomodoroSettingsRoute> {
+                    PomodoroSettingsScreen(onNavigateBack = { navController.popBackStack() })
                 }
 
             // -- Full-screen destinations (no bottom bar) --

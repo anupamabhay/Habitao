@@ -43,6 +43,14 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name="com.habitao.system.notifications.TaskReminderReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name="com.habitao.system.notifications.TaskCompletionReceiver"
+            android:exported="false" />
+
         <service
             android:name="com.habitao.feature.pomodoro.service.TimerService"
             android:exported="false"

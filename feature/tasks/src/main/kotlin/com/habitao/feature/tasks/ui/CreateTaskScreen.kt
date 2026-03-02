@@ -8,6 +8,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -391,8 +392,10 @@ private fun CreateTaskForm(
                 key(subtask.id) {
                     SubtaskRow(
                         text = subtask.text,
+                        description = subtask.description,
                         priority = subtask.priority,
                         onTextChange = { onIntent(CreateTaskIntent.UpdateSubtaskText(subtask.id, it)) },
+                        onDescriptionChange = { onIntent(CreateTaskIntent.UpdateSubtaskDescription(subtask.id, it)) },
                         onPriorityChange = { onIntent(CreateTaskIntent.UpdateSubtaskPriority(subtask.id, it)) },
                         onRemove = { onIntent(CreateTaskIntent.RemoveSubtask(subtask.id)) },
                         onSubmit = { onIntent(CreateTaskIntent.AddSubtask) },
@@ -692,8 +695,10 @@ private fun TimePickerField(
 @Composable
 private fun SubtaskRow(
     text: String,
+    description: String,
     priority: TaskPriority,
     onTextChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
     onPriorityChange: (TaskPriority) -> Unit,
     onRemove: () -> Unit,
     onSubmit: () -> Unit,
@@ -702,6 +707,7 @@ private fun SubtaskRow(
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
+    var showDescription by remember { mutableStateOf(description.isNotEmpty()) }
 
     LaunchedEffect(shouldRequestFocus) {
         if (shouldRequestFocus) {
@@ -710,72 +716,110 @@ private fun SubtaskRow(
         }
     }
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(
-            checked = false,
-            onCheckedChange = null,
-            colors = CheckboxDefaults.colors(
-                uncheckedColor = MaterialTheme.colorScheme.outlineVariant
-            ),
-            modifier = Modifier.size(24.dp)
-        )
-
-        BasicTextField(
-            value = text,
-            onValueChange = onTextChange,
-            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                color = MaterialTheme.colorScheme.onSurface
-            ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(onNext = { onSubmit() }),
+    Column(modifier = modifier) {
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .focusRequester(focusRequester)
-                .onKeyEvent { event ->
-                    if (
-                        event.type == KeyEventType.KeyUp &&
-                        (event.key == Key.Enter || event.key == Key.NumPadEnter)
-                    ) {
-                        onSubmit()
-                        true
-                    } else {
-                        false
-                    }
-                },
-            decorationBox = { innerTextField ->
-                if (text.isEmpty()) {
-                    Text(
-                        text = "New subtask",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
-                }
-                innerTextField()
-            }
-        )
-
-        SubtaskPrioritySelector(
-            selectedPriority = priority,
-            onPrioritySelected = onPriorityChange,
-        )
-
-        IconButton(
-            onClick = onRemove,
-            modifier = Modifier.size(32.dp),
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Remove subtask",
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            Checkbox(
+                checked = false,
+                onCheckedChange = null,
+                colors = CheckboxDefaults.colors(
+                    uncheckedColor = MaterialTheme.colorScheme.outlineVariant
+                ),
+                modifier = Modifier.size(24.dp)
             )
+
+            BasicTextField(
+                value = text,
+                onValueChange = onTextChange,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { onSubmit() }),
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester)
+                    .onKeyEvent { event ->
+                        if (
+                            event.type == KeyEventType.KeyUp &&
+                            (event.key == Key.Enter || event.key == Key.NumPadEnter)
+                        ) {
+                            onSubmit()
+                            true
+                        } else {
+                            false
+                        }
+                    },
+                decorationBox = { innerTextField ->
+                    if (text.isEmpty()) {
+                        Text(
+                            text = "New subtask",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                    innerTextField()
+                }
+            )
+
+            SubtaskPrioritySelector(
+                selectedPriority = priority,
+                onPrioritySelected = onPriorityChange,
+            )
+
+            IconButton(
+                onClick = onRemove,
+                modifier = Modifier.size(32.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Remove subtask",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        if (showDescription) {
+            BasicTextField(
+                value = description,
+                onValueChange = onDescriptionChange,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 36.dp, end = 8.dp, top = 4.dp),
+                decorationBox = { innerTextField ->
+                    if (description.isEmpty()) {
+                        Text(
+                            text = "Add description...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        )
+                    }
+                    innerTextField()
+                }
+            )
+        } else {
+            TextButton(
+                onClick = { showDescription = true },
+                modifier = Modifier.padding(start = 24.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+            ) {
+                Text(
+                    text = "+ Add description",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

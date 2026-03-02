@@ -93,6 +93,8 @@ fun SettingsScreen(
     onMaxVisibleTabsChanged: (Int) -> Unit,
     onShowTabLabelsChanged: (Boolean) -> Unit,
     onThemeModeChanged: (String) -> Unit,
+    onNavigateToNotifications: () -> Unit,
+    onNavigateToPomodoro: () -> Unit,
     onNavigateToAbout: () -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -107,6 +109,8 @@ fun SettingsScreen(
                     onNavigateToTabBar = { currentView = SettingsView.TabBar },
                     themeMode = themeMode,
                     onThemeModeChanged = onThemeModeChanged,
+                    onNavigateToNotifications = onNavigateToNotifications,
+                    onNavigateToPomodoro = onNavigateToPomodoro,
                     onNavigateToAbout = onNavigateToAbout,
                     defaultLaunchTabId = defaultLaunchTabId,
                     allTabs = allTabs,
@@ -138,6 +142,8 @@ fun MainSettingsView(
     onNavigateToTabBar: () -> Unit,
     themeMode: String,
     onThemeModeChanged: (String) -> Unit,
+    onNavigateToNotifications: () -> Unit,
+    onNavigateToPomodoro: () -> Unit,
     onNavigateToAbout: () -> Unit,
     defaultLaunchTabId: String,
     allTabs: List<SettingsTabOption>,
@@ -177,7 +183,7 @@ fun MainSettingsView(
                         icon = Icons.Default.Notifications,
                         title = "Notifications",
                         subtitle = "Manage reminders, streak alerts, and quiet hours.",
-                        onClick = { /* TODO */ },
+                        onClick = onNavigateToNotifications,
                         showDivider = true
                     )
                     SettingsListItem(
@@ -198,7 +204,7 @@ fun MainSettingsView(
                         icon = Icons.Default.Timer,
                         title = "Focus & Pomodoro",
                         subtitle = "Configure session length, breaks, and timer defaults.",
-                        onClick = { /* TODO */ },
+                        onClick = onNavigateToPomodoro,
                         showDivider = true
                     )
                     SettingsListItem(
