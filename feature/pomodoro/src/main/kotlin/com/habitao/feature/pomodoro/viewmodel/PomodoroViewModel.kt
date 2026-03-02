@@ -66,6 +66,8 @@ sealed class PomodoroIntent {
 
     data object SkipToNext : PomodoroIntent()
 
+    data class AdjustTime(val deltaSeconds: Long) : PomodoroIntent()
+
     data class LinkTask(val taskId: String) : PomodoroIntent()
 
     data class LinkHabit(val habitId: String) : PomodoroIntent()
@@ -286,6 +288,13 @@ class PomodoroViewModel
                 PomodoroIntent.ResumeTimer -> sendServiceAction(TimerService.ACTION_RESUME)
                 PomodoroIntent.StopTimer -> sendServiceAction(TimerService.ACTION_STOP)
                 PomodoroIntent.SkipToNext -> sendServiceAction(TimerService.ACTION_SKIP)
+                is PomodoroIntent.AdjustTime -> {
+                    val adjustIntent = Intent(context, TimerService::class.java).apply {
+                        action = TimerService.ACTION_ADJUST_TIME
+                        putExtra(TimerService.EXTRA_DELTA_SECONDS, intent.deltaSeconds)
+                    }
+                    context.startService(adjustIntent)
+                }
                 is PomodoroIntent.LinkTask -> timerStateHolder.linkTask(intent.taskId)
                 is PomodoroIntent.LinkHabit -> timerStateHolder.linkHabit(intent.habitId)
                 PomodoroIntent.ClearLinkedFocus -> timerStateHolder.clearLinkedFocus()

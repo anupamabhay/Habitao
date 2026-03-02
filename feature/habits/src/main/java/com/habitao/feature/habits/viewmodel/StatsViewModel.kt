@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.habitao.core.datastore.AppSettingsManager
 import com.habitao.domain.model.PomodoroSession
 import com.habitao.domain.model.PomodoroType
+import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.RoutineLog
 import com.habitao.domain.model.StreakInfo
 import com.habitao.domain.model.Task
@@ -13,12 +14,9 @@ import com.habitao.domain.repository.PomodoroRepository
 import com.habitao.domain.repository.RoutineRepository
 import com.habitao.domain.repository.TaskRepository
 import com.habitao.feature.pomodoro.service.PomodoroPreferences
+import com.habitao.feature.pomodoro.service.TimerState
 import com.habitao.feature.pomodoro.service.TimerStateHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +24,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -46,6 +43,7 @@ data class HabitStatItem(
     val longestStreak: Int,
     val totalCompletions: Int,
     val isCompletedToday: Boolean,
+    val frequency: String = "Daily",
 )
 
 data class ActivityDataPoint(
@@ -187,8 +185,13 @@ class StatsViewModel
                 timerStateHolder.totalSeconds,
                 timerStateHolder.remainingSeconds,
                 timerStateHolder.currentSessionType,
-            ) { totalSeconds, remainingSeconds, sessionType ->
-                if (sessionType == PomodoroType.WORK && totalSeconds > 0L) {
+                timerStateHolder.timerState,
+            ) { totalSeconds, remainingSeconds, sessionType, timerState ->
+                if (
+                    sessionType == PomodoroType.WORK &&
+                    totalSeconds > 0L &&
+                    (timerState == TimerState.RUNNING || timerState == TimerState.PAUSED)
+                ) {
                     (totalSeconds - remainingSeconds).coerceAtLeast(0L).toInt()
                 } else {
                     0
@@ -205,25 +208,37 @@ class StatsViewModel
                         .map { it.habitId }
                         .toSet()
 
-                coroutineScope {
-                    habits
-                        .map { habit ->
-                            async(Dispatchers.IO) {
-                                val streak = loadStreakSafe(habit.id)
-                                HabitStatItem(
-                                    habitId = habit.id,
-                                    title = habit.title,
-                                    currentStreak = streak.currentStreak,
-                                    longestStreak = streak.longestStreak,
-                                    totalCompletions = streak.totalCompletions,
-                                    isCompletedToday = completedTodayIds.contains(habit.id),
-                                )
+                habits
+                    .map { habit ->
+                        val streak = loadStreakSafe(habit.id)
+                        val frequency =
+                            when (habit.frequencyType) {
+                                FrequencyType.DAILY -> "Daily"
+                                FrequencyType.SPECIFIC_DAYS -> {
+                                    if (habit.scheduledDays.size == 7) {
+                                        "Daily"
+                                    } else {
+                                        habit.scheduledDays
+                                            .sorted()
+                                            .joinToString(", ") { it.shortName }
+                                            .ifBlank { "Weekly" }
+                                    }
+                                }
+                                FrequencyType.TIMES_PER_WEEK -> "${habit.frequencyValue}x/week"
+                                FrequencyType.EVERY_X_DAYS -> "Every ${habit.frequencyValue} days"
                             }
-                        }
-                        .awaitAll()
-                        .filter { it.currentStreak >= 2 }
-                        .sortedByDescending { it.currentStreak }
-                }
+                        HabitStatItem(
+                            habitId = habit.id,
+                            title = habit.title,
+                            currentStreak = streak.currentStreak,
+                            longestStreak = streak.longestStreak,
+                            totalCompletions = streak.totalCompletions,
+                            isCompletedToday = completedTodayIds.contains(habit.id),
+                            frequency = frequency,
+                        )
+                    }
+                    .filter { it.currentStreak >= 2 }
+                    .sortedByDescending { it.currentStreak }
             }
 
         private val taskStatsFlow =
@@ -346,9 +361,7 @@ class StatsViewModel
                     graphType = graphType,
                     isLoading = false,
                 )
-            }
-            .flowOn(Dispatchers.Default)
-            .stateIn(
+            }.stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = StatsState(),

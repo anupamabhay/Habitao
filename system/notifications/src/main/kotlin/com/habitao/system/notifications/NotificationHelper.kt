@@ -14,15 +14,10 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.habitao.system.notifications.NotificationConstants.ACTION_MARK_COMPLETE
-import com.habitao.system.notifications.NotificationConstants.ACTION_MARK_TASK_COMPLETE
 import com.habitao.system.notifications.NotificationConstants.CHANNEL_ID
 import com.habitao.system.notifications.NotificationConstants.CHANNEL_NAME
 import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_ID
 import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_TITLE
-import com.habitao.system.notifications.NotificationConstants.EXTRA_TASK_ID
-import com.habitao.system.notifications.NotificationConstants.EXTRA_TASK_TITLE
-import com.habitao.system.notifications.NotificationConstants.TASK_CHANNEL_ID
-import com.habitao.system.notifications.NotificationConstants.TASK_CHANNEL_NAME
 
 class NotificationHelper(
     private val context: Context,
@@ -42,27 +37,6 @@ class NotificationHelper(
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 description = "Habit reminder notifications"
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 500)
-                setSound(defaultSoundUri, audioAttributes)
-            }
-        notificationManager.createNotificationChannel(channel)
-    }
-
-    fun createTaskNotificationChannel() {
-        val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-        val audioAttributes =
-            AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-        val channel =
-            NotificationChannel(
-                TASK_CHANNEL_ID,
-                TASK_CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_HIGH,
-            ).apply {
-                description = "Task reminder notifications"
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 500)
                 setSound(defaultSoundUri, audioAttributes)
@@ -127,6 +101,27 @@ class NotificationHelper(
         NotificationManagerCompat.from(context).notify(habitId.hashCode(), notification)
     }
 
+    fun createTaskNotificationChannel() {
+        val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val audioAttributes =
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+        val channel =
+            NotificationChannel(
+                NotificationConstants.TASK_CHANNEL_ID,
+                NotificationConstants.TASK_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = "Task reminder notifications"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 500)
+                setSound(defaultSoundUri, audioAttributes)
+            }
+        notificationManager.createNotificationChannel(channel)
+    }
+
     fun showTaskReminder(
         taskId: String,
         taskTitle: String,
@@ -144,9 +139,9 @@ class NotificationHelper(
 
         val completeIntent =
             Intent(context, TaskCompletionReceiver::class.java).apply {
-                action = ACTION_MARK_TASK_COMPLETE
-                putExtra(EXTRA_TASK_ID, taskId)
-                putExtra(EXTRA_TASK_TITLE, taskTitle)
+                action = NotificationConstants.ACTION_TASK_MARK_COMPLETE
+                putExtra(NotificationConstants.EXTRA_TASK_ID, taskId)
+                putExtra(NotificationConstants.EXTRA_TASK_TITLE, taskTitle)
             }
 
         val completePendingIntent =
@@ -158,10 +153,10 @@ class NotificationHelper(
             )
 
         val notification =
-            NotificationCompat.Builder(context, TASK_CHANNEL_ID)
+            NotificationCompat.Builder(context, NotificationConstants.TASK_CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("Task Due")
-                .setContentText(taskTitle)
+                .setContentTitle("Task Reminder")
+                .setContentText("Time to: $taskTitle")
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

@@ -26,6 +26,12 @@ import com.habitao.core.ui.theme.Dimensions
 @Composable
 fun NotificationSettingsScreen(
     onNavigateBack: () -> Unit,
+    habitRemindersEnabled: Boolean,
+    taskRemindersEnabled: Boolean,
+    pomodoroNotificationsEnabled: Boolean,
+    onHabitRemindersEnabledChanged: (Boolean) -> Unit,
+    onTaskRemindersEnabledChanged: (Boolean) -> Unit,
+    onPomodoroNotificationsEnabledChanged: (Boolean) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -59,7 +65,10 @@ fun NotificationSettingsScreen(
                 headlineContent = { Text("Habit Reminders") },
                 supportingContent = { Text("Receive notifications for scheduled habits") },
                 trailingContent = {
-                    Switch(checked = true, onCheckedChange = { /* TODO: wire to global setting */ })
+                    Switch(
+                        checked = habitRemindersEnabled,
+                        onCheckedChange = onHabitRemindersEnabledChanged,
+                    )
                 },
             )
 
@@ -67,7 +76,10 @@ fun NotificationSettingsScreen(
                 headlineContent = { Text("Task Reminders") },
                 supportingContent = { Text("Receive notifications for tasks with due dates") },
                 trailingContent = {
-                    Switch(checked = true, onCheckedChange = { /* TODO: wire to global setting */ })
+                    Switch(
+                        checked = taskRemindersEnabled,
+                        onCheckedChange = onTaskRemindersEnabledChanged,
+                    )
                 },
             )
 
@@ -83,7 +95,10 @@ fun NotificationSettingsScreen(
                 headlineContent = { Text("Session Complete") },
                 supportingContent = { Text("Notify when a focus session or break ends") },
                 trailingContent = {
-                    Switch(checked = true, onCheckedChange = { /* TODO: wire to global setting */ })
+                    Switch(
+                        checked = pomodoroNotificationsEnabled,
+                        onCheckedChange = onPomodoroNotificationsEnabledChanged,
+                    )
                 },
             )
         }

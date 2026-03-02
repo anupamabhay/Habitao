@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -204,7 +206,9 @@ private fun StatsContent(
                 verticalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
                     horizontalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing)
                 ) {
                     // Tasks Breakdown
@@ -212,10 +216,11 @@ private fun StatsContent(
                         modifier = Modifier.weight(1f),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                        )
+                        ),
+                        shape = RoundedCornerShape(16.dp),
                     ) {
                         Column(
-                            modifier = Modifier.padding(Dimensions.sectionSpacing),
+                            modifier = Modifier.padding(Dimensions.cardPadding),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
@@ -255,10 +260,11 @@ private fun StatsContent(
                         modifier = Modifier.weight(1f),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                        )
+                        ),
+                        shape = RoundedCornerShape(16.dp),
                     ) {
                         Column(
-                            modifier = Modifier.padding(Dimensions.sectionSpacing),
+                            modifier = Modifier.padding(Dimensions.cardPadding),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
@@ -301,12 +307,13 @@ private fun StatsContent(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    )
+                    ),
+                    shape = RoundedCornerShape(16.dp),
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(Dimensions.sectionSpacing),
+                            .padding(Dimensions.cardPadding),
                         horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -380,133 +387,6 @@ private fun StatsContent(
             }
         }
 
-        // Pomodoro Analytics
-        item(key = "pomodoro_header") {
-            Text(
-                text = "Focus Analytics",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(
-                    top = Dimensions.sectionSpacing,
-                    bottom = Dimensions.elementSpacing,
-                ),
-            )
-        }
-
-        item(key = "pomodoro_stats") {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                ),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(Dimensions.cardPadding),
-                    verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                    ) {
-                        StatMetric(
-                            value = formatFocusTime(state.todaysFocusSeconds),
-                            label = "Focus Time",
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        StatMetric(
-                            value = state.todaysPomodoroSessions.toString(),
-                            label = "Sessions",
-                            color = MaterialTheme.colorScheme.secondary,
-                        )
-                        StatMetric(
-                            value = state.todaysCompletedRounds.toString(),
-                            label = "Rounds",
-                            color = MaterialTheme.colorScheme.tertiary,
-                        )
-                    }
-
-                    if (state.todaysFocusSeconds > 0) {
-                        val avgSessionMinutes = if (state.todaysPomodoroSessions > 0) {
-                            (state.todaysFocusSeconds / 60) / state.todaysPomodoroSessions
-                        } else 0
-                        Text(
-                            text = "Average session: ${avgSessionMinutes}m",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-        }
-
-        // Task Analytics
-        item(key = "task_header") {
-            Text(
-                text = "Task Analytics",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(
-                    top = Dimensions.sectionSpacing,
-                    bottom = Dimensions.elementSpacing,
-                ),
-            )
-        }
-
-        item(key = "task_stats") {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                ),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(Dimensions.cardPadding),
-                    verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                    ) {
-                        StatMetric(
-                            value = state.completedTasksToday.toString(),
-                            label = "Completed",
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        StatMetric(
-                            value = state.totalTasks.toString(),
-                            label = "Total",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        StatMetric(
-                            value = "${(state.taskCompletionRate * 100).toInt()}%",
-                            label = "Rate",
-                            color = if (state.taskCompletionRate >= 0.7f) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.error,
-                        )
-                    }
-
-                    val pendingTasks = maxOf(0, state.totalTasks - state.completedTasksToday)
-                    if (pendingTasks > 0) {
-                        LinearProgressIndicator(
-                            progress = { state.taskCompletionRate },
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                        )
-                        Text(
-                            text = "$pendingTasks tasks remaining",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-        }
-
         // Summary Grid Header
         item(key = "summary_header") {
             Text(
@@ -544,11 +424,12 @@ private fun ActivityGraphCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Dimensions.sectionSpacing),
+                .padding(Dimensions.cardPadding),
             verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
         ) {
             Text(
@@ -805,11 +686,12 @@ private fun CurrentStreakCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Dimensions.sectionSpacing),
+                .padding(Dimensions.cardPadding),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -825,7 +707,11 @@ private fun CurrentStreakCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.CheckCircle, // Placeholder icon
+                        imageVector = if (habitStat.currentStreak > 0) {
+                            Icons.Outlined.LocalFireDepartment
+                        } else {
+                            Icons.Outlined.CheckCircle
+                        },
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -840,7 +726,7 @@ private fun CurrentStreakCard(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = "Target: Daily", // Placeholder subtitle
+                        text = "Target: ${habitStat.frequency}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -891,12 +777,13 @@ private fun DetailedSummaryCard(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+        ),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Dimensions.sectionSpacing),
+                .padding(Dimensions.cardPadding),
             verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge)
         ) {
             // Focus Insight
@@ -972,32 +859,6 @@ private fun InsightRow(
                 lineHeight = 20.sp
             )
         }
-    }
-}
-
-@Composable
-private fun StatMetric(
-    value: String,
-    label: String,
-    color: Color,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = color,
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

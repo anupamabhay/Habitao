@@ -8,7 +8,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
@@ -29,6 +32,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -41,6 +45,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
@@ -52,7 +58,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.habitao.app.RequestAppPermissions
 import com.habitao.core.datastore.AppSettings
 import com.habitao.core.datastore.AppSettingsManager
 import com.habitao.core.ui.theme.HabitaoTheme
@@ -66,7 +71,6 @@ import com.habitao.feature.routines.ui.RoutineStatsScreen
 import com.habitao.feature.routines.ui.RoutinesScreen
 import com.habitao.feature.settings.ui.AboutScreen
 import com.habitao.feature.settings.ui.NotificationSettingsScreen
-import com.habitao.feature.settings.ui.PomodoroSettingsScreen
 import com.habitao.feature.settings.ui.SettingsScreen
 import com.habitao.feature.settings.ui.SettingsTabOption
 import com.habitao.feature.tasks.ui.CreateTaskScreen
@@ -103,10 +107,7 @@ object SettingsRoute
 object AboutRoute
 
 @Serializable
-object NotificationSettingsRoute
-
-@Serializable
-object PomodoroSettingsRoute
+object NotificationsRoute
 
 @Serializable
 object FullScreenClockRoute
@@ -209,7 +210,6 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
     }
 
     HabitaoTheme(themeMode = settings.themeMode) {
-    RequestAppPermissions()
 
     val selectedTabs = remember(settings.bottomNavTabs, settings.maxVisibleTabs) {
         resolveSelectedTabs(settings.bottomNavTabs, settings.maxVisibleTabs)
@@ -384,9 +384,8 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
                                 appSettingsManager.setThemeMode(themeMode)
                             }
                         },
-                        onNavigateToNotifications = { navController.navigate(NotificationSettingsRoute) },
-                        onNavigateToPomodoro = { navController.navigate(PomodoroSettingsRoute) },
                         onNavigateToAbout = { navController.navigate(AboutRoute) },
+                        onNavigateToNotifications = { navController.navigate(NotificationsRoute) },
                         onNavigateBack = { navController.popBackStack() },
                     )
                 }
@@ -395,12 +394,28 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
                     AboutScreen(onNavigateBack = { navController.popBackStack() })
                 }
 
-                composable<NotificationSettingsRoute> {
-                    NotificationSettingsScreen(onNavigateBack = { navController.popBackStack() })
-                }
-
-                composable<PomodoroSettingsRoute> {
-                    PomodoroSettingsScreen(onNavigateBack = { navController.popBackStack() })
+                composable<NotificationsRoute> {
+                    NotificationSettingsScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        habitRemindersEnabled = settings.habitRemindersEnabled,
+                        taskRemindersEnabled = settings.taskRemindersEnabled,
+                        pomodoroNotificationsEnabled = settings.pomodoroNotificationsEnabled,
+                        onHabitRemindersEnabledChanged = { enabled ->
+                            coroutineScope.launch {
+                                appSettingsManager.setHabitRemindersEnabled(enabled)
+                            }
+                        },
+                        onTaskRemindersEnabledChanged = { enabled ->
+                            coroutineScope.launch {
+                                appSettingsManager.setTaskRemindersEnabled(enabled)
+                            }
+                        },
+                        onPomodoroNotificationsEnabledChanged = { enabled ->
+                            coroutineScope.launch {
+                                appSettingsManager.setPomodoroNotificationsEnabled(enabled)
+                            }
+                        },
+                    )
                 }
 
             // -- Full-screen destinations (no bottom bar) --
@@ -458,7 +473,7 @@ private fun HabitaoNavigationBar(
     onMoreSelected: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    NavigationBar(modifier = modifier) {
+    NavigationBar(modifier = modifier.fillMaxWidth()) {
         visibleTabs.forEach { tab ->
             val isSelected =
                 currentDestination?.hierarchy?.any { destination ->
@@ -479,7 +494,11 @@ private fun HabitaoNavigationBar(
                         contentDescription = tab.label,
                     )
                 },
-                label = if (showTabLabels) { { Text(tab.label) } } else null,
+                label = if (showTabLabels) {
+                    { Text(tab.label, style = MaterialTheme.typography.labelSmall, fontSize = 10.sp, maxLines = 1) }
+                } else {
+                    null
+                },
                 alwaysShowLabel = showTabLabels,
             )
         }
@@ -498,7 +517,11 @@ private fun HabitaoNavigationBar(
                     contentDescription = "More",
                 )
             },
-            label = if (showTabLabels) { { Text("More") } } else null,
+            label = if (showTabLabels) {
+                { Text("More", style = MaterialTheme.typography.labelSmall, fontSize = 10.sp, maxLines = 1) }
+            } else {
+                null
+            },
             alwaysShowLabel = showTabLabels,
         )
     }
@@ -511,7 +534,17 @@ private fun MoreMenuSheet(
     onSettingsSelected: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier
+            .padding(vertical = 16.dp)
+            .navigationBarsPadding()
+            .padding(bottom = 24.dp)
+    ) {
+        Text(
+            text = "More",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+        )
         hiddenTabs.forEach { hiddenTab ->
             ListItem(
                 headlineContent = { Text(hiddenTab.label) },
@@ -521,7 +554,10 @@ private fun MoreMenuSheet(
                         contentDescription = hiddenTab.label,
                     )
                 },
-                modifier = Modifier.clickable { onHiddenTabSelected(hiddenTab) },
+                modifier = Modifier
+                    .clickable { onHiddenTabSelected(hiddenTab) }
+                    .padding(vertical = 4.dp)
+                    .height(56.dp),
             )
         }
 
@@ -535,7 +571,10 @@ private fun MoreMenuSheet(
                     contentDescription = "Settings",
                 )
             },
-            modifier = Modifier.clickable(onClick = onSettingsSelected),
+            modifier = Modifier
+                .clickable(onClick = onSettingsSelected)
+                .padding(vertical = 4.dp)
+                .height(56.dp),
         )
     }
 }

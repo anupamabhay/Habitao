@@ -64,7 +64,6 @@ dependencies {
     implementation(projects.domain)
     implementation(projects.core.common)
     implementation(projects.core.ui)
-    implementation(projects.system.notifications)
 
     // AndroidX Core
     implementation(libs.androidx.core.ktx)

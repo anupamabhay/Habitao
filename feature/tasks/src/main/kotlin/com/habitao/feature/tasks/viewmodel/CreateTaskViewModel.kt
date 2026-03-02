@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.Task
 import com.habitao.domain.model.TaskPriority
 import com.habitao.domain.repository.TaskRepository
-import com.habitao.system.notifications.TaskReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +22,6 @@ import javax.inject.Inject
 data class SubtaskItem(
     val id: String,
     val text: String,
-    val description: String = "",
     val priority: TaskPriority = TaskPriority.NONE,
     val existingTaskId: String? = null,
 )
@@ -55,7 +53,6 @@ sealed class CreateTaskIntent {
     object AddSubtask : CreateTaskIntent()
     data class RemoveSubtask(val id: String) : CreateTaskIntent()
     data class UpdateSubtaskText(val id: String, val text: String) : CreateTaskIntent()
-    data class UpdateSubtaskDescription(val id: String, val description: String) : CreateTaskIntent()
     data class UpdateSubtaskPriority(val id: String, val priority: TaskPriority) : CreateTaskIntent()
     object SaveTask : CreateTaskIntent()
     data class LoadTask(val taskId: String) : CreateTaskIntent()
@@ -65,8 +62,7 @@ sealed class CreateTaskIntent {
 
 @HiltViewModel
 class CreateTaskViewModel @Inject constructor(
-    private val taskRepository: TaskRepository,
-    private val taskReminderScheduler: TaskReminderScheduler,
+    private val taskRepository: TaskRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CreateTaskState())
@@ -125,16 +121,6 @@ class CreateTaskViewModel @Inject constructor(
                     it.copy(
                         subtasks = it.subtasks.map { subtask ->
                             if (subtask.id == intent.id) subtask.copy(text = intent.text) else subtask
-                        }
-                    )
-                }
-            }
-            is CreateTaskIntent.UpdateSubtaskDescription -> {
-                _state.update { state ->
-                    state.copy(
-                        subtasks = state.subtasks.map { subtask ->
-                            if (subtask.id == intent.id) subtask.copy(description = intent.description)
-                            else subtask
                         }
                     )
                 }
@@ -207,7 +193,6 @@ class CreateTaskViewModel @Inject constructor(
                     SubtaskItem(
                         id = task.id,
                         text = task.title,
-                        description = task.description ?: "",
                         priority = task.priority,
                         existingTaskId = task.id,
                     )
@@ -257,15 +242,6 @@ class CreateTaskViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = {
-                    if (currentState.reminderEnabled && currentState.dueDate != null) {
-                        taskReminderScheduler.scheduleReminder(
-                            taskId = taskId,
-                            taskTitle = currentState.title,
-                            dueDate = currentState.dueDate,
-                            dueTime = currentState.dueTime,
-                        )
-                    }
-
                     if (currentState.parentTaskId == null) {
                         try {
                             saveSubtasks(taskId, currentState)
@@ -322,7 +298,6 @@ class CreateTaskViewModel @Inject constructor(
                 if (existingTask != null) {
                     val updated = existingTask.copy(
                         title = subtask.text.trim(),
-                        description = subtask.description.trim().ifEmpty { null },
                         priority = subtask.priority,
                         parentTaskId = parentId,
                         updatedAt = System.currentTimeMillis(),
@@ -334,7 +309,6 @@ class CreateTaskViewModel @Inject constructor(
                 val newSubtask = Task(
                     id = UUID.randomUUID().toString(),
                     title = subtask.text.trim(),
-                    description = subtask.description.trim().ifEmpty { null },
                     parentTaskId = parentId,
                     dueDate = currentState.dueDate,
                     dueTime = currentState.dueTime,

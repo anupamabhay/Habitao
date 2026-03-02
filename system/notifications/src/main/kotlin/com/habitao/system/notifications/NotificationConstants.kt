@@ -1,7 +1,7 @@
 package com.habitao.system.notifications
 
 object NotificationConstants {
-    // Existing habit constants
+    // Habit reminders
     const val CHANNEL_ID = "habit_reminders"
     const val CHANNEL_NAME = "Habit Reminders"
     const val EXTRA_HABIT_ID = "HABIT_ID"
@@ -11,11 +11,11 @@ object NotificationConstants {
     const val ACTION_HABIT_REMINDER = "com.habitao.system.notifications.ACTION_HABIT_REMINDER"
     const val ACTION_MARK_COMPLETE = "com.habitao.system.notifications.ACTION_MARK_COMPLETE"
 
-    // New task constants
+    // Task reminders
     const val TASK_CHANNEL_ID = "task_reminders"
     const val TASK_CHANNEL_NAME = "Task Reminders"
     const val EXTRA_TASK_ID = "TASK_ID"
     const val EXTRA_TASK_TITLE = "TASK_TITLE"
     const val ACTION_TASK_REMINDER = "com.habitao.system.notifications.ACTION_TASK_REMINDER"
-    const val ACTION_MARK_TASK_COMPLETE = "com.habitao.system.notifications.ACTION_MARK_TASK_COMPLETE"
+    const val ACTION_TASK_MARK_COMPLETE = "com.habitao.system.notifications.ACTION_TASK_MARK_COMPLETE"
 }

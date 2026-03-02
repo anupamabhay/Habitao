@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.clickable
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.habitao.domain.model.PomodoroType
 import com.habitao.feature.pomodoro.service.TimerState
@@ -71,6 +72,7 @@ fun PomodoroScreen(
     var showSkipDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showFocusSelector by remember { mutableStateOf(false) }
+    var showTimeAdjustDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -102,36 +104,7 @@ fun PomodoroScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            TextButton(
-                onClick = { showFocusSelector = true },
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
-            ) {
-                val focusText = state.selectedFocusOption?.title ?: "Focus"
-                Text(
-                    text = "$focusText >",
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            // Session counter
-            val currentSession = (state.totalCompletedWorkSessions + 1).coerceAtMost(state.totalSessions)
-            val sessionCountText = if (state.totalCompletedWorkSessions >= state.totalSessions && state.timerState == TimerState.IDLE) {
-                "All sessions complete"
-            } else {
-                "Session $currentSession of ${state.totalSessions}"
-            }
-
-            Text(
-                text = sessionCountText,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Session type label
+            // Session type label (top)
             val sessionTypeLabel = when (state.currentSessionType) {
                 PomodoroType.WORK -> "Focus"
                 PomodoroType.SHORT_BREAK -> "Short Break"
@@ -149,17 +122,57 @@ fun PomodoroScreen(
                 color = sessionTypeColor,
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // Session counter
+            val currentSession = (state.totalCompletedWorkSessions + 1).coerceAtMost(state.totalSessions)
+            val sessionCountText = if (state.totalCompletedWorkSessions >= state.totalSessions && state.timerState == TimerState.IDLE) {
+                "All sessions complete"
+            } else {
+                "Session $currentSession of ${state.totalSessions}"
+            }
 
+            Text(
+                text = sessionCountText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            val isTimerActive = state.timerState == TimerState.RUNNING || state.timerState == TimerState.PAUSED
             TimerDisplay(
                 remainingSeconds = state.remainingSeconds,
                 totalSeconds = state.totalSeconds,
                 sessionType = state.currentSessionType,
                 timerState = state.timerState,
-                modifier = Modifier.size(280.dp)
+                modifier = Modifier
+                    .size(280.dp)
+                    .then(
+                        if (isTimerActive) Modifier.clickable { showTimeAdjustDialog = true }
+                        else Modifier
+                    )
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Task/Habit link selector (below timer, above controls)
+            TextButton(
+                onClick = { showFocusSelector = true },
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+            ) {
+                val selectedOption = state.selectedFocusOption
+                val focusText = when {
+                    selectedOption != null -> selectedOption.title
+                    else -> "Link a task or habit"
+                }
+                Text(
+                    text = "$focusText >",
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             TimerControls(
                 timerState = state.timerState,
@@ -213,6 +226,16 @@ fun PomodoroScreen(
                             Text(text = "Cancel")
                         }
                     },
+                )
+            }
+
+            if (showTimeAdjustDialog) {
+                TimeAdjustDialog(
+                    onAdjust = { deltaSeconds ->
+                        viewModel.processIntent(PomodoroIntent.AdjustTime(deltaSeconds))
+                        showTimeAdjustDialog = false
+                    },
+                    onDismiss = { showTimeAdjustDialog = false },
                 )
             }
 
@@ -398,6 +421,37 @@ private fun FocusSelectionRow(
             )
         }
     }
+}
+
+@Composable
+private fun TimeAdjustDialog(
+    onAdjust: (Long) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Adjust Time") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                ) {
+                    TextButton(onClick = { onAdjust(-5 * 60L) }) { Text("-5 min") }
+                    TextButton(onClick = { onAdjust(-1 * 60L) }) { Text("-1 min") }
+                    TextButton(onClick = { onAdjust(1 * 60L) }) { Text("+1 min") }
+                    TextButton(onClick = { onAdjust(5 * 60L) }) { Text("+5 min") }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
 }
 
 private val FocusLinkType.displayName: String

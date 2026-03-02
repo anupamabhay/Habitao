@@ -29,7 +29,7 @@ interface PomodoroSessionDao {
     ): Flow<List<PomodoroSessionEntity>>
 
     @Query(
-        "SELECT COALESCE(SUM(actualDurationSeconds), 0) FROM pomodoro_sessions WHERE sessionType = 'WORK' AND startedAt >= :startOfDay AND startedAt < :endOfDay AND wasInterrupted = 0",
+        "SELECT COALESCE(SUM(actualDurationSeconds), 0) FROM pomodoro_sessions WHERE sessionType = 'WORK' AND startedAt >= :startOfDay AND startedAt < :endOfDay",
     )
     suspend fun getTotalFocusSeconds(
         startOfDay: Long,

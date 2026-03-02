@@ -42,6 +42,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -62,50 +64,20 @@ fun FullScreenClockScreen(
     viewModel: PomodoroViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    val pagerState = rememberPagerState(pageCount = { 4 })
 
     EnterImmersiveMode()
     BackHandler(onBack = onClose)
 
+    // Force dark color scheme for AOD — ensures visibility on black background in both themes
+    MaterialTheme(colorScheme = darkColorScheme()) {
     Box(
         modifier =
             Modifier
                 .fillMaxSize()
                 .background(Color.Black),
-        contentAlignment = Alignment.Center,
     ) {
-        IconButton(
-            onClick = onClose,
-            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Close,
-                contentDescription = "Close full screen clock",
-                tint = Color.White.copy(alpha = 0.8f),
-            )
-        }
-
-        // Session type label
-        val sessionTypeLabel = when (state.currentSessionType) {
-            PomodoroType.WORK -> "Focus"
-            PomodoroType.SHORT_BREAK -> "Short Break"
-            PomodoroType.LONG_BREAK -> "Long Break"
-        }
-        val sessionTypeColor = when (state.currentSessionType) {
-            PomodoroType.WORK -> MaterialTheme.colorScheme.primary
-            PomodoroType.SHORT_BREAK -> MaterialTheme.colorScheme.tertiary
-            PomodoroType.LONG_BREAK -> MaterialTheme.colorScheme.secondary
-        }
-        Text(
-            text = sessionTypeLabel,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = sessionTypeColor,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 56.dp),
-        )
-
+        // Pager fills background - must be rendered FIRST (below overlays)
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
@@ -152,10 +124,60 @@ fun FullScreenClockScreen(
                             DigitalTimeText(state.remainingSeconds)
                         }
                     }
+                    3 -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            TomatoClock(
+                                remainingSeconds = state.remainingSeconds,
+                                totalSeconds = state.totalSeconds,
+                                modifier = Modifier.size(360.dp)
+                            )
+                            Spacer(modifier = Modifier.height(48.dp))
+                            DigitalTimeText(state.remainingSeconds)
+                        }
+                    }
                 }
             }
         }
 
+        // Session type label - rendered ON TOP of pager
+        val sessionTypeLabel = when (state.currentSessionType) {
+            PomodoroType.WORK -> "Focus"
+            PomodoroType.SHORT_BREAK -> "Short Break"
+            PomodoroType.LONG_BREAK -> "Long Break"
+        }
+        val sessionTypeColor = when (state.currentSessionType) {
+            PomodoroType.WORK -> MaterialTheme.colorScheme.primary
+            PomodoroType.SHORT_BREAK -> MaterialTheme.colorScheme.tertiary
+            PomodoroType.LONG_BREAK -> MaterialTheme.colorScheme.secondary
+        }
+        Text(
+            text = sessionTypeLabel,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = sessionTypeColor,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 56.dp),
+        )
+
+        // Close button - rendered ON TOP of pager (last = highest z-order)
+        IconButton(
+            onClick = onClose,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Close,
+                contentDescription = "Close full screen clock",
+                tint = Color.White.copy(alpha = 0.8f),
+            )
+        }
+
+        // Page indicator dots
         Row(
             modifier =
                 Modifier
@@ -180,6 +202,7 @@ fun FullScreenClockScreen(
             }
         }
     }
+    } // MaterialTheme
 }
 
 @Composable
@@ -432,6 +455,152 @@ fun PlantClock(
 }
 
 @Composable
+fun TomatoClock(
+    remainingSeconds: Long,
+    totalSeconds: Long,
+    modifier: Modifier = Modifier
+) {
+    val progress = if (totalSeconds > 0L) 1f - (remainingSeconds.toFloat() / totalSeconds) else 1f
+    val tomatoRed = Color(0xFFE53935)
+    val tomatoRedDark = Color(0xFFB71C1C)
+    val leafGreen = Color(0xFF43A047)
+    val stemGreen = Color(0xFF2E7D32)
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing),
+        label = "tomato_fill"
+    )
+
+    Canvas(modifier = modifier) {
+        val width = size.width
+        val height = size.height
+        val cx = width / 2f
+        val cy = height / 2f
+
+        // Tomato body dimensions
+        val tomatoWidth = width * 0.7f
+        val tomatoHeight = height * 0.55f
+        val tomatoTop = cy - tomatoHeight * 0.35f
+        val tomatoBottom = tomatoTop + tomatoHeight
+
+        // Stem
+        val stemWidth = width * 0.03f
+        val stemHeight = height * 0.08f
+        drawRect(
+            color = stemGreen,
+            topLeft = Offset(cx - stemWidth / 2f, tomatoTop - stemHeight),
+            size = Size(stemWidth, stemHeight + 4.dp.toPx()),
+        )
+
+        // Leaf (left)
+        drawPath(
+            path = Path().apply {
+                moveTo(cx - stemWidth / 2f, tomatoTop - stemHeight * 0.4f)
+                cubicTo(
+                    cx - width * 0.12f, tomatoTop - stemHeight * 1.4f,
+                    cx - width * 0.2f, tomatoTop - stemHeight * 0.8f,
+                    cx - width * 0.06f, tomatoTop - stemHeight * 0.1f
+                )
+            },
+            color = leafGreen
+        )
+
+        // Leaf (right)
+        drawPath(
+            path = Path().apply {
+                moveTo(cx + stemWidth / 2f, tomatoTop - stemHeight * 0.4f)
+                cubicTo(
+                    cx + width * 0.12f, tomatoTop - stemHeight * 1.4f,
+                    cx + width * 0.2f, tomatoTop - stemHeight * 0.8f,
+                    cx + width * 0.06f, tomatoTop - stemHeight * 0.1f
+                )
+            },
+            color = leafGreen
+        )
+
+        // Tomato outline (unfilled, dark)
+        drawPath(
+            path = createTomatoPath(cx, tomatoTop, tomatoWidth, tomatoHeight),
+            color = tomatoRedDark.copy(alpha = 0.3f),
+        )
+
+        // Tomato filled portion (rising from bottom based on progress)
+        val fillHeight = tomatoHeight * animatedProgress
+        val clipTop = tomatoBottom - fillHeight
+
+        drawContext.canvas.save()
+        drawContext.canvas.clipRect(
+            left = 0f,
+            top = clipTop,
+            right = width,
+            bottom = tomatoBottom + 20.dp.toPx()
+        )
+        drawPath(
+            path = createTomatoPath(cx, tomatoTop, tomatoWidth, tomatoHeight),
+            color = tomatoRed,
+        )
+        drawContext.canvas.restore()
+
+        // Tomato outline stroke
+        drawPath(
+            path = createTomatoPath(cx, tomatoTop, tomatoWidth, tomatoHeight),
+            color = tomatoRedDark.copy(alpha = 0.6f),
+            style = Stroke(width = 2.dp.toPx()),
+        )
+
+        // Percentage text in center
+        val percentText = "${(animatedProgress * 100).toInt()}%"
+        val paint = android.graphics.Paint().apply {
+            textSize = width * 0.08f
+            color = android.graphics.Color.WHITE
+            textAlign = android.graphics.Paint.Align.CENTER
+            isAntiAlias = true
+            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+        }
+        drawContext.canvas.nativeCanvas.drawText(
+            percentText,
+            cx,
+            cy + paint.textSize * 0.35f,
+            paint,
+        )
+    }
+}
+
+private fun createTomatoPath(cx: Float, top: Float, width: Float, height: Float): Path {
+    val halfW = width / 2f
+    val bottom = top + height
+    val midY = top + height * 0.5f
+
+    return Path().apply {
+        moveTo(cx, top)
+        // Right side
+        cubicTo(
+            cx + halfW * 0.6f, top,
+            cx + halfW, top + height * 0.15f,
+            cx + halfW, midY,
+        )
+        cubicTo(
+            cx + halfW, bottom - height * 0.1f,
+            cx + halfW * 0.6f, bottom,
+            cx, bottom,
+        )
+        // Left side
+        cubicTo(
+            cx - halfW * 0.6f, bottom,
+            cx - halfW, bottom - height * 0.1f,
+            cx - halfW, midY,
+        )
+        cubicTo(
+            cx - halfW, top + height * 0.15f,
+            cx - halfW * 0.6f, top,
+            cx, top,
+        )
+        close()
+    }
+}
+
+@Composable
 private fun EnterImmersiveMode() {
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
@@ -446,6 +615,11 @@ private fun EnterImmersiveMode() {
             controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             controller.hide(WindowInsetsCompat.Type.systemBars())
             targetActivity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+            // AOD-style: dim screen brightness to minimum
+            val layoutParams = targetActivity.window.attributes
+            layoutParams.screenBrightness = AOD_BRIGHTNESS
+            targetActivity.window.attributes = layoutParams
         }
 
         onDispose {
@@ -457,10 +631,18 @@ private fun EnterImmersiveMode() {
                     )
                 controller.show(WindowInsetsCompat.Type.systemBars())
                 targetActivity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+                // Restore system brightness
+                val layoutParams = targetActivity.window.attributes
+                layoutParams.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                targetActivity.window.attributes = layoutParams
             }
         }
     }
 }
+
+/** AOD brightness: very dim but still visible on OLED */
+private const val AOD_BRIGHTNESS = 0.01f
 
 private tailrec fun Context.findActivity(): Activity? =
     when (this) {

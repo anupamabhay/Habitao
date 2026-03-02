@@ -28,6 +28,9 @@ data class AppSettings(
     val showTabLabels: Boolean = true,
     val themeMode: String = DEFAULT_THEME_MODE,
     val statsGraphType: String = DEFAULT_STATS_GRAPH_TYPE,
+    val habitRemindersEnabled: Boolean = true,
+    val taskRemindersEnabled: Boolean = true,
+    val pomodoroNotificationsEnabled: Boolean = true,
 )
 
 class AppSettingsManager(
@@ -52,6 +55,10 @@ class AppSettingsManager(
                     showTabLabels = preferences[SHOW_TAB_LABELS_KEY] ?: true,
                     themeMode = preferences.themeMode(),
                     statsGraphType = preferences.statsGraphType(),
+                    habitRemindersEnabled = preferences[HABIT_REMINDERS_ENABLED_KEY] ?: true,
+                    taskRemindersEnabled = preferences[TASK_REMINDERS_ENABLED_KEY] ?: true,
+                    pomodoroNotificationsEnabled =
+                        preferences[POMODORO_NOTIFICATIONS_ENABLED_KEY] ?: true,
                 )
             }
 
@@ -109,6 +116,24 @@ class AppSettingsManager(
         }
     }
 
+    suspend fun setHabitRemindersEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[HABIT_REMINDERS_ENABLED_KEY] = enabled
+        }
+    }
+
+    suspend fun setTaskRemindersEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[TASK_REMINDERS_ENABLED_KEY] = enabled
+        }
+    }
+
+    suspend fun setPomodoroNotificationsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[POMODORO_NOTIFICATIONS_ENABLED_KEY] = enabled
+        }
+    }
+
     private fun Preferences.bottomNavTabs(): List<String> {
         return this[BOTTOM_NAV_TABS_KEY]
             .orEmpty()
@@ -147,5 +172,9 @@ class AppSettingsManager(
         private val SHOW_TAB_LABELS_KEY = booleanPreferencesKey("show_tab_labels")
         private val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
         private val STATS_GRAPH_TYPE_KEY = stringPreferencesKey("stats_graph_type")
+        private val HABIT_REMINDERS_ENABLED_KEY = booleanPreferencesKey("habit_reminders_enabled")
+        private val TASK_REMINDERS_ENABLED_KEY = booleanPreferencesKey("task_reminders_enabled")
+        private val POMODORO_NOTIFICATIONS_ENABLED_KEY =
+            booleanPreferencesKey("pomodoro_notifications_enabled")
     }
 }

@@ -68,6 +68,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.habitao.feature.pomodoro.ui.components.PomodoroSettingsSheet
 
 data class SettingsTabOption(
     val id: String,
@@ -93,9 +94,8 @@ fun SettingsScreen(
     onMaxVisibleTabsChanged: (Int) -> Unit,
     onShowTabLabelsChanged: (Boolean) -> Unit,
     onThemeModeChanged: (String) -> Unit,
-    onNavigateToNotifications: () -> Unit,
-    onNavigateToPomodoro: () -> Unit,
     onNavigateToAbout: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -109,9 +109,8 @@ fun SettingsScreen(
                     onNavigateToTabBar = { currentView = SettingsView.TabBar },
                     themeMode = themeMode,
                     onThemeModeChanged = onThemeModeChanged,
-                    onNavigateToNotifications = onNavigateToNotifications,
-                    onNavigateToPomodoro = onNavigateToPomodoro,
                     onNavigateToAbout = onNavigateToAbout,
+                    onNavigateToNotifications = onNavigateToNotifications,
                     defaultLaunchTabId = defaultLaunchTabId,
                     allTabs = allTabs,
                     onDefaultLaunchTabChanged = onDefaultLaunchTabChanged,
@@ -142,9 +141,8 @@ fun MainSettingsView(
     onNavigateToTabBar: () -> Unit,
     themeMode: String,
     onThemeModeChanged: (String) -> Unit,
-    onNavigateToNotifications: () -> Unit,
-    onNavigateToPomodoro: () -> Unit,
     onNavigateToAbout: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     defaultLaunchTabId: String,
     allTabs: List<SettingsTabOption>,
     onDefaultLaunchTabChanged: (String) -> Unit,
@@ -152,6 +150,7 @@ fun MainSettingsView(
 ) {
     var showThemeModeDialog by remember { mutableStateOf(false) }
     var showDefaultLaunchTabDialog by remember { mutableStateOf(false) }
+    var showPomodoroSettings by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -204,7 +203,7 @@ fun MainSettingsView(
                         icon = Icons.Default.Timer,
                         title = "Focus & Pomodoro",
                         subtitle = "Configure session length, breaks, and timer defaults.",
-                        onClick = onNavigateToPomodoro,
+                        onClick = { showPomodoroSettings = true },
                         showDivider = true
                     )
                     SettingsListItem(
@@ -250,6 +249,10 @@ fun MainSettingsView(
                 },
                 onDismiss = { showDefaultLaunchTabDialog = false },
             )
+        }
+
+        if (showPomodoroSettings) {
+            PomodoroSettingsSheet(onDismiss = { showPomodoroSettings = false })
         }
     }
 }

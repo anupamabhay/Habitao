@@ -99,6 +99,10 @@ class TimerService : LifecycleService() {
             ACTION_RESUME -> handleResume()
             ACTION_STOP -> handleStop()
             ACTION_SKIP -> handleSkip()
+            ACTION_ADJUST_TIME -> {
+                val delta = intent.getLongExtra(EXTRA_DELTA_SECONDS, 0L)
+                if (delta != 0L) handleAdjustTime(delta)
+            }
         }
         return START_STICKY
     }
@@ -186,6 +190,26 @@ class TimerService : LifecycleService() {
         timerStateHolder.updateTimerState(TimerState.IDLE)
         updateNotification(0L)
         stopTimerService()
+    }
+
+    private fun handleAdjustTime(deltaSeconds: Long) {
+        val currentState = timerStateHolder.timerState.value
+        if (currentState != TimerState.RUNNING && currentState != TimerState.PAUSED) return
+
+        val currentRemaining = timerStateHolder.remainingSeconds.value
+        val currentTotal = timerStateHolder.totalSeconds.value
+        val newRemaining = (currentRemaining + deltaSeconds).coerceAtLeast(0L)
+        val newTotal = (currentTotal + deltaSeconds).coerceAtLeast(newRemaining)
+
+        timerStateHolder.updateRemainingSeconds(newRemaining)
+        timerStateHolder.updateTotalSeconds(newTotal)
+
+        if (currentState == TimerState.RUNNING) {
+            // Restart the timer coroutine with the adjusted time
+            startTimer(newRemaining)
+        } else {
+            updateNotification(newRemaining)
+        }
     }
 
     private fun startTimer(initialRemainingSeconds: Long) {
@@ -509,6 +533,8 @@ class TimerService : LifecycleService() {
         const val ACTION_RESUME = "com.habitao.feature.pomodoro.action.RESUME"
         const val ACTION_STOP = "com.habitao.feature.pomodoro.action.STOP"
         const val ACTION_SKIP = "com.habitao.feature.pomodoro.action.SKIP"
+        const val ACTION_ADJUST_TIME = "com.habitao.feature.pomodoro.action.ADJUST_TIME"
+        const val EXTRA_DELTA_SECONDS = "extra_delta_seconds"
 
         const val DEFAULT_WORK_SECONDS = 1500L
         const val DEFAULT_SHORT_BREAK_SECONDS = 300L

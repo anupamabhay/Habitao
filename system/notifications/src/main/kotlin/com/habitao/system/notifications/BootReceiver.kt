@@ -14,9 +14,6 @@ class BootReceiver : BroadcastReceiver() {
     @Inject
     lateinit var scheduler: HabitReminderScheduler
 
-    @Inject
-    lateinit var taskScheduler: TaskReminderScheduler
-
     override fun onReceive(
         context: Context,
         intent: Intent,
@@ -24,7 +21,6 @@ class BootReceiver : BroadcastReceiver() {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             CoroutineScope(Dispatchers.IO).launch {
                 scheduler.rescheduleAllReminders()
-                taskScheduler.rescheduleAllReminders()
             }
         }
     }
