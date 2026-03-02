@@ -52,6 +52,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -85,11 +86,14 @@ fun SettingsScreen(
     allTabs: List<SettingsTabOption>,
     defaultLaunchTabId: String,
     maxVisibleTabs: Int,
+    showTabLabels: Boolean,
     themeMode: String,
     onBottomTabsChanged: (List<String>) -> Unit,
     onDefaultLaunchTabChanged: (String) -> Unit,
     onMaxVisibleTabsChanged: (Int) -> Unit,
+    onShowTabLabelsChanged: (Boolean) -> Unit,
     onThemeModeChanged: (String) -> Unit,
+    onNavigateToAbout: () -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -103,6 +107,7 @@ fun SettingsScreen(
                     onNavigateToTabBar = { currentView = SettingsView.TabBar },
                     themeMode = themeMode,
                     onThemeModeChanged = onThemeModeChanged,
+                    onNavigateToAbout = onNavigateToAbout,
                     defaultLaunchTabId = defaultLaunchTabId,
                     allTabs = allTabs,
                     onDefaultLaunchTabChanged = onDefaultLaunchTabChanged,
@@ -114,8 +119,10 @@ fun SettingsScreen(
                     selectedBottomTabIds = selectedBottomTabIds,
                     allTabs = allTabs,
                     maxVisibleTabs = maxVisibleTabs,
+                    showTabLabels = showTabLabels,
                     onBottomTabsChanged = onBottomTabsChanged,
                     onMaxVisibleTabsChanged = onMaxVisibleTabsChanged,
+                    onShowTabLabelsChanged = onShowTabLabelsChanged,
                     onNavigateBack = { currentView = SettingsView.Main },
                     modifier = modifier
                 )
@@ -131,6 +138,7 @@ fun MainSettingsView(
     onNavigateToTabBar: () -> Unit,
     themeMode: String,
     onThemeModeChanged: (String) -> Unit,
+    onNavigateToAbout: () -> Unit,
     defaultLaunchTabId: String,
     allTabs: List<SettingsTabOption>,
     onDefaultLaunchTabChanged: (String) -> Unit,
@@ -211,22 +219,7 @@ fun MainSettingsView(
             }
             
             item {
-                SettingsSection(title = "About") {
-                    SettingsListItem(
-                        icon = Icons.Default.Info,
-                        title = "About Habitao",
-                        subtitle = "Habitao is a habit, routine, and task tracker with Pomodoro focus to help you stay consistent and productive.",
-                        onClick = { /* TODO */ },
-                        showDivider = true
-                    )
-                    SettingsListItem(
-                        icon = Icons.Default.Settings,
-                        title = "Authors",
-                        subtitle = "Anupam Abhay and AI Agent",
-                        onClick = { /* TODO */ },
-                        showDivider = false
-                    )
-                }
+                AboutSection(onNavigateToAbout = onNavigateToAbout)
             }
         }
 
@@ -252,6 +245,24 @@ fun MainSettingsView(
                 onDismiss = { showDefaultLaunchTabDialog = false },
             )
         }
+    }
+}
+
+@Composable
+private fun AboutSection(onNavigateToAbout: () -> Unit) {
+    SettingsSection(title = "About") {
+        SettingsListItem(
+            icon = Icons.Default.Info,
+            title = "About Habitao",
+            onClick = onNavigateToAbout,
+            showDivider = true,
+        )
+        SettingsListItem(
+            icon = Icons.Default.Settings,
+            title = "Authors",
+            onClick = onNavigateToAbout,
+            showDivider = false,
+        )
     }
 }
 
@@ -427,8 +438,10 @@ fun TabBarSettingsView(
     selectedBottomTabIds: List<String>,
     allTabs: List<SettingsTabOption>,
     maxVisibleTabs: Int,
+    showTabLabels: Boolean,
     onBottomTabsChanged: (List<String>) -> Unit,
     onMaxVisibleTabsChanged: (Int) -> Unit,
+    onShowTabLabelsChanged: (Boolean) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -468,6 +481,36 @@ fun TabBarSettingsView(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            item {
+                Text(
+                    text = "Tab Settings",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 4.dp)
+                )
+            }
+
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    )
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Show Tab Labels") },
+                        supportingContent = { Text("Display text under navigation icons") },
+                        trailingContent = {
+                            Switch(
+                                checked = showTabLabels,
+                                onCheckedChange = onShowTabLabelsChanged,
+                            )
+                        },
+                    )
+                }
+            }
+
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),

@@ -2,7 +2,6 @@ package com.habitao.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
@@ -14,12 +13,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.outlined.CheckCircleOutline
+import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material.icons.outlined.Timer
@@ -62,7 +61,9 @@ import com.habitao.feature.habits.ui.StatsScreen
 import com.habitao.feature.pomodoro.ui.FullScreenClockScreen
 import com.habitao.feature.pomodoro.ui.PomodoroScreen
 import com.habitao.feature.routines.ui.CreateRoutineScreen
+import com.habitao.feature.routines.ui.RoutineStatsScreen
 import com.habitao.feature.routines.ui.RoutinesScreen
+import com.habitao.feature.settings.ui.AboutScreen
 import com.habitao.feature.settings.ui.SettingsScreen
 import com.habitao.feature.settings.ui.SettingsTabOption
 import com.habitao.feature.tasks.ui.CreateTaskScreen
@@ -87,10 +88,16 @@ object StatsRoute
 object RoutinesRoute
 
 @Serializable
+object RoutineStatsRoute
+
+@Serializable
 object TasksRoute
 
 @Serializable
 object SettingsRoute
+
+@Serializable
+object AboutRoute
 
 @Serializable
 object FullScreenClockRoute
@@ -127,8 +134,8 @@ private enum class Tab(
     HABITS(
         id = "habits",
         label = "Habits",
-        selectedIcon = Icons.Filled.CheckCircle,
-        unselectedIcon = Icons.Outlined.CheckCircleOutline,
+        selectedIcon = Icons.Filled.LocalFireDepartment,
+        unselectedIcon = Icons.Outlined.LocalFireDepartment,
         route = HabitsRoute,
     ),
     TASKS(
@@ -166,18 +173,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge(
-            statusBarStyle =
-                SystemBarStyle.auto(
-                    android.graphics.Color.TRANSPARENT,
-                    android.graphics.Color.TRANSPARENT,
-                ),
-            navigationBarStyle =
-                SystemBarStyle.auto(
-                    android.graphics.Color.TRANSPARENT,
-                    android.graphics.Color.TRANSPARENT,
-                ),
-        )
+        enableEdgeToEdge()
         setContent {
             HabitaoApp(appSettingsManager = appSettingsManager)
         }
@@ -275,6 +271,7 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
                         currentDestination = currentDestination,
                         visibleTabs = selectedTabs,
                         hiddenTabs = hiddenTabs,
+                        showTabLabels = settings.showTabLabels,
                         onTabSelected = navigateToTab,
                         onMoreSelected = { showMoreSheet = true },
                     )
@@ -320,8 +317,15 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
                         onEditRoutine = { routineId ->
                             navController.navigate(CreateRoutineRoute(routineId = routineId))
                         },
+                        onNavigateToStats = { navController.navigate(RoutineStatsRoute) },
                     )
                 }
+            }
+
+            composable<RoutineStatsRoute> {
+                RoutineStatsScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                )
             }
 
             composable<TasksRoute> {
@@ -341,6 +345,7 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
                         allTabs = allTabOptions,
                         defaultLaunchTabId = defaultLaunchTab.id,
                         maxVisibleTabs = settings.maxVisibleTabs,
+                        showTabLabels = settings.showTabLabels,
                         themeMode = settings.themeMode,
                         onBottomTabsChanged = { tabIds ->
                             val normalizedTabIds = resolveSelectedTabs(tabIds, settings.maxVisibleTabs).map(Tab::id)
@@ -359,13 +364,23 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
                                 appSettingsManager.setMaxVisibleTabs(count)
                             }
                         },
+                        onShowTabLabelsChanged = { show ->
+                            coroutineScope.launch {
+                                appSettingsManager.setShowTabLabels(show)
+                            }
+                        },
                         onThemeModeChanged = { themeMode ->
                             coroutineScope.launch {
                                 appSettingsManager.setThemeMode(themeMode)
                             }
                         },
+                        onNavigateToAbout = { navController.navigate(AboutRoute) },
                         onNavigateBack = { navController.popBackStack() },
                     )
+                }
+
+                composable<AboutRoute> {
+                    AboutScreen(onNavigateBack = { navController.popBackStack() })
                 }
 
             // -- Full-screen destinations (no bottom bar) --
@@ -418,6 +433,7 @@ private fun HabitaoNavigationBar(
     currentDestination: NavDestination?,
     visibleTabs: List<Tab>,
     hiddenTabs: List<Tab>,
+    showTabLabels: Boolean,
     onTabSelected: (Tab) -> Unit,
     onMoreSelected: () -> Unit,
     modifier: Modifier = Modifier,
@@ -443,7 +459,8 @@ private fun HabitaoNavigationBar(
                         contentDescription = tab.label,
                     )
                 },
-                label = { Text(tab.label) },
+                label = if (showTabLabels) { { Text(tab.label) } } else null,
+                alwaysShowLabel = showTabLabels,
             )
         }
 
@@ -461,7 +478,8 @@ private fun HabitaoNavigationBar(
                     contentDescription = "More",
                 )
             },
-            label = { Text("More") },
+            label = if (showTabLabels) { { Text("More") } } else null,
+            alwaysShowLabel = showTabLabels,
         )
     }
 }

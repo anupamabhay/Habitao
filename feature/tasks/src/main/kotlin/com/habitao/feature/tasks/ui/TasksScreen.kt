@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.habitao.core.ui.theme.Dimensions
@@ -430,13 +431,24 @@ private fun TaskRow(
             .clip(MaterialTheme.shapes.medium)
             .clickable(onClick = onClick)
             .padding(
-                start = if (isSubtask) 48.dp else Dimensions.elementSpacing,
-                end = Dimensions.elementSpacing,
-                top = Dimensions.elementSpacingSmall,
-                bottom = Dimensions.elementSpacingSmall
+                start = if (isSubtask) 48.dp else 0.dp,
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Priority color bar on the left
+        if (task.priority != TaskPriority.NONE) {
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(getPriorityColor(task.priority))
+            )
+            Spacer(modifier = Modifier.width(Dimensions.elementSpacingSmall))
+        } else {
+            Spacer(modifier = Modifier.width(4.dp + Dimensions.elementSpacingSmall))
+        }
+
         Checkbox(
             checked = task.isCompleted,
             onCheckedChange = onToggleComplete
@@ -445,24 +457,14 @@ private fun TaskRow(
         Spacer(modifier = Modifier.width(Dimensions.elementSpacingSmall))
 
         Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                    color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-                )
-
-                if (task.priority != TaskPriority.NONE) {
-                    Spacer(modifier = Modifier.width(Dimensions.elementSpacingSmall))
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(getPriorityColor(task.priority))
-                    )
-                }
-            }
+            Text(
+                text = task.title,
+                style = MaterialTheme.typography.bodyLarge,
+                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
 
             task.dueDate?.let { date ->
                 Text(

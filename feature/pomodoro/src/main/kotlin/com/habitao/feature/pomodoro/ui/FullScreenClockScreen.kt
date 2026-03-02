@@ -3,6 +3,7 @@ package com.habitao.feature.pomodoro.ui
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -12,14 +13,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,13 +32,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -46,6 +50,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.habitao.domain.model.PomodoroType
 import com.habitao.feature.pomodoro.ui.components.TimerDisplay
 import com.habitao.feature.pomodoro.viewmodel.PomodoroViewModel
 import kotlin.math.cos
@@ -57,7 +62,7 @@ fun FullScreenClockScreen(
     viewModel: PomodoroViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    var clockStyle by remember { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(pageCount = { 3 })
 
     EnterImmersiveMode()
     BackHandler(onBack = onClose)
@@ -66,7 +71,7 @@ fun FullScreenClockScreen(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .background(Color.Black),
         contentAlignment = Alignment.Center,
     ) {
         IconButton(
@@ -76,60 +81,103 @@ fun FullScreenClockScreen(
             Icon(
                 imageVector = Icons.Filled.Close,
                 contentDescription = "Close full screen clock",
-                tint = MaterialTheme.colorScheme.onBackground,
+                tint = Color.White.copy(alpha = 0.8f),
             )
         }
 
-        when (clockStyle) {
-            0 -> {
-                TimerDisplay(
-                    remainingSeconds = state.remainingSeconds,
-                    totalSeconds = state.totalSeconds,
-                    sessionType = state.currentSessionType,
-                    timerState = state.timerState,
-                    modifier = Modifier.size(400.dp)
+        // Session type label
+        val sessionTypeLabel = when (state.currentSessionType) {
+            PomodoroType.WORK -> "Focus"
+            PomodoroType.SHORT_BREAK -> "Short Break"
+            PomodoroType.LONG_BREAK -> "Long Break"
+        }
+        val sessionTypeColor = when (state.currentSessionType) {
+            PomodoroType.WORK -> MaterialTheme.colorScheme.primary
+            PomodoroType.SHORT_BREAK -> MaterialTheme.colorScheme.tertiary
+            PomodoroType.LONG_BREAK -> MaterialTheme.colorScheme.secondary
+        }
+        Text(
+            text = sessionTypeLabel,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = sessionTypeColor,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 56.dp),
+        )
+
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+        ) { page ->
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                when (page) {
+                    0 -> {
+                        TimerDisplay(
+                            remainingSeconds = state.remainingSeconds,
+                            totalSeconds = state.totalSeconds,
+                            sessionType = state.currentSessionType,
+                            timerState = state.timerState,
+                            modifier = Modifier.size(400.dp)
+                        )
+                    }
+                    1 -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            AnalogClock(
+                                remainingSeconds = state.remainingSeconds,
+                                totalSeconds = state.totalSeconds,
+                                modifier = Modifier.size(360.dp)
+                            )
+                            Spacer(modifier = Modifier.height(48.dp))
+                            DigitalTimeText(state.remainingSeconds)
+                        }
+                    }
+                    2 -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            PlantClock(
+                                remainingSeconds = state.remainingSeconds,
+                                totalSeconds = state.totalSeconds,
+                                modifier = Modifier.size(360.dp)
+                            )
+                            Spacer(modifier = Modifier.height(48.dp))
+                            DigitalTimeText(state.remainingSeconds)
+                        }
+                    }
+                }
+            }
+        }
+
+        Row(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 48.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            repeat(pagerState.pageCount) { index ->
+                val isSelected = pagerState.currentPage == index
+                Box(
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 4.dp)
+                            .size(if (isSelected) 10.dp else 8.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isSelected) Color.White.copy(alpha = 0.9f)
+                                else Color.White.copy(alpha = 0.3f)
+                            ),
                 )
             }
-            1 -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    AnalogClock(
-                        remainingSeconds = state.remainingSeconds,
-                        totalSeconds = state.totalSeconds,
-                        modifier = Modifier.size(360.dp)
-                    )
-                    Spacer(modifier = Modifier.height(48.dp))
-                    DigitalTimeText(state.remainingSeconds)
-                }
-            }
-            2 -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    PlantClock(
-                        remainingSeconds = state.remainingSeconds,
-                        totalSeconds = state.totalSeconds,
-                        modifier = Modifier.size(360.dp)
-                    )
-                    Spacer(modifier = Modifier.height(48.dp))
-                    DigitalTimeText(state.remainingSeconds)
-                }
-            }
-        }
-
-        IconButton(
-            onClick = { clockStyle = (clockStyle + 1) % 3 },
-            modifier = Modifier.align(Alignment.BottomCenter).padding(32.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Palette,
-                contentDescription = "Change clock style",
-                tint = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.size(32.dp)
-            )
         }
     }
 }
@@ -146,7 +194,7 @@ fun DigitalTimeText(remainingSeconds: Long) {
             fontSize = 64.sp,
             fontWeight = FontWeight.Bold
         ),
-        color = MaterialTheme.colorScheme.onBackground
+        color = Color.White
     )
 }
 
@@ -397,6 +445,7 @@ private fun EnterImmersiveMode() {
                 )
             controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             controller.hide(WindowInsetsCompat.Type.systemBars())
+            targetActivity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
 
         onDispose {
@@ -407,6 +456,7 @@ private fun EnterImmersiveMode() {
                         targetActivity.window.decorView,
                     )
                 controller.show(WindowInsetsCompat.Type.systemBars())
+                targetActivity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
         }
     }

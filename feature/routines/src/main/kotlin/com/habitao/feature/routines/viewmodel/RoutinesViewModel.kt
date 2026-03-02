@@ -2,6 +2,7 @@ package com.habitao.feature.routines.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.habitao.domain.model.RepeatPattern
 import com.habitao.domain.model.Routine
 import com.habitao.domain.model.RoutineLog
 import com.habitao.domain.model.RoutineStep
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 // State for Routines screen
@@ -48,8 +50,11 @@ class RoutinesViewModel @Inject constructor(
     private val errorFlow = MutableStateFlow<String?>(null)
 
     private val routinesFlow = selectedDateFlow.flatMapLatest { date ->
-        routineRepository.observeRoutinesForDate(date)
-            .map { result -> result.getOrElse { emptyList() } }
+        routineRepository.observeAllRoutines()
+            .map { result ->
+                result.getOrElse { emptyList() }
+                    .filter { routine -> isScheduledForDate(routine, date) }
+            }
             .catch { emit(emptyList()) }
     }
 
@@ -108,6 +113,35 @@ class RoutinesViewModel @Inject constructor(
             is RoutinesIntent.DeleteRoutine -> deleteRoutine(intent.routineId)
             is RoutinesIntent.ToggleStep -> toggleStep(intent.routineId, intent.stepId, intent.isCompleted)
             is RoutinesIntent.ClearError -> clearError()
+        }
+    }
+
+    fun refreshDate() {
+        val today = LocalDate.now()
+        if (selectedDateFlow.value != today) {
+            selectedDateFlow.value = today
+        }
+    }
+
+    private fun isScheduledForDate(routine: Routine, date: LocalDate): Boolean {
+        if (date.isBefore(routine.startDate)) return false
+        if (routine.endDate != null && date.isAfter(routine.endDate)) return false
+
+        return when (routine.repeatPattern) {
+            RepeatPattern.DAILY -> true
+            RepeatPattern.WEEKLY, RepeatPattern.SPECIFIC_DATES -> {
+                val repeatDays = routine.repeatDays
+                if (repeatDays.isNullOrEmpty()) {
+                    true
+                } else {
+                    date.dayOfWeek in repeatDays
+                }
+            }
+            RepeatPattern.CUSTOM -> {
+                val interval = routine.customInterval ?: 1
+                val daysBetween = ChronoUnit.DAYS.between(routine.startDate, date)
+                daysBetween >= 0 && daysBetween % interval == 0L
+            }
         }
     }
 

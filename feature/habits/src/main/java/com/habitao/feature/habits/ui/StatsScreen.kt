@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -444,56 +444,80 @@ private fun ActivityGraphCard(
             } else {
                 val axisLabels =
                     if (timeFilter == 0) {
-                        listOf("00:00", "06:00", "12:00", "18:00", "24:00")
+                        data.mapIndexed { i, p -> if (i % 3 == 0) p.label else "" }
                     } else if (data.size <= 7) {
                         data.map { it.label }
                     } else {
                         listOf(data.first().label, data[data.lastIndex / 2].label, data.last().label)
                     }
 
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val scrollState = rememberScrollState()
-                    val minPointWidth = when (timeFilter) {
-                        2 -> 24.dp
-                        0 -> 12.dp
-                        else -> 18.dp
-                    }
-                    val desiredWidth = (data.size * minPointWidth.value).dp
-                    val chartWidth = if (desiredWidth > maxWidth) desiredWidth else maxWidth
+                val rawMaxValue = data.maxOf { maxOf(it.habitsCompleted, it.routinesCompleted, it.tasksCompleted) }.coerceAtLeast(1)
+                val yAxisMax = calculateYAxisMax(rawMaxValue)
+                val yAxisTicks = listOf(yAxisMax, yAxisMax / 2, 0)
 
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    // Sticky Y-axis (outside scroll area)
                     Column(
                         modifier = Modifier
-                            .horizontalScroll(scrollState)
-                            .width(chartWidth),
-                        verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
+                            .height(180.dp)
+                            .padding(end = 6.dp),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        horizontalAlignment = Alignment.End,
                     ) {
-                        if (graphType == "LINE") {
-                            ActivityLineChart(
-                                data = data,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(180.dp),
-                            )
-                        } else {
-                            ActivityBarChart(
-                                data = data,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(180.dp),
+                        yAxisTicks.forEach { tick ->
+                            Text(
+                                text = tick.toString(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
+                    }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                    // Scrollable chart area
+                    BoxWithConstraints(modifier = Modifier.weight(1f)) {
+                        val scrollState = rememberScrollState()
+                        val minPointWidth = when (timeFilter) {
+                            2 -> 24.dp
+                            0 -> 28.dp
+                            else -> 40.dp
+                        }
+                        val desiredWidth = (data.size * minPointWidth.value).dp
+                        val chartWidth = if (desiredWidth > maxWidth) desiredWidth else maxWidth
+
+                        Column(
+                            modifier = Modifier
+                                .horizontalScroll(scrollState)
+                                .width(chartWidth),
+                            verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
                         ) {
-                            axisLabels.forEach { label ->
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
+                            if (graphType == "LINE") {
+                                ActivityLineChart(
+                                    data = data,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(180.dp),
                                 )
+                            } else {
+                                ActivityBarChart(
+                                    data = data,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(180.dp),
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                axisLabels.forEach { label ->
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                    )
+                                }
                             }
                         }
                     }
@@ -539,75 +563,48 @@ private fun ActivityBarChart(
     data: List<ActivityDataPoint>,
     modifier: Modifier = Modifier,
 ) {
-    val habitsValues = data.map { it.habitsCompleted }
-    val routinesValues = data.map { it.routinesCompleted }
-    val tasksValues = data.map { it.tasksCompleted }
     val habitsColor = MaterialTheme.colorScheme.primary
     val routinesColor = MaterialTheme.colorScheme.secondary
     val tasksColor = MaterialTheme.colorScheme.tertiary
     val rawMaxValue = maxOf(
-        habitsValues.maxOrNull() ?: 0,
-        routinesValues.maxOrNull() ?: 0,
-        tasksValues.maxOrNull() ?: 0,
+        data.maxOfOrNull { it.habitsCompleted } ?: 0,
+        data.maxOfOrNull { it.routinesCompleted } ?: 0,
+        data.maxOfOrNull { it.tasksCompleted } ?: 0,
         1,
     )
-
     val yAxisMax = calculateYAxisMax(rawMaxValue)
-    val yAxisTicks = listOf(yAxisMax, yAxisMax / 2, 0)
 
-    Row(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(end = 6.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.End,
-        ) {
-            yAxisTicks.forEach { tick ->
-                Text(
-                    text = tick.toString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+    Canvas(modifier = modifier) {
+        val chartTop = 8.dp.toPx()
+        val chartBottom = size.height - 8.dp.toPx()
+        val chartHeight = chartBottom - chartTop
+        val count = data.size
+        if (count == 0) return@Canvas
 
-        Canvas(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-        ) {
-            val chartTop = 12.dp.toPx()
-            val chartBottom = size.height - 12.dp.toPx()
-            val chartHeight = chartBottom - chartTop
-            val count = data.size
-            val stepX = if (count > 1) size.width / (count - 1) else 0f
-            val barWidth = if (count > 1) (stepX * 0.6f) / 3f else size.width * 0.1f
+        val groupWidth = size.width / count
+        val barWidth = (groupWidth * 0.7f) / 3f
+        val gap = groupWidth * 0.3f / 2f
 
-            fun drawBar(index: Int, value: Int, color: Color, offsetMultiplier: Float) {
+        data.forEachIndexed { index, point ->
+            val groupLeft = index * groupWidth + gap
+
+            fun drawBar(barIndex: Int, value: Int, color: androidx.compose.ui.graphics.Color) {
                 if (value == 0) return
-                val x = if (count > 1) index * stepX else size.width / 2f
                 val normalized = value.toFloat() / yAxisMax.toFloat()
-                val barHeight = normalized * chartHeight
-                val y = chartBottom - barHeight
+                val barHeight = (normalized * chartHeight).coerceAtLeast(2.dp.toPx())
+                val left = groupLeft + barIndex * barWidth
+                val top = chartBottom - barHeight
 
-                val barX = x + (offsetMultiplier * barWidth) - (barWidth / 2f)
-
-                drawPath(
-                    path = Path().apply {
-                        moveTo(barX, chartBottom)
-                        lineTo(barX, y + (barWidth / 2f))
-                    },
+                drawRect(
                     color = color,
-                    style = Stroke(width = barWidth, cap = StrokeCap.Round),
+                    topLeft = Offset(left, top),
+                    size = Size(width = barWidth, height = barHeight),
                 )
             }
 
-            for (i in 0 until count) {
-                drawBar(i, habitsValues[i], habitsColor, -1f)
-                drawBar(i, routinesValues[i], routinesColor, 0f)
-                drawBar(i, tasksValues[i], tasksColor, 1f)
-            }
+            drawBar(0, point.habitsCompleted, habitsColor)
+            drawBar(1, point.routinesCompleted, routinesColor)
+            drawBar(2, point.tasksCompleted, tasksColor)
         }
     }
 }
@@ -617,99 +614,52 @@ private fun ActivityLineChart(
     data: List<ActivityDataPoint>,
     modifier: Modifier = Modifier,
 ) {
-    val habitsValues = data.map { it.habitsCompleted }
-    val routinesValues = data.map { it.routinesCompleted }
-    val tasksValues = data.map { it.tasksCompleted }
     val habitsColor = MaterialTheme.colorScheme.primary
     val routinesColor = MaterialTheme.colorScheme.secondary
     val tasksColor = MaterialTheme.colorScheme.tertiary
     val rawMaxValue = maxOf(
-        habitsValues.maxOrNull() ?: 0,
-        routinesValues.maxOrNull() ?: 0,
-        tasksValues.maxOrNull() ?: 0,
+        data.maxOfOrNull { it.habitsCompleted } ?: 0,
+        data.maxOfOrNull { it.routinesCompleted } ?: 0,
+        data.maxOfOrNull { it.tasksCompleted } ?: 0,
         1,
     )
-
     val yAxisMax = calculateYAxisMax(rawMaxValue)
-    val yAxisTicks = listOf(yAxisMax, yAxisMax / 2, 0)
 
-    Row(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(end = 6.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.End,
-        ) {
-            yAxisTicks.forEach { tick ->
-                Text(
-                    text = tick.toString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+    Canvas(modifier = modifier) {
+        val chartTop = 8.dp.toPx()
+        val chartBottom = size.height - 8.dp.toPx()
+        val chartHeight = chartBottom - chartTop
+        val count = data.size
+        if (count == 0) return@Canvas
+        val stepX = if (count > 1) size.width / (count - 1) else 0f
+
+        fun point(index: Int, value: Int): Offset {
+            val x = if (count > 1) index * stepX else size.width / 2f
+            val normalized = value.toFloat() / yAxisMax.toFloat()
+            val y = chartBottom - (normalized * chartHeight)
+            return Offset(x, y)
         }
 
-        Canvas(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-        ) {
-            val chartTop = 12.dp.toPx()
-            val chartBottom = size.height - 12.dp.toPx()
-            val chartHeight = chartBottom - chartTop
-            val count = data.size
-            val stepX = if (count > 1) size.width / (count - 1) else 0f
-
-            fun point(index: Int, value: Int): Offset {
-                val x = if (count > 1) index * stepX else size.width / 2f
-                val normalized = value.toFloat() / yAxisMax.toFloat()
-                val y = chartBottom - (normalized * chartHeight)
-                return Offset(x, y)
-            }
-
-            fun drawSeries(values: List<Int>, color: Color) {
-                if (values.isEmpty()) return
-                val points = values.mapIndexed { index, value -> point(index, value) }
-
-                if (points.size > 1) {
-                    val path = Path().apply {
-                        moveTo(points.first().x, points.first().y)
-                        for (index in 1 until points.size) {
-                            val previous = points[index - 1]
-                            val current = points[index]
-                            val controlX = (previous.x + current.x) / 2f
-                            cubicTo(
-                                controlX,
-                                previous.y,
-                                controlX,
-                                current.y,
-                                current.x,
-                                current.y,
-                            )
-                        }
+        fun drawSeries(values: List<Int>, color: androidx.compose.ui.graphics.Color) {
+            val points = values.mapIndexed { index, value -> point(index, value) }
+            if (points.size > 1) {
+                val path = Path().apply {
+                    moveTo(points.first().x, points.first().y)
+                    for (i in 1 until points.size) {
+                        val prev = points[i - 1]
+                        val curr = points[i]
+                        val cx = (prev.x + curr.x) / 2f
+                        cubicTo(cx, prev.y, cx, curr.y, curr.x, curr.y)
                     }
-
-                    drawPath(
-                        path = path,
-                        color = color,
-                        style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round),
-                    )
                 }
-
-                points.forEach { p ->
-                    drawCircle(
-                        color = color,
-                        radius = 3.dp.toPx(),
-                        center = p,
-                    )
-                }
+                drawPath(path, color, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
             }
-
-            drawSeries(habitsValues, habitsColor)
-            drawSeries(routinesValues, routinesColor)
-            drawSeries(tasksValues, tasksColor)
+            points.forEach { p -> drawCircle(color, radius = 3.dp.toPx(), center = p) }
         }
+
+        drawSeries(data.map { it.habitsCompleted }, habitsColor)
+        drawSeries(data.map { it.routinesCompleted }, routinesColor)
+        drawSeries(data.map { it.tasksCompleted }, tasksColor)
     }
 }
 

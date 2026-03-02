@@ -129,7 +129,27 @@ fun PomodoroScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Session type label
+            val sessionTypeLabel = when (state.currentSessionType) {
+                PomodoroType.WORK -> "Focus"
+                PomodoroType.SHORT_BREAK -> "Short Break"
+                PomodoroType.LONG_BREAK -> "Long Break"
+            }
+            val sessionTypeColor = when (state.currentSessionType) {
+                PomodoroType.WORK -> MaterialTheme.colorScheme.primary
+                PomodoroType.SHORT_BREAK -> MaterialTheme.colorScheme.tertiary
+                PomodoroType.LONG_BREAK -> MaterialTheme.colorScheme.secondary
+            }
+            Text(
+                text = sessionTypeLabel,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = sessionTypeColor,
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             TimerDisplay(
                 remainingSeconds = state.remainingSeconds,

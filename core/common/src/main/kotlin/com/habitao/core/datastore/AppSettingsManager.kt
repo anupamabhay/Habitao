@@ -2,6 +2,7 @@ package com.habitao.core.datastore
 
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -24,6 +25,7 @@ data class AppSettings(
     val bottomNavTabs: List<String> = emptyList(),
     val defaultLaunchTab: String = "habits",
     val maxVisibleTabs: Int = DEFAULT_MAX_VISIBLE_TABS,
+    val showTabLabels: Boolean = true,
     val themeMode: String = DEFAULT_THEME_MODE,
     val statsGraphType: String = DEFAULT_STATS_GRAPH_TYPE,
 )
@@ -47,6 +49,7 @@ class AppSettingsManager(
                     bottomNavTabs = preferences.bottomNavTabs(),
                     defaultLaunchTab = preferences[DEFAULT_LAUNCH_TAB_KEY] ?: "habits",
                     maxVisibleTabs = preferences[MAX_VISIBLE_TABS_KEY] ?: DEFAULT_MAX_VISIBLE_TABS,
+                    showTabLabels = preferences[SHOW_TAB_LABELS_KEY] ?: true,
                     themeMode = preferences.themeMode(),
                     statsGraphType = preferences.statsGraphType(),
                 )
@@ -85,6 +88,12 @@ class AppSettingsManager(
         val clamped = count.coerceIn(3, 5)
         dataStore.edit { preferences ->
             preferences[MAX_VISIBLE_TABS_KEY] = clamped
+        }
+    }
+
+    suspend fun setShowTabLabels(show: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SHOW_TAB_LABELS_KEY] = show
         }
     }
 
@@ -135,6 +144,7 @@ class AppSettingsManager(
         private val BOTTOM_NAV_TABS_KEY = stringPreferencesKey("bottom_nav_tabs")
         private val DEFAULT_LAUNCH_TAB_KEY = stringPreferencesKey("default_launch_tab")
         private val MAX_VISIBLE_TABS_KEY = intPreferencesKey("max_visible_tabs")
+        private val SHOW_TAB_LABELS_KEY = booleanPreferencesKey("show_tab_labels")
         private val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
         private val STATS_GRAPH_TYPE_KEY = stringPreferencesKey("stats_graph_type")
     }

@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -39,6 +40,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.LinearProgressIndicator
@@ -49,6 +51,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,12 +64,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.habitao.core.ui.theme.AppShapes
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.Routine
@@ -81,10 +87,24 @@ import com.habitao.feature.routines.viewmodel.RoutinesViewModel
 fun RoutinesScreen(
     onAddRoutine: () -> Unit,
     onEditRoutine: (String) -> Unit,
+    onNavigateToStats: () -> Unit,
     viewModel: RoutinesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshDate()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     LaunchedEffect(state.error) {
         state.error?.let { error ->
@@ -100,6 +120,14 @@ fun RoutinesScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Routines") },
+                actions = {
+                    IconButton(onClick = onNavigateToStats) {
+                        Icon(
+                            imageVector = Icons.Outlined.BarChart,
+                            contentDescription = "Routine Stats",
+                        )
+                    }
+                },
                 scrollBehavior = scrollBehavior,
             )
         },
@@ -264,7 +292,7 @@ private fun RoutineCard(
                             overflow = TextOverflow.Ellipsis,
                             textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
                         Text(
                             text = "$completedStepsCount of $totalStepsCount steps completed",
                             style = MaterialTheme.typography.bodySmall,
@@ -274,7 +302,7 @@ private fun RoutineCard(
                         )
 
                         if (totalStepsCount > 0) {
-                            Spacer(modifier = Modifier.height(2.dp))
+                            Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
                             Text(
                                 text = "${(progress * 100).toInt()}% complete",
                                 style = MaterialTheme.typography.labelSmall,
@@ -288,7 +316,7 @@ private fun RoutineCard(
                 Spacer(modifier = Modifier.width(Dimensions.elementSpacingLarge))
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     FilledIconButton(
@@ -415,7 +443,7 @@ private fun RoutineStepRow(
             .clip(RoundedCornerShape(8.dp))
             .background(color = rowBackgroundColor)
             .clickable(onClick = onToggle)
-            .padding(horizontal = Dimensions.elementSpacing, vertical = 10.dp),
+            .padding(horizontal = Dimensions.elementSpacing, vertical = Dimensions.elementSpacingLarge),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
     ) {
@@ -483,7 +511,7 @@ private fun RoutineOverviewCard(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
                     Text(
                         text = "$completedRoutines of $totalRoutines routines complete",
                         style = MaterialTheme.typography.bodySmall,
@@ -493,9 +521,9 @@ private fun RoutineOverviewCard(
 
                 Text(
                     text = "${(completionRate * 100).toInt()}%",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
 

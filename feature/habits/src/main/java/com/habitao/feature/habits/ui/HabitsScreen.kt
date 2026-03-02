@@ -67,6 +67,7 @@ import com.habitao.feature.habits.viewmodel.HabitsIntent
 import com.habitao.feature.habits.viewmodel.HabitsState
 import com.habitao.feature.habits.viewmodel.HabitsViewModel
 import com.habitao.feature.habits.viewmodel.SortOption
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -383,26 +384,28 @@ private fun DateSelector(
     val baseWeekStart = remember(today) { today.with(DayOfWeek.MONDAY) }
     val currentSelectedDate by rememberUpdatedState(selectedDate)
 
-    // Auto-select corresponding day when user scrolls to a different week
+    // Sync date when pager settles on a new page — debounced and deduplicated
     LaunchedEffect(pagerState) {
-        var previousPage = pagerState.settledPage
-        snapshotFlow { pagerState.settledPage }.collect { page ->
-            if (page != previousPage) {
-                previousPage = page
-                val weekOffset = (page - middlePage).toLong()
-                val newWeekStart = baseWeekStart.plusWeeks(weekOffset)
-                val dayOfWeekIndex = currentSelectedDate.dayOfWeek.value - 1
-                val newDate = newWeekStart.plusDays(dayOfWeekIndex.toLong())
-                if (newDate != currentSelectedDate) {
-                    onDateSelected(newDate)
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { page ->
+                // Only update if pager is not actively being scrolled
+                if (!pagerState.isScrollInProgress) {
+                    val weekOffset = (page - middlePage).toLong()
+                    val newWeekStart = baseWeekStart.plusWeeks(weekOffset)
+                    val dayOfWeekIndex = currentSelectedDate.dayOfWeek.value - 1
+                    val newDate = newWeekStart.plusDays(dayOfWeekIndex.toLong())
+                    if (newDate != currentSelectedDate) {
+                        onDateSelected(newDate)
+                    }
                 }
             }
-        }
     }
 
     HorizontalPager(
         modifier = modifier.fillMaxWidth(),
         state = pagerState,
+        beyondViewportPageCount = 1,
     ) { page ->
         val weekStart = baseWeekStart.plusWeeks((page - middlePage).toLong())
         val isCurrentWeek = page == middlePage
