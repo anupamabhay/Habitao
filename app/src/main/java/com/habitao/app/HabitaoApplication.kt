@@ -14,6 +14,7 @@ class HabitaoApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         notificationHelper.createNotificationChannel()
+        notificationHelper.createTaskNotificationChannel()
         if (BuildConfig.DEBUG) {
             Log.d("Habitao", "Application started in debug mode")
         }

@@ -20,6 +20,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import com.habitao.core.datastore.AppSettingsManager
 import com.habitao.domain.model.PomodoroSession
 import com.habitao.domain.model.PomodoroType
 import com.habitao.domain.repository.PomodoroRepository
@@ -29,6 +30,7 @@ import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,6 +42,9 @@ class TimerService : LifecycleService() {
 
     @Inject
     lateinit var pomodoroRepository: PomodoroRepository
+
+    @Inject
+    lateinit var appSettingsManager: AppSettingsManager
 
     private var timerJob: Job? = null
     private lateinit var sharedPreferences: SharedPreferences
@@ -461,6 +466,10 @@ class TimerService : LifecycleService() {
     }
 
     private fun showCompletionNotification() {
+        // Check if pomodoro notifications are enabled in settings
+        val settings = kotlinx.coroutines.runBlocking { appSettingsManager.settings.first() }
+        if (!settings.pomodoroNotificationsEnabled) return
+
         val contentIntent =
             packageManager.getLaunchIntentForPackage(packageName)?.let { intent ->
                 PendingIntent.getActivity(

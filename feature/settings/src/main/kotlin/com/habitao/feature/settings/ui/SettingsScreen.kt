@@ -264,12 +264,6 @@ private fun AboutSection(onNavigateToAbout: () -> Unit) {
             icon = Icons.Default.Info,
             title = "About Habitao",
             onClick = onNavigateToAbout,
-            showDivider = true,
-        )
-        SettingsListItem(
-            icon = Icons.Default.Settings,
-            title = "Authors",
-            onClick = onNavigateToAbout,
             showDivider = false,
         )
     }

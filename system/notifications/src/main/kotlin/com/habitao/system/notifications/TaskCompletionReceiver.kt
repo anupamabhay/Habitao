@@ -21,18 +21,23 @@ class TaskCompletionReceiver : BroadcastReceiver() {
         intent: Intent,
     ) {
         val taskId = intent.getStringExtra(NotificationConstants.EXTRA_TASK_ID) ?: return
+        val pendingResult = goAsync()
 
         NotificationManagerCompat.from(context).cancel(taskId.hashCode() + 10000)
 
         CoroutineScope(Dispatchers.IO).launch {
-            val task = taskRepository.getTaskById(taskId).getOrNull() ?: return@launch
-            taskRepository.updateTask(
-                task.copy(
-                    isCompleted = true,
-                    completedAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis(),
-                ),
-            )
+            try {
+                val task = taskRepository.getTaskById(taskId).getOrNull() ?: return@launch
+                taskRepository.updateTask(
+                    task.copy(
+                        isCompleted = true,
+                        completedAt = System.currentTimeMillis(),
+                        updatedAt = System.currentTimeMillis(),
+                    ),
+                )
+            } finally {
+                pendingResult.finish()
+            }
         }
     }
 }

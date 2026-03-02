@@ -132,14 +132,12 @@ fun RoutinesScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            androidx.compose.material3.FloatingActionButton(
                 onClick = onAddRoutine,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(Dimensions.elementSpacing))
-                Text("New Routine")
+                Icon(Icons.Default.Add, contentDescription = "New Routine")
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },

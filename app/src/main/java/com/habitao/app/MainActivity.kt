@@ -211,6 +211,9 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
 
     HabitaoTheme(themeMode = settings.themeMode) {
 
+    // Request app permissions (notifications, exact alarms)
+    RequestAppPermissions()
+
     val selectedTabs = remember(settings.bottomNavTabs, settings.maxVisibleTabs) {
         resolveSelectedTabs(settings.bottomNavTabs, settings.maxVisibleTabs)
     }

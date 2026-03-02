@@ -52,6 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.PomodoroType
 import com.habitao.feature.pomodoro.service.TimerState
 import com.habitao.feature.pomodoro.ui.components.PomodoroSettingsSheet
@@ -434,7 +435,7 @@ private fun TimeAdjustDialog(
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

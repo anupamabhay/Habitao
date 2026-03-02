@@ -135,14 +135,12 @@ fun HabitsScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            androidx.compose.material3.FloatingActionButton(
                 onClick = onAddHabit,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(Dimensions.elementSpacing))
-                Text("New Habit")
+                Icon(Icons.Default.Add, contentDescription = "New Habit")
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },

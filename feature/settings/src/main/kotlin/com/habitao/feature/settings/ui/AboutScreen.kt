@@ -105,6 +105,30 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
                 ) {
                     Text(
+                        text = "About",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = "A unified productivity app combining habit tracking, Pomodoro focus timer, routines, and task management.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    ),
+            ) {
+                Column(
+                    modifier = Modifier.padding(Dimensions.cardPadding),
+                    verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
+                ) {
+                    Text(
                         text = "Authors",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
@@ -112,12 +136,6 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                     Text(
                         text = "Anupam Abhay",
                         style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Text(
-                        text = "A unified productivity app combining habit tracking, Pomodoro focus timer, routines, and task management.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = Dimensions.elementSpacing),
                     )
                 }
             }

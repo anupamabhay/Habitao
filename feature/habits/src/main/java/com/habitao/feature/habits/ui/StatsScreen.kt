@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -213,23 +214,27 @@ private fun StatsContent(
                 ) {
                     // Tasks Breakdown
                     Card(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         ),
                         shape = RoundedCornerShape(16.dp),
                     ) {
                         Column(
-                            modifier = Modifier.padding(Dimensions.cardPadding),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(Dimensions.cardPadding),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(
                                 text = "Tasks",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.align(Alignment.Start)
+                                modifier = Modifier.fillMaxWidth()
                             )
-                            Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
                             Box(contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(
                                     progress = { state.taskCompletionRate },
@@ -245,7 +250,6 @@ private fun StatsContent(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
-                            Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
                             Text(
                                 text = "${state.completedTasksToday} of ${state.totalTasks} done",
                                 style = MaterialTheme.typography.bodySmall,
@@ -257,23 +261,27 @@ private fun StatsContent(
 
                     // Daily Goal
                     Card(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         ),
                         shape = RoundedCornerShape(16.dp),
                     ) {
                         Column(
-                            modifier = Modifier.padding(Dimensions.cardPadding),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(Dimensions.cardPadding),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(
                                 text = "Daily Goal",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.align(Alignment.Start)
+                                modifier = Modifier.fillMaxWidth()
                             )
-                            Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
                             Box(contentAlignment = Alignment.Center) {
                                 val progress = if (state.totalHabits > 0) state.completedToday.toFloat() / state.totalHabits else 0f
                                 CircularProgressIndicator(
@@ -290,10 +298,9 @@ private fun StatsContent(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
-                            Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
                             val remaining = maxOf(0, state.totalHabits - state.completedToday)
                             Text(
-                                text = "$remaining more targets to hit your goal.",
+                                text = "$remaining more to hit your goal",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center
@@ -787,22 +794,33 @@ private fun DetailedSummaryCard(
             verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge)
         ) {
             // Focus Insight
-            if (state.todaysFocusSeconds > 0) {
-                InsightRow(
-                    icon = Icons.Outlined.Timer,
-                    iconTint = MaterialTheme.colorScheme.primary,
-                    title = "Deep Work",
-                    description = "You've logged ${formatFocusTime(state.todaysFocusSeconds)} of focus time across ${state.todaysPomodoroSessions} sessions $periodText."
-                )
-            }
+            InsightRow(
+                icon = Icons.Outlined.Timer,
+                iconTint = MaterialTheme.colorScheme.primary,
+                title = "Deep Work",
+                description = if (state.todaysFocusSeconds > 0 || state.todaysPomodoroSessions > 0) {
+                    "You've logged ${formatFocusTime(state.todaysFocusSeconds)} of focus time across ${state.todaysPomodoroSessions} sessions $periodText."
+                } else {
+                    "No focus sessions logged $periodText. Start a Pomodoro to track deep work."
+                }
+            )
 
             // Habits Insight
             val habitRate = (state.overallCompletionRate * 100).toInt()
+            val streakText = if (state.currentBestStreak > 0) {
+                " Your best active streak is ${state.currentBestStreak} days."
+            } else {
+                ""
+            }
             InsightRow(
                 icon = Icons.Outlined.CheckCircle,
                 iconTint = MaterialTheme.colorScheme.tertiary,
                 title = "Habit Consistency",
-                description = "You have a $habitRate% completion rate for your habits $periodText. Your best active streak is ${state.currentBestStreak} days."
+                description = if (state.totalHabits > 0) {
+                    "You have a $habitRate% completion rate for your habits $periodText.$streakText"
+                } else {
+                    "No habits tracked yet. Create a habit to start building consistency."
+                }
             )
 
             // Tasks & Routines Insight

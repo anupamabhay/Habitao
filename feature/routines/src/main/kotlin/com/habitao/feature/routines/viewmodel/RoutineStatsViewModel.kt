@@ -2,7 +2,6 @@ package com.habitao.feature.routines.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.habitao.domain.model.RepeatPattern
 import com.habitao.domain.model.Routine
 import com.habitao.domain.repository.RoutineRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -110,7 +109,7 @@ class RoutineStatsViewModel
                                     .toSet()
 
                             val completionCount = completionDates.size
-                            val totalScheduledDays = allDates.count { date -> isRoutineScheduledForDate(routine, date) }
+                            val totalScheduledDays = allDates.count { date -> routine.isScheduledForDate(date) }
                             val completionRate =
                                 if (totalScheduledDays > 0) {
                                     completionCount.toFloat() / totalScheduledDays
@@ -144,7 +143,7 @@ class RoutineStatsViewModel
                         RoutineActivityPoint(
                             label = formatLabelForDate(date = date, timeFilter = timeFilter),
                             completedCount = completedByDate[date] ?: 0,
-                            totalCount = routines.count { routine -> isRoutineScheduledForDate(routine, date) },
+                            totalCount = routines.count { routine -> routine.isScheduledForDate(date) },
                         )
                     }
 
@@ -184,34 +183,6 @@ class RoutineStatsViewModel
                 0 -> date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
                 else -> date.format(dateLabelFormatter)
             }
-
-        private fun isRoutineScheduledForDate(
-            routine: Routine,
-            date: LocalDate,
-        ): Boolean {
-            if (date.isBefore(routine.startDate)) return false
-            if (routine.endDate != null && date.isAfter(routine.endDate)) return false
-
-            return when (routine.repeatPattern) {
-                RepeatPattern.DAILY -> true
-                RepeatPattern.WEEKLY,
-                RepeatPattern.SPECIFIC_DATES,
-                -> {
-                    val repeatDays = routine.repeatDays
-                    if (repeatDays.isNullOrEmpty()) {
-                        true
-                    } else {
-                        date.dayOfWeek in repeatDays
-                    }
-                }
-
-                RepeatPattern.CUSTOM -> {
-                    val interval = routine.customInterval ?: 1
-                    val daysBetween = ChronoUnit.DAYS.between(routine.startDate, date)
-                    daysBetween >= 0 && daysBetween % interval == 0L
-                }
-            }
-        }
 
         private fun calculateStreaks(
             completedDates: Set<LocalDate>,
