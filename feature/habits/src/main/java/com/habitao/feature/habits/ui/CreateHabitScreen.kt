@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -85,6 +86,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.DayOfWeek
 import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.HabitType
@@ -157,36 +159,34 @@ fun CreateHabitScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.surface,
         bottomBar = {
-            Surface(
-                tonalElevation = 3.dp,
-                shadowElevation = 8.dp,
-                modifier = Modifier.navigationBarsPadding(),
-            ) {
-                Button(
-                    onClick = { viewModel.processIntent(CreateHabitIntent.SaveHabit) },
-                    enabled = !state.isSaving,
-                    shape = MaterialTheme.shapes.large,
-                    colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
+            Button(
+                onClick = { viewModel.processIntent(CreateHabitIntent.SaveHabit) },
+                enabled = !state.isSaving,
+                shape = RoundedCornerShape(16.dp),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(
+                            horizontal = Dimensions.screenPaddingHorizontal,
+                            vertical = Dimensions.elementSpacingLarge,
                         ),
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 12.dp)
-                            .height(56.dp),
-                ) {
-                    Text(
-                        text =
-                            when {
-                                state.isSaving -> "Saving..."
-                                state.isEditMode -> "Save Changes"
-                                else -> "Create Habit"
-                            },
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
+                contentPadding = PaddingValues(vertical = 16.dp),
+            ) {
+                Text(
+                    text =
+                        when {
+                            state.isSaving -> "Saving..."
+                            state.isEditMode -> "Save Changes"
+                            else -> "Create Habit"
+                        },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         },
     ) { paddingValues ->

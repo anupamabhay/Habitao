@@ -240,14 +240,23 @@ private fun StatsContent(
                                     .fillMaxSize()
                                     .padding(horizontal = Dimensions.cardPadding, vertical = 20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
+                            verticalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text(
-                                text = "Tasks",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "Tasks",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
+                                Text(
+                                    text = "${state.completedTasksToday} of ${state.totalTasks} done",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
                             Box(contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(
                                     progress = { state.taskCompletionRate },
@@ -263,12 +272,6 @@ private fun StatsContent(
                                     fontWeight = FontWeight.Bold,
                                 )
                             }
-                            Text(
-                                text = "${state.completedTasksToday} of ${state.totalTasks} done",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                            )
                         }
                     }
 
@@ -290,14 +293,24 @@ private fun StatsContent(
                                     .fillMaxSize()
                                     .padding(horizontal = Dimensions.cardPadding, vertical = 20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
+                            verticalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text(
-                                text = "Daily Goal",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "Daily Goal",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
+                                val remaining = maxOf(0, state.totalHabits - state.completedToday)
+                                Text(
+                                    text = "$remaining more to hit your goal",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
                             Box(contentAlignment = Alignment.Center) {
                                 val progress =
                                     if (state.totalHabits > 0) {
@@ -319,13 +332,6 @@ private fun StatsContent(
                                     fontWeight = FontWeight.Bold,
                                 )
                             }
-                            val remaining = maxOf(0, state.totalHabits - state.completedToday)
-                            Text(
-                                text = "$remaining more to hit your goal",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                            )
                         }
                     }
                 }

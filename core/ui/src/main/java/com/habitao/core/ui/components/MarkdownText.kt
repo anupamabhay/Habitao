@@ -9,8 +9,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
@@ -162,6 +166,165 @@ private fun AnnotatedString.Builder.appendFormattedLine(
                     withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
                         append(text.substring(i + 1, end))
                     }
+                    i = end + 1
+                } else {
+                    append(text[i])
+                    i++
+                }
+            }
+            else -> {
+                append(text[i])
+                i++
+            }
+        }
+    }
+}
+
+/**
+ * VisualTransformation that renders markdown inline while editing.
+ * Keeps the same character count (identity offset mapping) by styling
+ * text between markers without removing markers. List markers are
+ * replaced with bullets (same char count).
+ */
+class MarkdownVisualTransformation(
+    private val baseColor: Color,
+) : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val rawText = text.text
+        if (rawText.isEmpty()) return TransformedText(text, OffsetMapping.Identity)
+
+        val annotated =
+            buildAnnotatedString {
+                val lines = rawText.lines()
+                lines.forEachIndexed { lineIndex, line ->
+                    val trimmed = line.trimStart()
+                    val indent = line.length - trimmed.length
+
+                    // Preserve leading whitespace
+                    if (indent > 0) append(line.substring(0, indent))
+
+                    when {
+                        // Checkbox unchecked: [ ] -> same length styled
+                        trimmed.startsWith("[ ] ") -> {
+                            withStyle(SpanStyle(color = baseColor.copy(alpha = 0.4f))) {
+                                append("[ ] ")
+                            }
+                            appendStyledInline(trimmed.substring(4), baseColor)
+                        }
+                        // Checkbox checked: [x] -> same length with strikethrough
+                        trimmed.startsWith("[x] ") || trimmed.startsWith("[X] ") -> {
+                            withStyle(SpanStyle(color = baseColor.copy(alpha = 0.4f))) {
+                                append(trimmed.substring(0, 4))
+                            }
+                            withStyle(
+                                SpanStyle(
+                                    textDecoration = TextDecoration.LineThrough,
+                                    color = baseColor.copy(alpha = 0.5f),
+                                ),
+                            ) {
+                                appendStyledInline(trimmed.substring(4), baseColor.copy(alpha = 0.5f))
+                            }
+                        }
+                        // Unordered list: "- " -> keep same chars but style marker dim
+                        trimmed.startsWith("- ") -> {
+                            withStyle(SpanStyle(color = baseColor.copy(alpha = 0.4f))) {
+                                append("- ")
+                            }
+                            appendStyledInline(trimmed.substring(2), baseColor)
+                        }
+                        // Numbered list: "1. " etc
+                        trimmed.matches(Regex("^\\d+\\.\\s.*")) -> {
+                            val prefix = trimmed.substringBefore(". ") + ". "
+                            withStyle(
+                                SpanStyle(
+                                    color = baseColor.copy(alpha = 0.5f),
+                                    fontWeight = FontWeight.SemiBold,
+                                ),
+                            ) {
+                                append(prefix)
+                            }
+                            appendStyledInline(trimmed.substring(prefix.length), baseColor)
+                        }
+                        else -> {
+                            appendStyledInline(trimmed, baseColor)
+                        }
+                    }
+
+                    if (lineIndex < lines.lastIndex) append("\n")
+                }
+            }
+
+        return TransformedText(annotated, OffsetMapping.Identity)
+    }
+}
+
+private fun AnnotatedString.Builder.appendStyledInline(
+    text: String,
+    baseColor: Color,
+) {
+    var i = 0
+    while (i < text.length) {
+        when {
+            // Bold: **text**
+            text.startsWith("**", i) -> {
+                val end = text.indexOf("**", i + 2)
+                if (end != -1) {
+                    withStyle(SpanStyle(color = baseColor.copy(alpha = 0.35f))) { append("**") }
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append(text.substring(i + 2, end))
+                    }
+                    withStyle(SpanStyle(color = baseColor.copy(alpha = 0.35f))) { append("**") }
+                    i = end + 2
+                } else {
+                    append(text[i])
+                    i++
+                }
+            }
+            // Strikethrough: ~~text~~
+            text.startsWith("~~", i) -> {
+                val end = text.indexOf("~~", i + 2)
+                if (end != -1) {
+                    withStyle(SpanStyle(color = baseColor.copy(alpha = 0.35f))) { append("~~") }
+                    withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) {
+                        append(text.substring(i + 2, end))
+                    }
+                    withStyle(SpanStyle(color = baseColor.copy(alpha = 0.35f))) { append("~~") }
+                    i = end + 2
+                } else {
+                    append(text[i])
+                    i++
+                }
+            }
+            // Inline code: `text`
+            text[i] == '`' -> {
+                val end = text.indexOf('`', i + 1)
+                if (end != -1) {
+                    withStyle(SpanStyle(color = baseColor.copy(alpha = 0.35f))) { append("`") }
+                    withStyle(
+                        SpanStyle(
+                            fontFamily = FontFamily.Monospace,
+                            color = baseColor.copy(alpha = 0.8f),
+                            background = baseColor.copy(alpha = 0.06f),
+                        ),
+                    ) {
+                        append(text.substring(i + 1, end))
+                    }
+                    withStyle(SpanStyle(color = baseColor.copy(alpha = 0.35f))) { append("`") }
+                    i = end + 1
+                } else {
+                    append(text[i])
+                    i++
+                }
+            }
+            // Italic: *text* (single, not **)
+            text[i] == '*' && i + 1 < text.length && text[i + 1] != '*' -> {
+                val end = text.indexOf('*', i + 1)
+                if (end != -1 && end > i + 1) {
+                    withStyle(SpanStyle(color = baseColor.copy(alpha = 0.35f))) { append("*") }
+                    withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                        append(text.substring(i + 1, end))
+                    }
+                    withStyle(SpanStyle(color = baseColor.copy(alpha = 0.35f))) { append("*") }
                     i = end + 1
                 } else {
                     append(text[i])

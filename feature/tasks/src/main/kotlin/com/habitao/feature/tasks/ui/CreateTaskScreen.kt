@@ -7,6 +7,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,15 +32,15 @@ import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -71,7 +72,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
@@ -86,7 +86,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.habitao.core.ui.components.MarkdownText
+import com.habitao.core.ui.components.MarkdownVisualTransformation
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.TaskPriority
 import com.habitao.feature.tasks.viewmodel.CreateTaskIntent
@@ -160,17 +160,24 @@ fun CreateTaskScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = {
-            FloatingActionButton(
+        bottomBar = {
+            Button(
                 onClick = { viewModel.processIntent(CreateTaskIntent.SaveTask) },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
+                enabled = !state.isSaving,
+                shape = RoundedCornerShape(16.dp),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
-                        .padding(horizontal = Dimensions.screenPaddingHorizontal),
-                shape = RoundedCornerShape(100),
+                        .padding(
+                            horizontal = Dimensions.screenPaddingHorizontal,
+                            vertical = Dimensions.elementSpacingLarge,
+                        ),
+                contentPadding = PaddingValues(vertical = 16.dp),
             ) {
                 Text(
                     text =
@@ -180,11 +187,10 @@ fun CreateTaskScreen(
                             else -> "Create Task"
                         },
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
         },
-        floatingActionButtonPosition = FabPosition.Center,
     ) { paddingValues ->
         CreateTaskForm(
             state = state,
@@ -460,66 +466,33 @@ private fun MarkdownDescriptionField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var isFocused by remember { mutableStateOf(false) }
-    val hasMarkdown =
-        remember(value) {
-            value.contains("**") || value.contains("*") || value.contains("~~") ||
-                value.contains("`") || value.contains("- ") || value.contains("[ ]") ||
-                value.contains("[x]") || value.matches(Regex(".*\\d+\\.\\s.*"))
+    val baseColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val markdownTransformation =
+        remember(baseColor) {
+            MarkdownVisualTransformation(baseColor)
         }
 
-    Column(
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        textStyle =
+            MaterialTheme.typography.bodyLarge.copy(
+                color = baseColor,
+            ),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
-    ) {
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            textStyle =
-                MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .onFocusChanged { isFocused = it.isFocused },
-            decorationBox = { innerTextField ->
-                if (value.isEmpty()) {
-                    Text(
-                        text = "Add description (supports **bold**, *italic*, ~~strike~~, `code`, lists)",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    )
-                }
-                innerTextField()
-            },
-        )
-
-        // Live markdown preview
-        if (hasMarkdown && value.isNotEmpty()) {
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(
-                    modifier = Modifier.padding(Dimensions.elementSpacingLarge),
-                ) {
-                    Text(
-                        text = "Preview",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    )
-                    Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
-                    MarkdownText(
-                        text = value,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
+        visualTransformation = markdownTransformation,
+        decorationBox = { innerTextField ->
+            if (value.isEmpty()) {
+                Text(
+                    text = "Add description...",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                )
             }
-        }
-    }
+            innerTextField()
+        },
+    )
 }
 
 @Composable

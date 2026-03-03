@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -148,37 +149,35 @@ fun CreateRoutineScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.surface,
         bottomBar = {
-            Surface(
-                tonalElevation = 3.dp,
-                shadowElevation = 8.dp,
-                modifier = Modifier.navigationBarsPadding(),
-            ) {
-                Button(
-                    onClick = { viewModel.processIntent(CreateRoutineIntent.SaveRoutine) },
-                    enabled = !state.isLoading && !state.isSaving,
-                    shape = MaterialTheme.shapes.large,
-                    colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
+            Button(
+                onClick = { viewModel.processIntent(CreateRoutineIntent.SaveRoutine) },
+                enabled = !state.isLoading && !state.isSaving,
+                shape = RoundedCornerShape(16.dp),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(
+                            horizontal = Dimensions.screenPaddingHorizontal,
+                            vertical = Dimensions.elementSpacingLarge,
                         ),
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Dimensions.screenPaddingHorizontal, vertical = 12.dp)
-                            .height(56.dp),
-                ) {
-                    Text(
-                        text =
-                            when {
-                                state.isLoading -> "Loading..."
-                                state.isSaving -> "Saving..."
-                                state.isEditMode -> "Save Changes"
-                                else -> "Create Routine"
-                            },
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
+                contentPadding = PaddingValues(vertical = 16.dp),
+            ) {
+                Text(
+                    text =
+                        when {
+                            state.isLoading -> "Loading..."
+                            state.isSaving -> "Saving..."
+                            state.isEditMode -> "Save Changes"
+                            else -> "Create Routine"
+                        },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         },
     ) { paddingValues ->
@@ -552,19 +551,49 @@ private fun RepeatPatternSelector(
     selectedPattern: RepeatPattern,
     onPatternSelected: (RepeatPattern) -> Unit,
 ) {
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        val patterns =
-            listOf(RepeatPattern.DAILY, RepeatPattern.WEEKLY, RepeatPattern.SPECIFIC_DATES, RepeatPattern.CUSTOM)
-        patterns.forEachIndexed { index, pattern ->
+    Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)) {
+        // Row 1: Daily | Specific days
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            val firstRowPatterns = listOf(RepeatPattern.DAILY, RepeatPattern.SPECIFIC_DATES)
+            firstRowPatterns.forEachIndexed { index, pattern ->
+                SegmentedButton(
+                    selected =
+                        selectedPattern == pattern ||
+                            (pattern == RepeatPattern.SPECIFIC_DATES && selectedPattern == RepeatPattern.WEEKLY),
+                    onClick = { onPatternSelected(pattern) },
+                    shape =
+                        SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = firstRowPatterns.size,
+                            baseShape = RoundedCornerShape(12.dp),
+                        ),
+                    colors =
+                        SegmentedButtonDefaults.colors(
+                            activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                ) {
+                    Text(
+                        text =
+                            when (pattern) {
+                                RepeatPattern.DAILY -> "Daily"
+                                RepeatPattern.SPECIFIC_DATES -> "Specific days"
+                                else -> ""
+                            },
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            }
+        }
+
+        // Row 2: Every X days
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             SegmentedButton(
-                selected = selectedPattern == pattern,
-                onClick = { onPatternSelected(pattern) },
-                shape =
-                    SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = patterns.size,
-                        baseShape = RoundedCornerShape(12.dp),
-                    ),
+                selected = selectedPattern == RepeatPattern.CUSTOM,
+                onClick = { onPatternSelected(RepeatPattern.CUSTOM) },
+                shape = RoundedCornerShape(12.dp),
                 colors =
                     SegmentedButtonDefaults.colors(
                         activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -574,15 +603,8 @@ private fun RepeatPatternSelector(
                     ),
             ) {
                 Text(
-                    text =
-                        when (pattern) {
-                            RepeatPattern.DAILY -> "Daily"
-                            RepeatPattern.WEEKLY -> "Weekly"
-                            RepeatPattern.SPECIFIC_DATES -> "Days"
-                            RepeatPattern.CUSTOM -> "Custom"
-                        },
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
+                    text = "Every X days",
+                    style = MaterialTheme.typography.labelLarge,
                 )
             }
         }
