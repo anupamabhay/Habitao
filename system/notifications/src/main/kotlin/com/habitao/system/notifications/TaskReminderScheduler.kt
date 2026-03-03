@@ -12,6 +12,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import javax.inject.Inject
+import kotlin.math.abs
 
 class TaskReminderScheduler
     @Inject
@@ -62,7 +63,7 @@ class TaskReminderScheduler
             val pendingIntent =
                 PendingIntent.getBroadcast(
                     context,
-                    taskId.hashCode() + 20000,
+                    abs(taskId.hashCode()) + 20000,
                     Intent(context, TaskReminderReceiver::class.java),
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
@@ -89,7 +90,7 @@ class TaskReminderScheduler
                 }
             return PendingIntent.getBroadcast(
                 context,
-                taskId.hashCode() + 20000,
+                abs(taskId.hashCode()) + 20000,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )

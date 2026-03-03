@@ -18,6 +18,7 @@ import com.habitao.system.notifications.NotificationConstants.CHANNEL_ID
 import com.habitao.system.notifications.NotificationConstants.CHANNEL_NAME
 import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_ID
 import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_TITLE
+import kotlin.math.abs
 
 class NotificationHelper(
     private val context: Context,
@@ -131,7 +132,7 @@ class NotificationHelper(
             context.packageManager.getLaunchIntentForPackage(context.packageName)?.let { intent ->
                 PendingIntent.getActivity(
                     context,
-                    taskId.hashCode() + 10000,
+                    abs(taskId.hashCode()) + 10000,
                     intent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
@@ -147,7 +148,7 @@ class NotificationHelper(
         val completePendingIntent =
             PendingIntent.getBroadcast(
                 context,
-                taskId.hashCode() + 10001,
+                abs(taskId.hashCode()) + 10001,
                 completeIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
@@ -165,6 +166,6 @@ class NotificationHelper(
                 .addAction(android.R.drawable.ic_menu_agenda, "Mark Complete", completePendingIntent)
                 .build()
 
-        NotificationManagerCompat.from(context).notify(taskId.hashCode() + 10000, notification)
+        NotificationManagerCompat.from(context).notify(abs(taskId.hashCode()) + 10000, notification)
     }
 }

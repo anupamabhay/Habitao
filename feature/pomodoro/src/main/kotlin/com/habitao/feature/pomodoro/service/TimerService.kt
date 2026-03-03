@@ -207,7 +207,7 @@ class TimerService : LifecycleService() {
 
         val currentRemaining = timerStateHolder.remainingSeconds.value
         val currentTotal = timerStateHolder.totalSeconds.value
-        val newRemaining = (currentRemaining + deltaSeconds).coerceAtLeast(0L)
+        val newRemaining = (currentRemaining + deltaSeconds).coerceAtLeast(1L)
         val newTotal = (currentTotal + deltaSeconds).coerceAtLeast(newRemaining)
 
         timerStateHolder.updateRemainingSeconds(newRemaining)
@@ -475,39 +475,41 @@ class TimerService : LifecycleService() {
     }
 
     private fun showCompletionNotification() {
-        // Check if pomodoro notifications are enabled in settings
-        val settings = kotlinx.coroutines.runBlocking { appSettingsManager.settings.first() }
-        if (!settings.pomodoroNotificationsEnabled) return
+        lifecycleScope.launch {
+            // Check if pomodoro notifications are enabled in settings
+            val settings = appSettingsManager.settings.first()
+            if (!settings.pomodoroNotificationsEnabled) return@launch
 
-        val contentIntent =
-            packageManager.getLaunchIntentForPackage(packageName)?.let { intent ->
-                PendingIntent.getActivity(
-                    this,
-                    REQUEST_CODE_COMPLETE,
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
-            }
-
-        val notification =
-            NotificationCompat.Builder(this, COMPLETE_CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-                .setContentTitle("Pomodoro Complete")
-                .setContentText("Session finished")
-                .setStyle(
-                    NotificationCompat.BigTextStyle().bigText("Session finished"),
-                )
-                .setContentIntent(contentIntent)
-                .setAutoCancel(true)
-                .setCategory(NotificationCompat.CATEGORY_ALARM)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .apply {
-                    if (pomodoroPreferences.vibrateEnabled) {
-                        setVibrate(longArrayOf(0L, pomodoroPreferences.vibrateDurationSeconds * 1000L))
-                    }
+            val contentIntent =
+                packageManager.getLaunchIntentForPackage(packageName)?.let { intent ->
+                    PendingIntent.getActivity(
+                        this@TimerService,
+                        REQUEST_CODE_COMPLETE,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    )
                 }
-                .build()
-        notificationManager.notify(NOTIFICATION_COMPLETE_ID, notification)
+
+            val notification =
+                NotificationCompat.Builder(this@TimerService, COMPLETE_CHANNEL_ID)
+                    .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                    .setContentTitle("Pomodoro Complete")
+                    .setContentText("Session finished")
+                    .setStyle(
+                        NotificationCompat.BigTextStyle().bigText("Session finished"),
+                    )
+                    .setContentIntent(contentIntent)
+                    .setAutoCancel(true)
+                    .setCategory(NotificationCompat.CATEGORY_ALARM)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .apply {
+                        if (pomodoroPreferences.vibrateEnabled) {
+                            setVibrate(longArrayOf(0L, pomodoroPreferences.vibrateDurationSeconds * 1000L))
+                        }
+                    }
+                    .build()
+            notificationManager.notify(NOTIFICATION_COMPLETE_ID, notification)
+        }
     }
 
     private fun createNotificationChannel() {

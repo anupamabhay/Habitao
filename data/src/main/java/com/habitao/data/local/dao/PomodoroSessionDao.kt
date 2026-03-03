@@ -36,6 +36,7 @@ interface PomodoroSessionDao {
         "SELECT COALESCE(SUM(actualDurationSeconds), 0) " +
             "FROM pomodoro_sessions " +
             "WHERE sessionType = 'WORK' " +
+            "AND wasInterrupted = 0 " +
             "AND startedAt >= :startOfDay AND startedAt < :endOfDay",
     )
     suspend fun getTotalFocusSeconds(

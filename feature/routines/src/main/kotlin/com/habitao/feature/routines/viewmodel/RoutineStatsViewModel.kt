@@ -64,7 +64,6 @@ class RoutineStatsViewModel
     constructor(
         private val routineRepository: RoutineRepository,
     ) : ViewModel() {
-        private val today = LocalDate.now()
         private val dateLabelFormatter = DateTimeFormatter.ofPattern("M/d", Locale.getDefault())
         private val timeFilterFlow = MutableStateFlow(0)
 
@@ -87,6 +86,7 @@ class RoutineStatsViewModel
 
         val state: StateFlow<RoutineStatsState> =
             combine(timeFilterFlow, dateRangeFlow, routinesFlow, routineLogsFlow) { timeFilter, range, routines, logs ->
+                val today = LocalDate.now()
                 val allDates = range.allDates()
                 val completedPairs =
                     logs
@@ -172,12 +172,14 @@ class RoutineStatsViewModel
             }
         }
 
-        private fun getDateRangeForFilter(filter: Int): RoutineStatsDateRange =
-            when (filter) {
+        private fun getDateRangeForFilter(filter: Int): RoutineStatsDateRange {
+            val today = LocalDate.now()
+            return when (filter) {
                 1 -> RoutineStatsDateRange(startDate = today.minusDays(29), endDate = today)
                 2 -> RoutineStatsDateRange(startDate = today.minusDays(364), endDate = today)
                 else -> RoutineStatsDateRange(startDate = today.minusDays(6), endDate = today)
             }
+        }
 
         private fun formatLabelForDate(
             date: LocalDate,

@@ -27,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.habitao.core.ui.theme.Dimensions
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,12 +53,12 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Dimensions.sectionSpacing),
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(Dimensions.sectionSpacing))
 
             Box(
                 modifier =
                     Modifier
-                        .size(120.dp)
+                        .size(Dimensions.logoSize)
                         .background(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.shapes.large),
                 contentAlignment = Alignment.Center,
             ) {
@@ -116,29 +115,6 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                                 "Pomodoro focus timer, routines, and task management.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors =
-                    CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                    ),
-            ) {
-                Column(
-                    modifier = Modifier.padding(Dimensions.cardPadding),
-                    verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
-                ) {
-                    Text(
-                        text = "Authors",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = "Anupam Abhay",
-                        style = MaterialTheme.typography.bodyLarge,
                     )
                 }
             }

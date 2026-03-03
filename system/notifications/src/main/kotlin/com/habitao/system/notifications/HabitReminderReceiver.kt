@@ -10,8 +10,10 @@ import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_TITLE
 import com.habitao.system.notifications.NotificationConstants.EXTRA_REMINDER_HOUR
 import com.habitao.system.notifications.NotificationConstants.EXTRA_REMINDER_MINUTE
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import java.time.LocalTime
 import javax.inject.Inject
 
@@ -35,22 +37,36 @@ class HabitReminderReceiver : BroadcastReceiver() {
         val hour = intent.getIntExtra(EXTRA_REMINDER_HOUR, 9)
         val minute = intent.getIntExtra(EXTRA_REMINDER_MINUTE, 0)
 
-        // Check if habit reminders are enabled in settings
-        val settings = runBlocking { appSettingsManager.settings.first() }
-        if (!settings.habitRemindersEnabled) {
-            // Still reschedule so it fires again next time (toggle may be re-enabled)
-            scheduler.scheduleReminder(habitId = habitId, habitTitle = habitTitle, time = LocalTime.of(hour, minute))
-            return
-        }
+        val pendingResult = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Check if habit reminders are enabled in settings
+                val settings = appSettingsManager.settings.first()
+                if (!settings.habitRemindersEnabled) {
+                    // Still reschedule so it fires again next time (toggle may be re-enabled)
+                    scheduler.scheduleReminder(
+                        habitId = habitId,
+                        habitTitle = habitTitle,
+                        time = LocalTime.of(hour, minute),
+                    )
+                    return@launch
+                }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || notificationHelper.hasNotificationPermission()) {
-            notificationHelper.showReminder(habitId, habitTitle)
-        }
+                val hasPermission =
+                    Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                        notificationHelper.hasNotificationPermission()
+                if (hasPermission) {
+                    notificationHelper.showReminder(habitId, habitTitle)
+                }
 
-        scheduler.scheduleReminder(
-            habitId = habitId,
-            habitTitle = habitTitle,
-            time = LocalTime.of(hour, minute),
-        )
+                scheduler.scheduleReminder(
+                    habitId = habitId,
+                    habitTitle = habitTitle,
+                    time = LocalTime.of(hour, minute),
+                )
+            } finally {
+                pendingResult.finish()
+            }
+        }
     }
 }

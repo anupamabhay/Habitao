@@ -153,8 +153,9 @@ private fun AnnotatedString.Builder.appendFormattedLine(
                     i++
                 }
             }
-            // Italic: *text* or _text_ (single)
-            (text[i] == '*' || text[i] == '_') && i + 1 < text.length && text[i + 1] != text[i] -> {
+            // Italic: *text* or _text_ (single, _ requires word boundary)
+            (text[i] == '*' || (text[i] == '_' && (i == 0 || text[i - 1].isWhitespace()))) &&
+                i + 1 < text.length && text[i + 1] != text[i] -> {
                 val marker = text[i]
                 val end = text.indexOf(marker, i + 1)
                 if (end != -1 && end > i + 1) {

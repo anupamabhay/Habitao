@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat
 fun RequestAppPermissions() {
     val context = LocalContext.current
     var showRationale by remember { mutableStateOf(false) }
+    var showAlarmRationale by remember { mutableStateOf(false) }
     var permissionsRequested by remember { mutableStateOf(false) }
 
     val permissionLauncher =
@@ -37,7 +38,12 @@ fun RequestAppPermissions() {
                 showRationale = true
             }
             // Also check exact alarm permission
-            checkAndRequestExactAlarmPermission(context)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                if (!alarmManager.canScheduleExactAlarms()) {
+                    showAlarmRationale = true
+                }
+            }
         }
 
     // Request notification permission on first composition
@@ -59,7 +65,12 @@ fun RequestAppPermissions() {
                 permissionLauncher.launch(permissionsToRequest.toTypedArray())
             } else {
                 // Permissions already granted, check exact alarm
-                checkAndRequestExactAlarmPermission(context)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                    if (!alarmManager.canScheduleExactAlarms()) {
+                        showAlarmRationale = true
+                    }
+                }
             }
         }
     }
@@ -96,21 +107,42 @@ fun RequestAppPermissions() {
             },
         )
     }
-}
 
-private fun checkAndRequestExactAlarmPermission(context: Context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        if (!alarmManager.canScheduleExactAlarms()) {
-            try {
-                val intent =
-                    Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                        data = Uri.fromParts("package", context.packageName, null)
-                    }
-                context.startActivity(intent)
-            } catch (_: Exception) {
-                // Some devices don't support this intent
-            }
-        }
+    if (showAlarmRationale) {
+        AlertDialog(
+            onDismissRequest = { showAlarmRationale = false },
+            title = { Text("Exact Alarms Permission") },
+            text = {
+                Text(
+                    "Habitao needs exact alarm permission to deliver " +
+                        "precise reminders for your habits and tasks.",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showAlarmRationale = false
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            try {
+                                val intent =
+                                    Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                                        data = Uri.fromParts("package", context.packageName, null)
+                                    }
+                                context.startActivity(intent)
+                            } catch (_: Exception) {
+                                // Some devices don't support this intent
+                            }
+                        }
+                    },
+                ) {
+                    Text("Grant Permission")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAlarmRationale = false }) {
+                    Text("Later")
+                }
+            },
+        )
     }
 }

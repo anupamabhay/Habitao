@@ -54,6 +54,8 @@ dependencies {
     // Module Dependencies
     implementation(projects.core.common)
     implementation(projects.core.ui)
+    // TODO: Decouple settings from pomodoro — extract PomodoroSettingsSheet to core/ui
+    //  or use navigation-based composition to avoid cross-feature dependency
     implementation(projects.feature.pomodoro)
 
     // AndroidX Core

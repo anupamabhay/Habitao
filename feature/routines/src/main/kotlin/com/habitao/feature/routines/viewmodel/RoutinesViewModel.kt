@@ -52,6 +52,9 @@ class RoutinesViewModel
         private val selectedDateFlow = MutableStateFlow(LocalDate.now())
         private val errorFlow = MutableStateFlow<String?>(null)
 
+        // Uses observeAllRoutines() + in-memory filtering via isScheduledForDate() because the
+        // database query cannot efficiently filter for SPECIFIC_DATES/WEEKLY repeat patterns
+        // that require day-of-week matching. For typical routine counts (<100), this is acceptable.
         private val routinesFlow =
             selectedDateFlow.flatMapLatest { date ->
                 routineRepository.observeAllRoutines()
