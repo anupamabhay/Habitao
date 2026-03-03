@@ -71,6 +71,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
@@ -85,6 +86,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.habitao.core.ui.components.MarkdownText
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.TaskPriority
 import com.habitao.feature.tasks.viewmodel.CreateTaskIntent
@@ -242,24 +244,9 @@ private fun CreateTaskForm(
                 }
             )
 
-            BasicTextField(
+            MarkdownDescriptionField(
                 value = state.description,
                 onValueChange = { onIntent(CreateTaskIntent.SetDescription(it)) },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                modifier = Modifier.fillMaxWidth(),
-                decorationBox = { innerTextField ->
-                    if (state.description.isEmpty()) {
-                        Text(
-                            text = "Add description...",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        )
-                    }
-                    innerTextField()
-                }
             )
         }
 
@@ -451,6 +438,71 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
+private fun MarkdownDescriptionField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val hasMarkdown = remember(value) {
+        value.contains("**") || value.contains("*") || value.contains("~~") ||
+            value.contains("`") || value.contains("- ") || value.contains("[ ]") ||
+            value.contains("[x]") || value.matches(Regex(".*\\d+\\.\\s.*"))
+    }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
+    ) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { isFocused = it.isFocused },
+            decorationBox = { innerTextField ->
+                if (value.isEmpty()) {
+                    Text(
+                        text = "Add description (supports **bold**, *italic*, ~~strike~~, `code`, lists)",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
+                innerTextField()
+            }
+        )
+
+        // Live markdown preview
+        if (hasMarkdown && value.isNotEmpty()) {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.padding(Dimensions.elementSpacingLarge),
+                ) {
+                    Text(
+                        text = "Preview",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    )
+                    Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
+                    MarkdownText(
+                        text = value,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun PriorityChip(
     priority: TaskPriority,
     isSelected: Boolean,
@@ -490,9 +542,9 @@ private fun PriorityChip(
 private fun priorityColor(priority: TaskPriority): Color {
     return when (priority) {
         TaskPriority.NONE -> MaterialTheme.colorScheme.onSurfaceVariant
-        TaskPriority.LOW -> Color(0xFF4CAF50)
-        TaskPriority.MEDIUM -> Color(0xFFFF9800)
-        TaskPriority.HIGH -> Color(0xFFF44336)
+        TaskPriority.LOW -> Color(0xFF1E88E5)
+        TaskPriority.MEDIUM -> Color(0xFFFFB300)
+        TaskPriority.HIGH -> Color(0xFFE53935)
     }
 }
 

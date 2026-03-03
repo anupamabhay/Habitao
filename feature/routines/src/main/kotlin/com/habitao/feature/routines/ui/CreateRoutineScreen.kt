@@ -299,7 +299,7 @@ private fun CreateRoutineForm(
             )
 
             AnimatedVisibility(
-                visible = state.repeatPattern == RepeatPattern.WEEKLY,
+                visible = state.repeatPattern == RepeatPattern.WEEKLY || state.repeatPattern == RepeatPattern.SPECIFIC_DATES,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
             ) {
@@ -508,7 +508,7 @@ private fun RepeatPatternSelector(
     onPatternSelected: (RepeatPattern) -> Unit,
 ) {
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        val patterns = listOf(RepeatPattern.DAILY, RepeatPattern.WEEKLY, RepeatPattern.CUSTOM)
+        val patterns = listOf(RepeatPattern.DAILY, RepeatPattern.WEEKLY, RepeatPattern.SPECIFIC_DATES, RepeatPattern.CUSTOM)
         patterns.forEachIndexed { index, pattern ->
             SegmentedButton(
                 selected = selectedPattern == pattern,
@@ -526,7 +526,12 @@ private fun RepeatPatternSelector(
                 ),
             ) {
                 Text(
-                    text = pattern.name.lowercase().replaceFirstChar { it.uppercase() },
+                    text = when (pattern) {
+                        RepeatPattern.DAILY -> "Daily"
+                        RepeatPattern.WEEKLY -> "Weekly"
+                        RepeatPattern.SPECIFIC_DATES -> "Specific Days"
+                        RepeatPattern.CUSTOM -> "Custom"
+                    },
                     style = MaterialTheme.typography.labelLarge,
                 )
             }

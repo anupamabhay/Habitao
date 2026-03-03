@@ -375,7 +375,7 @@ private fun TaskSectionHeader(
                 .clickable(onClick = onToggle)
                 .padding(
                     horizontal = Dimensions.screenPaddingHorizontal,
-                    vertical = Dimensions.elementSpacingSmall,
+                    vertical = Dimensions.elementSpacing,
                 ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -538,7 +538,7 @@ private fun TaskRow(
             modifier =
                 Modifier
                     .weight(1f)
-                    .padding(vertical = Dimensions.elementSpacing),
+                    .padding(vertical = Dimensions.elementSpacingLarge),
         ) {
             Text(
                 text = task.title,
@@ -560,7 +560,7 @@ private fun TaskRow(
             val hasSubtasks = subtaskCount > 0
 
             if (hasDescription || hasDueDate || hasSubtasks) {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
@@ -658,7 +658,7 @@ private fun TaskOverviewRow(
                 .fillMaxWidth()
                 .padding(
                     horizontal = Dimensions.screenPaddingHorizontal,
-                    vertical = Dimensions.elementSpacingSmall,
+                    vertical = Dimensions.elementSpacing,
                 ),
         horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
         verticalAlignment = Alignment.CenterVertically,

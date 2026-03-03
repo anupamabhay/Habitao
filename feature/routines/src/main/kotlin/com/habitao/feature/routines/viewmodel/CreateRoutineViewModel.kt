@@ -231,8 +231,8 @@ class CreateRoutineViewModel @Inject constructor(
             return
         }
 
-        if (currentState.repeatPattern == RepeatPattern.WEEKLY && currentState.scheduledDays.isEmpty()) {
-            _state.update { it.copy(error = "Select at least one day for weekly routine") }
+        if ((currentState.repeatPattern == RepeatPattern.WEEKLY || currentState.repeatPattern == RepeatPattern.SPECIFIC_DATES) && currentState.scheduledDays.isEmpty()) {
+            _state.update { it.copy(error = "Select at least one day") }
             return
         }
 
@@ -248,7 +248,7 @@ class CreateRoutineViewModel @Inject constructor(
                 title = currentState.title.trim(),
                 description = currentState.description.trim().takeIf { it.isNotBlank() },
                 repeatPattern = currentState.repeatPattern,
-                repeatDays = if (currentState.repeatPattern == RepeatPattern.WEEKLY) currentState.scheduledDays.toList() else null,
+                repeatDays = if (currentState.repeatPattern == RepeatPattern.WEEKLY || currentState.repeatPattern == RepeatPattern.SPECIFIC_DATES) currentState.scheduledDays.toList() else null,
                 customInterval = if (currentState.repeatPattern == RepeatPattern.CUSTOM) currentState.customInterval else null,
                 reminderEnabled = currentState.reminderEnabled,
                 reminderTime = currentState.reminderTime,
@@ -258,7 +258,7 @@ class CreateRoutineViewModel @Inject constructor(
                 title = currentState.title.trim(),
                 description = currentState.description.trim().takeIf { it.isNotBlank() },
                 repeatPattern = currentState.repeatPattern,
-                repeatDays = if (currentState.repeatPattern == RepeatPattern.WEEKLY) currentState.scheduledDays.toList() else null,
+                repeatDays = if (currentState.repeatPattern == RepeatPattern.WEEKLY || currentState.repeatPattern == RepeatPattern.SPECIFIC_DATES) currentState.scheduledDays.toList() else null,
                 customInterval = if (currentState.repeatPattern == RepeatPattern.CUSTOM) currentState.customInterval else null,
                 startDate = today,
                 nextScheduledDate = today,
