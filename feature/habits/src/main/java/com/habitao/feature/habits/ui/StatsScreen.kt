@@ -54,6 +54,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -237,9 +238,9 @@ private fun StatsContent(
                             modifier =
                                 Modifier
                                     .fillMaxSize()
-                                    .padding(Dimensions.cardPadding),
+                                    .padding(horizontal = Dimensions.cardPadding, vertical = 20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.SpaceBetween,
+                            verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
                         ) {
                             Text(
                                 text = "Tasks",
@@ -250,8 +251,8 @@ private fun StatsContent(
                             Box(contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(
                                     progress = { state.taskCompletionRate },
-                                    modifier = Modifier.size(80.dp),
-                                    strokeWidth = 8.dp,
+                                    modifier = Modifier.size(72.dp),
+                                    strokeWidth = 6.dp,
                                     strokeCap = StrokeCap.Round,
                                     color = MaterialTheme.colorScheme.primary,
                                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -287,9 +288,9 @@ private fun StatsContent(
                             modifier =
                                 Modifier
                                     .fillMaxSize()
-                                    .padding(Dimensions.cardPadding),
+                                    .padding(horizontal = Dimensions.cardPadding, vertical = 20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.SpaceBetween,
+                            verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
                         ) {
                             Text(
                                 text = "Daily Goal",
@@ -306,8 +307,8 @@ private fun StatsContent(
                                     }
                                 CircularProgressIndicator(
                                     progress = { progress },
-                                    modifier = Modifier.size(80.dp),
-                                    strokeWidth = 8.dp,
+                                    modifier = Modifier.size(72.dp),
+                                    strokeWidth = 6.dp,
                                     strokeCap = StrokeCap.Round,
                                     color = MaterialTheme.colorScheme.tertiary,
                                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -342,8 +343,8 @@ private fun StatsContent(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(Dimensions.cardPadding),
-                        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
+                                .padding(horizontal = Dimensions.cardPadding, vertical = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
@@ -638,8 +639,10 @@ private fun ActivityBarChart(
         if (count == 0) return@Canvas
 
         val groupWidth = size.width / count
-        val barWidth = (groupWidth * 0.7f) / 3f
-        val gap = groupWidth * 0.3f / 2f
+        val barSpacing = 2.dp.toPx()
+        val totalBarArea = groupWidth * 0.55f
+        val barWidth = (totalBarArea - barSpacing * 2f) / 3f
+        val gap = (groupWidth - totalBarArea) / 2f
 
         data.forEachIndexed { index, point ->
             val groupLeft = index * groupWidth + gap
@@ -652,13 +655,14 @@ private fun ActivityBarChart(
                 if (value == 0) return
                 val normalized = value.toFloat() / yAxisMax.toFloat()
                 val barHeight = (normalized * chartHeight).coerceAtLeast(2.dp.toPx())
-                val left = groupLeft + barIndex * barWidth
+                val left = groupLeft + barIndex * (barWidth + barSpacing)
                 val top = chartBottom - barHeight
 
-                drawRect(
+                drawRoundRect(
                     color = color,
                     topLeft = Offset(left, top),
                     size = Size(width = barWidth, height = barHeight),
+                    cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f),
                 )
             }
 

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -150,6 +151,7 @@ fun CreateRoutineScreen(
             Surface(
                 tonalElevation = 3.dp,
                 shadowElevation = 8.dp,
+                modifier = Modifier.navigationBarsPadding(),
             ) {
                 Button(
                     onClick = { viewModel.processIntent(CreateRoutineIntent.SaveRoutine) },
@@ -576,10 +578,11 @@ private fun RepeatPatternSelector(
                         when (pattern) {
                             RepeatPattern.DAILY -> "Daily"
                             RepeatPattern.WEEKLY -> "Weekly"
-                            RepeatPattern.SPECIFIC_DATES -> "Specific Days"
+                            RepeatPattern.SPECIFIC_DATES -> "Days"
                             RepeatPattern.CUSTOM -> "Custom"
                         },
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
                 )
             }
         }
