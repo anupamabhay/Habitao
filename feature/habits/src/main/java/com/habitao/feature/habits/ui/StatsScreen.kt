@@ -54,6 +54,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -63,7 +64,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -238,26 +238,27 @@ private fun StatsContent(
                             modifier =
                                 Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = Dimensions.cardPadding, vertical = 20.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                                    .padding(horizontal = Dimensions.cardPadding, vertical = 24.dp),
+                            horizontalAlignment = Alignment.Start,
                             verticalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Column {
                                 Text(
                                     text = "Tasks",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.fillMaxWidth(),
                                 )
-                                Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = "${state.completedTasksToday} of ${state.totalTasks} done",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = TextAlign.Center,
                                 )
                             }
-                            Box(contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center,
+                            ) {
                                 CircularProgressIndicator(
                                     progress = { state.taskCompletionRate },
                                     modifier = Modifier.size(72.dp),
@@ -291,27 +292,28 @@ private fun StatsContent(
                             modifier =
                                 Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = Dimensions.cardPadding, vertical = 20.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                                    .padding(horizontal = Dimensions.cardPadding, vertical = 24.dp),
+                            horizontalAlignment = Alignment.Start,
                             verticalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Column {
                                 Text(
                                     text = "Daily Goal",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
-                                    modifier = Modifier.fillMaxWidth(),
                                 )
-                                Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
+                                Spacer(modifier = Modifier.height(4.dp))
                                 val remaining = maxOf(0, state.totalHabits - state.completedToday)
                                 Text(
                                     text = "$remaining more to hit your goal",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = TextAlign.Center,
                                 )
                             }
-                            Box(contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center,
+                            ) {
                                 val progress =
                                     if (state.totalHabits > 0) {
                                         state.completedToday.toFloat() / state.totalHabits
@@ -345,48 +347,73 @@ private fun StatsContent(
                         ),
                     shape = RoundedCornerShape(16.dp),
                 ) {
-                    Row(
+                    Column(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = Dimensions.cardPadding, vertical = 20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
-                        verticalAlignment = Alignment.CenterVertically,
+                                .padding(horizontal = Dimensions.cardPadding, vertical = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Repeat,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.size(24.dp),
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Row(
+                                horizontalArrangement =
+                                    Arrangement.spacedBy(Dimensions.elementSpacingLarge),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .size(40.dp)
+                                            .background(
+                                                MaterialTheme.colorScheme.secondaryContainer,
+                                                RoundedCornerShape(12.dp),
+                                            ),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Repeat,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = "Routines",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        text =
+                                            "${state.completedRoutinesToday} of " +
+                                                "${state.totalRoutines} completed $periodSuffix",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
 
-                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Routines",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text =
-                                    "${state.completedRoutinesToday} of ${state.totalRoutines} completed $periodSuffix",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
-                            LinearProgressIndicator(
-                                progress = { state.routineCompletionRate },
-                                modifier = Modifier.fillMaxWidth(),
+                                text = "${(state.routineCompletionRate * 100).toInt()}%",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.secondary,
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
                             )
                         }
 
-                        Text(
-                            text = "${(state.routineCompletionRate * 100).toInt()}%",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                        LinearProgressIndicator(
+                            progress = { state.routineCompletionRate },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
+                                    .clip(RoundedCornerShape(4.dp)),
                             color = MaterialTheme.colorScheme.secondary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
                         )
                     }
                 }

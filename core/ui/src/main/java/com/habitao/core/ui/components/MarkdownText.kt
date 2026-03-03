@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.sp
 
 /**
  * Renders basic Markdown formatting:
@@ -56,8 +57,30 @@ private fun parseMarkdown(
         lines.forEachIndexed { index, line ->
             val trimmed = line.trimStart()
 
-            // Checkbox: [ ] or [x]
             when {
+                trimmed.startsWith("# ") && !trimmed.startsWith("## ") -> {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 24.sp)) {
+                        appendFormattedLine(trimmed.substring(2), baseColor)
+                    }
+                }
+                trimmed.startsWith("## ") && !trimmed.startsWith("### ") -> {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 20.sp)) {
+                        appendFormattedLine(trimmed.substring(3), baseColor)
+                    }
+                }
+                trimmed.startsWith("### ") && !trimmed.startsWith("#### ") -> {
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)) {
+                        appendFormattedLine(trimmed.substring(4), baseColor)
+                    }
+                }
+                trimmed.startsWith("#### ") -> {
+                    val hLevel = trimmed.takeWhile { it == '#' }.length
+                    val prefix = "#".repeat(hLevel) + " "
+                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, fontSize = 16.sp)) {
+                        appendFormattedLine(trimmed.substring(prefix.length), baseColor)
+                    }
+                }
+                // Checkbox: [ ] or [x]
                 trimmed.startsWith("[ ] ") -> {
                     append("☐ ")
                     appendFormattedLine(trimmed.removePrefix("[ ] "), baseColor)
@@ -204,6 +227,40 @@ class MarkdownVisualTransformation(
                     if (indent > 0) append(line.substring(0, indent))
 
                     when {
+                        trimmed.startsWith("# ") && !trimmed.startsWith("## ") -> {
+                            withStyle(SpanStyle(color = baseColor.copy(alpha = 0.3f))) {
+                                append("# ")
+                            }
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 24.sp)) {
+                                appendStyledInline(trimmed.substring(2), baseColor)
+                            }
+                        }
+                        trimmed.startsWith("## ") && !trimmed.startsWith("### ") -> {
+                            withStyle(SpanStyle(color = baseColor.copy(alpha = 0.3f))) {
+                                append("## ")
+                            }
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 20.sp)) {
+                                appendStyledInline(trimmed.substring(3), baseColor)
+                            }
+                        }
+                        trimmed.startsWith("### ") && !trimmed.startsWith("#### ") -> {
+                            withStyle(SpanStyle(color = baseColor.copy(alpha = 0.3f))) {
+                                append("### ")
+                            }
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp)) {
+                                appendStyledInline(trimmed.substring(4), baseColor)
+                            }
+                        }
+                        trimmed.startsWith("#### ") -> {
+                            val hLevel = trimmed.takeWhile { it == '#' }.length
+                            val prefix = "#".repeat(hLevel) + " "
+                            withStyle(SpanStyle(color = baseColor.copy(alpha = 0.3f))) {
+                                append(prefix)
+                            }
+                            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, fontSize = 16.sp)) {
+                                appendStyledInline(trimmed.substring(prefix.length), baseColor)
+                            }
+                        }
                         // Checkbox unchecked: [ ] -> same length styled
                         trimmed.startsWith("[ ] ") -> {
                             withStyle(SpanStyle(color = baseColor.copy(alpha = 0.4f))) {

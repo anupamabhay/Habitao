@@ -295,6 +295,7 @@ private fun TasksContent(
                                     onToggleExpanded = {
                                         expandedTaskIds[task.id] = !(expandedTaskIds[task.id] ?: true)
                                     },
+                                    allSubTasks = state.completedSubTasks,
                                 )
                             }
 
@@ -353,6 +354,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
                 onToggleExpanded = {
                     expandedTaskIds[task.id] = !(expandedTaskIds[task.id] ?: true)
                 },
+                allSubTasks = subTasks,
             )
         }
     }
@@ -415,31 +417,49 @@ private fun TaskItemWithSubtasks(
     onTaskClick: (String) -> Unit,
     isExpanded: Boolean,
     onToggleExpanded: () -> Unit,
+    allSubTasks: Map<String, List<Task>> = emptyMap(),
+    depth: Int = 0,
 ) {
     Column {
         TaskRow(
             task = task,
             onToggleComplete = { onToggleComplete(task.id, it) },
             onClick = { onTaskClick(task.id) },
-            isSubtask = false,
+            isSubtask = depth > 0,
             subtaskCount = subtasks.size,
             showSubtaskChevron = subtasks.isNotEmpty(),
             onToggleExpanded = if (subtasks.isNotEmpty()) onToggleExpanded else null,
             isExpanded = isExpanded,
+            nestingDepth = depth,
         )
 
         if (subtasks.isNotEmpty() && isExpanded) {
             subtasks.forEach { subtask ->
-                TaskRow(
-                    task = subtask,
-                    onToggleComplete = { onToggleComplete(subtask.id, it) },
-                    onClick = { onTaskClick(subtask.id) },
-                    isSubtask = true,
-                    subtaskCount = 0,
-                    showSubtaskChevron = false,
-                    onToggleExpanded = null,
-                    isExpanded = true,
-                )
+                val nestedSubtasks = allSubTasks[subtask.id] ?: emptyList()
+                if (nestedSubtasks.isNotEmpty()) {
+                    TaskItemWithSubtasks(
+                        task = subtask,
+                        subtasks = nestedSubtasks,
+                        onToggleComplete = onToggleComplete,
+                        onTaskClick = onTaskClick,
+                        isExpanded = true,
+                        onToggleExpanded = {},
+                        allSubTasks = allSubTasks,
+                        depth = depth + 1,
+                    )
+                } else {
+                    TaskRow(
+                        task = subtask,
+                        onToggleComplete = { onToggleComplete(subtask.id, it) },
+                        onClick = { onTaskClick(subtask.id) },
+                        isSubtask = true,
+                        subtaskCount = 0,
+                        showSubtaskChevron = false,
+                        onToggleExpanded = null,
+                        isExpanded = true,
+                        nestingDepth = depth + 1,
+                    )
+                }
             }
         }
     }
@@ -463,6 +483,7 @@ private fun TaskRow(
     showSubtaskChevron: Boolean,
     onToggleExpanded: (() -> Unit)?,
     isExpanded: Boolean,
+    nestingDepth: Int = 0,
 ) {
     val priorityColor = getPriorityColor(task.priority)
     val hasPriority = task.priority != TaskPriority.NONE
@@ -476,12 +497,7 @@ private fun TaskRow(
                 .height(IntrinsicSize.Min)
                 .clickable(onClick = onClick)
                 .padding(
-                    start =
-                        if (isSubtask) {
-                            Dimensions.screenPaddingHorizontal + 32.dp
-                        } else {
-                            Dimensions.screenPaddingHorizontal
-                        },
+                    start = Dimensions.screenPaddingHorizontal + (nestingDepth * 32).dp,
                     end = Dimensions.screenPaddingHorizontal,
                 ),
         verticalAlignment = Alignment.CenterVertically,

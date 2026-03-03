@@ -9,8 +9,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -591,7 +589,6 @@ private fun FrequencyTypeSelector(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DaySelector(
     selectedDays: Set<DayOfWeek>,
@@ -602,13 +599,12 @@ private fun DaySelector(
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        FlowRow(
+        Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             DayOfWeek.entries.forEach { day ->
                 val isSelected = selectedDays.contains(day)
@@ -618,10 +614,11 @@ private fun DaySelector(
                     label = {
                         Text(
                             text = day.shortName,
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.labelSmall,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         )
                     },
+                    modifier = Modifier.weight(1f),
                     colors =
                         FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primary,

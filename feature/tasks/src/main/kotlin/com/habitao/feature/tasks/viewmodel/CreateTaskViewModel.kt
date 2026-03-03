@@ -263,22 +263,17 @@ class CreateTaskViewModel
 
                 result.fold(
                     onSuccess = {
-                        if (currentState.parentTaskId == null) {
-                            try {
-                                saveSubtasks(taskId, currentState)
-                                _state.update { it.copy(isSaving = false) }
-                                _savedEvent.emit(Unit)
-                            } catch (e: Exception) {
-                                _state.update {
-                                    it.copy(
-                                        isSaving = false,
-                                        error = e.message ?: "Failed to save subtasks",
-                                    )
-                                }
-                            }
-                        } else {
+                        try {
+                            saveSubtasks(taskId, currentState)
                             _state.update { it.copy(isSaving = false) }
                             _savedEvent.emit(Unit)
+                        } catch (e: Exception) {
+                            _state.update {
+                                it.copy(
+                                    isSaving = false,
+                                    error = e.message ?: "Failed to save subtasks",
+                                )
+                            }
                         }
                     },
                     onFailure = { error ->

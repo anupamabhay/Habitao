@@ -98,15 +98,26 @@ class TasksViewModel
                 val completedTopLevelTasks = allTopLevelTasks.filter { it.id in fullyCompletedParentIds }
 
                 // Subtasks of active parents stay with the active parent (even if the subtask itself is completed)
+                // Build complete subtask map including nested sub-subtasks
                 val activeSubTasks =
-                    allSubTasksByParent.filterKeys { parentId ->
-                        activeTopLevelTasks.any { it.id == parentId }
+                    buildMap<String, List<Task>> {
+                        fun addDescendants(parentId: String) {
+                            val children = allSubTasksByParent[parentId] ?: return
+                            put(parentId, sortTasks(children, sortOrder))
+                            children.forEach { child -> addDescendants(child.id) }
+                        }
+                        activeTopLevelTasks.forEach { task -> addDescendants(task.id) }
                     }
 
                 val completedSubTasks =
-                    allSubTasksByParent
-                        .filterKeys { it in fullyCompletedParentIds }
-                        .mapValues { (_, value) -> sortTasks(value, sortOrder) }
+                    buildMap<String, List<Task>> {
+                        fun addDescendants(parentId: String) {
+                            val children = allSubTasksByParent[parentId] ?: return
+                            put(parentId, sortTasks(children, sortOrder))
+                            children.forEach { child -> addDescendants(child.id) }
+                        }
+                        completedTopLevelTasks.forEach { task -> addDescendants(task.id) }
+                    }
 
                 val knownParentIds = allTopLevelTasks.map { it.id }.toSet()
                 val orphanCompletedSubTasks =
@@ -144,7 +155,7 @@ class TasksViewModel
                     todayTasks = sortTasks(todayTasks, sortOrder),
                     tomorrowTasks = sortTasks(tomorrowTasks, sortOrder),
                     upcomingTasks = sortTasks(upcomingTasks, sortOrder),
-                    subTasks = activeSubTasks.mapValues { (_, value) -> sortTasks(value, sortOrder) },
+                    subTasks = activeSubTasks,
                     completedTasks = sortTasks(completedTopLevelTasks, sortOrder),
                     completedSubTasks = completedSubTasks,
                     orphanCompletedSubTasks = sortTasks(orphanCompletedSubTasks, sortOrder),

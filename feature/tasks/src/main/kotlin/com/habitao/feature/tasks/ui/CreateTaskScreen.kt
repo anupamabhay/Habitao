@@ -472,9 +472,14 @@ private fun MarkdownDescriptionField(
             MarkdownVisualTransformation(baseColor)
         }
 
+    val autoFormatOnChange: (String) -> Unit = { newValue: String ->
+        val formatted = handleMarkdownAutoFormat(value, newValue)
+        onValueChange(formatted)
+    }
+
     BasicTextField(
         value = value,
-        onValueChange = onValueChange,
+        onValueChange = autoFormatOnChange,
         textStyle =
             MaterialTheme.typography.bodyLarge.copy(
                 color = baseColor,
@@ -485,7 +490,7 @@ private fun MarkdownDescriptionField(
         decorationBox = { innerTextField ->
             if (value.isEmpty()) {
                 Text(
-                    text = "Add description...",
+                    text = "Add description... (supports markdown)",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 )
@@ -493,6 +498,74 @@ private fun MarkdownDescriptionField(
             innerTextField()
         },
     )
+}
+
+private fun handleMarkdownAutoFormat(
+    oldValue: String,
+    newValue: String,
+): String {
+    // Only trigger on newline insertion (user pressed Enter)
+    if (newValue.length <= oldValue.length) return newValue
+    val insertedChar = newValue.length - oldValue.length
+    if (insertedChar != 1) return newValue
+
+    // Find where the newline was inserted
+    val diffIndex =
+        newValue.indices.firstOrNull { i ->
+            i >= oldValue.length || newValue[i] != oldValue[i]
+        } ?: return newValue
+
+    if (newValue[diffIndex] != '\n') return newValue
+
+    // Get the line BEFORE the newline
+    val beforeNewline = newValue.substring(0, diffIndex)
+    val prevLineStart = beforeNewline.lastIndexOf('\n').let { if (it == -1) 0 else it + 1 }
+    val prevLine = beforeNewline.substring(prevLineStart)
+    val trimmedPrev = prevLine.trimStart()
+
+    // Unordered list: "- text" -> auto-add "- " on next line
+    if (trimmedPrev.startsWith("- ") && trimmedPrev.length > 2) {
+        val after = newValue.substring(diffIndex + 1)
+        return beforeNewline + "\n- " + after
+    }
+
+    // Empty unordered list marker: just "- " with no text -> remove it
+    if (trimmedPrev == "-" || trimmedPrev == "- ") {
+        val beforePrevLine = newValue.substring(0, prevLineStart)
+        val after = newValue.substring(diffIndex + 1)
+        return beforePrevLine + after
+    }
+
+    // Numbered list: "1. text" -> auto-add "2. " on next line
+    val numberedMatch = Regex("^(\\d+)\\.\\s(.+)$").find(trimmedPrev)
+    if (numberedMatch != null) {
+        val nextNumber = (numberedMatch.groupValues[1].toIntOrNull() ?: 0) + 1
+        val after = newValue.substring(diffIndex + 1)
+        return beforeNewline + "\n$nextNumber. " + after
+    }
+
+    // Empty numbered list marker: "1. " with no text -> remove it
+    val emptyNumberedMatch = Regex("^(\\d+)\\.\\s?$").find(trimmedPrev)
+    if (emptyNumberedMatch != null) {
+        val beforePrevLine = newValue.substring(0, prevLineStart)
+        val after = newValue.substring(diffIndex + 1)
+        return beforePrevLine + after
+    }
+
+    // Checkbox: "[ ] text" -> auto-add "[ ] " on next line
+    if (trimmedPrev.startsWith("[ ] ") && trimmedPrev.length > 4) {
+        val after = newValue.substring(diffIndex + 1)
+        return beforeNewline + "\n[ ] " + after
+    }
+
+    // Empty checkbox: "[ ] " -> remove
+    if (trimmedPrev == "[ ]" || trimmedPrev == "[ ] ") {
+        val beforePrevLine = newValue.substring(0, prevLineStart)
+        val after = newValue.substring(diffIndex + 1)
+        return beforePrevLine + after
+    }
+
+    return newValue
 }
 
 @Composable
