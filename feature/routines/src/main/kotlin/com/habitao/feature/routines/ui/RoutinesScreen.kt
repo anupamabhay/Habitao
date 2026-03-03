@@ -5,8 +5,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,31 +24,30 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -73,7 +72,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.habitao.core.ui.theme.AppShapes
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.Routine
 import com.habitao.domain.model.RoutineLog
@@ -95,11 +93,12 @@ fun RoutinesScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refreshDate()
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    viewModel.refreshDate()
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -175,12 +174,13 @@ private fun RoutinesContent(
             else -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        start = Dimensions.screenPaddingHorizontal,
-                        top = Dimensions.elementSpacing,
-                        end = Dimensions.screenPaddingHorizontal,
-                        bottom = Dimensions.fabClearance,
-                    ),
+                    contentPadding =
+                        PaddingValues(
+                            start = Dimensions.screenPaddingHorizontal,
+                            top = Dimensions.elementSpacing,
+                            end = Dimensions.screenPaddingHorizontal,
+                            bottom = Dimensions.fabClearance,
+                        ),
                     verticalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
                 ) {
                     item(key = "routine_overview") {
@@ -217,14 +217,15 @@ private fun RoutineCard(
     modifier: Modifier = Modifier,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
-    
+
     val completedStepsCount = log?.completedStepIds?.size ?: 0
     val totalStepsCount = steps.size
-    val progress = if (totalStepsCount > 0) {
-        completedStepsCount.toFloat() / totalStepsCount
-    } else {
-        0f
-    }
+    val progress =
+        if (totalStepsCount > 0) {
+            completedStepsCount.toFloat() / totalStepsCount
+        } else {
+            0f
+        }
     val isCompleted = totalStepsCount > 0 && completedStepsCount == totalStepsCount
 
     val cardContainerColor by animateColorAsState(
@@ -239,26 +240,30 @@ private fun RoutineCard(
     )
 
     ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = { isExpanded = !isExpanded }),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable(onClick = { isExpanded = !isExpanded }),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = cardContainerColor,
-        ),
-        elevation = CardDefaults.elevatedCardElevation(
-            defaultElevation =
-                if (isCompleted) {
-                    Dimensions.cardElevationCompleted
-                } else {
-                    Dimensions.cardElevation
-                },
-        ),
+        colors =
+            CardDefaults.elevatedCardColors(
+                containerColor = cardContainerColor,
+            ),
+        elevation =
+            CardDefaults.elevatedCardElevation(
+                defaultElevation =
+                    if (isCompleted) {
+                        Dimensions.cardElevationCompleted
+                    } else {
+                        Dimensions.cardElevation
+                    },
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.cardPadding),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(Dimensions.cardPadding),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -294,9 +299,10 @@ private fun RoutineCard(
                         Text(
                             text = "$completedStepsCount of $totalStepsCount steps completed",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                alpha = if (isCompleted) 0.5f else 1f,
-                            ),
+                            color =
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                    alpha = if (isCompleted) 0.5f else 1f,
+                                ),
                         )
 
                         if (totalStepsCount > 0) {
@@ -320,10 +326,11 @@ private fun RoutineCard(
                     FilledIconButton(
                         onClick = onEditRoutine,
                         modifier = Modifier.size(40.dp),
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        colors =
+                            IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
@@ -336,21 +343,23 @@ private fun RoutineCard(
                         checked = isExpanded,
                         onCheckedChange = { isExpanded = it },
                         modifier = Modifier.size(40.dp),
-                        colors = IconButtonDefaults.filledIconToggleButtonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                            checkedContainerColor = MaterialTheme.colorScheme.tertiary,
-                            checkedContentColor = MaterialTheme.colorScheme.onTertiary,
-                        ),
+                        colors =
+                            IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                checkedContainerColor = MaterialTheme.colorScheme.tertiary,
+                                checkedContentColor = MaterialTheme.colorScheme.onTertiary,
+                            ),
                     ) {
                         Icon(
                             imageVector = Icons.Default.ExpandMore,
                             contentDescription = if (isExpanded) "Collapse" else "Expand",
-                            modifier = Modifier
-                                .size(20.dp)
-                                .graphicsLayer {
-                                    rotationZ = if (isExpanded) 180f else 0f
-                                },
+                            modifier =
+                                Modifier
+                                    .size(20.dp)
+                                    .graphicsLayer {
+                                        rotationZ = if (isExpanded) 180f else 0f
+                                    },
                         )
                     }
                 }
@@ -360,10 +369,11 @@ private fun RoutineCard(
                 Spacer(modifier = Modifier.height(Dimensions.elementSpacingLarge))
                 LinearProgressIndicator(
                     progress = { progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(3.dp)
-                        .clip(CircleShape),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .clip(CircleShape),
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
                     trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                     strokeCap = StrokeCap.Round,
@@ -376,9 +386,10 @@ private fun RoutineCard(
                 exit = shrinkVertically(animationSpec = tween(durationMillis = 200)),
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = Dimensions.elementSpacing),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = Dimensions.elementSpacing),
                     verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
                 ) {
                     steps.sortedBy { it.stepOrder }.forEach { step ->
@@ -436,12 +447,13 @@ private fun RoutineStepRow(
     )
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(color = rowBackgroundColor)
-            .clickable(onClick = onToggle)
-            .padding(horizontal = Dimensions.elementSpacing, vertical = Dimensions.elementSpacingLarge),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(color = rowBackgroundColor)
+                .clickable(onClick = onToggle)
+                .padding(horizontal = Dimensions.elementSpacing, vertical = Dimensions.elementSpacingLarge),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
     ) {
@@ -473,11 +485,12 @@ private fun RoutineOverviewCard(
     modifier: Modifier = Modifier,
 ) {
     val totalRoutines = state.routines.size
-    val completedRoutines = state.routines.count { routine ->
-        val routineSteps = state.steps[routine.id] ?: emptyList()
-        val completedStepsCount = state.logs[routine.id]?.completedStepIds?.size ?: 0
-        routineSteps.isNotEmpty() && completedStepsCount >= routineSteps.size
-    }
+    val completedRoutines =
+        state.routines.count { routine ->
+            val routineSteps = state.steps[routine.id] ?: emptyList()
+            val completedStepsCount = state.logs[routine.id]?.completedStepIds?.size ?: 0
+            routineSteps.isNotEmpty() && completedStepsCount >= routineSteps.size
+        }
 
     val completionRate =
         if (totalRoutines > 0) {
@@ -488,14 +501,16 @@ private fun RoutineOverviewCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.cardPadding),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(Dimensions.cardPadding),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

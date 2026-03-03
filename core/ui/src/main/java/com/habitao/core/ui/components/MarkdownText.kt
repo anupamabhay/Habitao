@@ -43,7 +43,10 @@ fun MarkdownText(
     )
 }
 
-private fun parseMarkdown(text: String, baseColor: Color): AnnotatedString {
+private fun parseMarkdown(
+    text: String,
+    baseColor: Color,
+): AnnotatedString {
     return buildAnnotatedString {
         val lines = text.lines()
         lines.forEachIndexed { index, line ->
@@ -57,7 +60,9 @@ private fun parseMarkdown(text: String, baseColor: Color): AnnotatedString {
                 }
                 trimmed.startsWith("[x] ") || trimmed.startsWith("[X] ") -> {
                     append("☑ ")
-                    withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough, color = baseColor.copy(alpha = 0.6f))) {
+                    withStyle(
+                        SpanStyle(textDecoration = TextDecoration.LineThrough, color = baseColor.copy(alpha = 0.6f)),
+                    ) {
                         appendFormattedLine(trimmed.removePrefix("[x] ").removePrefix("[X] "), baseColor)
                     }
                 }
@@ -85,7 +90,10 @@ private fun parseMarkdown(text: String, baseColor: Color): AnnotatedString {
     }
 }
 
-private fun AnnotatedString.Builder.appendFormattedLine(text: String, baseColor: Color) {
+private fun AnnotatedString.Builder.appendFormattedLine(
+    text: String,
+    baseColor: Color,
+) {
     var i = 0
     while (i < text.length) {
         when {
@@ -131,7 +139,12 @@ private fun AnnotatedString.Builder.appendFormattedLine(text: String, baseColor:
             text.startsWith("`", i) -> {
                 val end = text.indexOf("`", i + 1)
                 if (end != -1) {
-                    withStyle(SpanStyle(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, color = baseColor.copy(alpha = 0.8f))) {
+                    withStyle(
+                        SpanStyle(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            color = baseColor.copy(alpha = 0.8f),
+                        ),
+                    ) {
                         append(text.substring(i + 1, end))
                     }
                     i = end + 1

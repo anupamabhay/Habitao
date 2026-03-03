@@ -28,16 +28,17 @@ fun RequestAppPermissions() {
     var showRationale by remember { mutableStateOf(false) }
     var permissionsRequested by remember { mutableStateOf(false) }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions(),
-    ) { results ->
-        val allGranted = results.values.all { it }
-        if (!allGranted) {
-            showRationale = true
+    val permissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions(),
+        ) { results ->
+            val allGranted = results.values.all { it }
+            if (!allGranted) {
+                showRationale = true
+            }
+            // Also check exact alarm permission
+            checkAndRequestExactAlarmPermission(context)
         }
-        // Also check exact alarm permission
-        checkAndRequestExactAlarmPermission(context)
-    }
 
     // Request notification permission on first composition
     LaunchedEffect(Unit) {
@@ -69,7 +70,8 @@ fun RequestAppPermissions() {
             title = { Text("Permissions Required") },
             text = {
                 Text(
-                    "Habitao needs notification permission to send you reminders for habits, tasks, and Pomodoro sessions. " +
+                    "Habitao needs notification permission to send you reminders " +
+                        "for habits, tasks, and Pomodoro sessions. " +
                         "You can grant this in Settings.",
                 )
             },
@@ -77,9 +79,10 @@ fun RequestAppPermissions() {
                 TextButton(
                     onClick = {
                         showRationale = false
-                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.fromParts("package", context.packageName, null)
-                        }
+                        val intent =
+                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.fromParts("package", context.packageName, null)
+                            }
                         context.startActivity(intent)
                     },
                 ) {
@@ -100,9 +103,10 @@ private fun checkAndRequestExactAlarmPermission(context: Context) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (!alarmManager.canScheduleExactAlarms()) {
             try {
-                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                    data = Uri.fromParts("package", context.packageName, null)
-                }
+                val intent =
+                    Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
                 context.startActivity(intent)
             } catch (_: Exception) {
                 // Some devices don't support this intent

@@ -3,9 +3,9 @@ package com.habitao.feature.habits.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.habitao.core.datastore.AppSettingsManager
+import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.PomodoroSession
 import com.habitao.domain.model.PomodoroType
-import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.RoutineLog
 import com.habitao.domain.model.StreakInfo
 import com.habitao.domain.model.Task
@@ -248,18 +248,29 @@ class StatsViewModel
 
         private val routineStatsFlow =
             combine(routineLogsFlow, routinesFlow, displayDateRangeFlow) { logs, routines, range ->
-                val completed = logs.count { it.isCompleted && !it.date.isBefore(range.startDate) && !it.date.isAfter(range.endDate) }
+                val completed =
+                    logs.count {
+                        it.isCompleted &&
+                            !it.date.isBefore(
+                                range.startDate,
+                            ) && !it.date.isAfter(range.endDate)
+                    }
                 val total = routines.size * range.totalDays
                 val rate = if (total > 0) completed.toFloat() / total else 0f
                 RoutineStatsData(completed = completed, total = total, completionRate = rate)
             }
 
         private val pomodoroStatsFlow =
-            combine(pomodoroSessionsFlow, activeWorkSecondsFlow, displayDateRangeFlow) { sessions, activeWorkSeconds, range ->
-                val filteredSessions = sessions.filter { 
-                    val date = it.startedAt.toLocalDate(ZoneId.systemDefault())
-                    !date.isBefore(range.startDate) && !date.isAfter(range.endDate)
-                }
+            combine(
+                pomodoroSessionsFlow,
+                activeWorkSecondsFlow,
+                displayDateRangeFlow,
+            ) { sessions, activeWorkSeconds, range ->
+                val filteredSessions =
+                    sessions.filter {
+                        val date = it.startedAt.toLocalDate(ZoneId.systemDefault())
+                        !date.isBefore(range.startDate) && !date.isAfter(range.endDate)
+                    }
                 PomodoroStatsData(
                     sessions = filteredSessions,
                     activeWorkSeconds = activeWorkSeconds,
@@ -269,7 +280,7 @@ class StatsViewModel
         private val coreStatsFlow =
             combine(
                 combine(displayDateRangeFlow, fetchDateRangeFlow, habitsFlow) { r, fr, h -> Triple(r, fr, h) },
-                combine(habitLogsFlow, routineLogsFlow, taskStatsFlow) { hl, rl, ts -> Triple(hl, rl, ts) }
+                combine(habitLogsFlow, routineLogsFlow, taskStatsFlow) { hl, rl, ts -> Triple(hl, rl, ts) },
             ) { (range, fetchRange, habits), (habitLogs, routineLogs, taskStats) ->
                 CoreStatsInput(
                     range = range,
@@ -286,7 +297,7 @@ class StatsViewModel
         val state: StateFlow<StatsState> =
             combine(
                 combine(timeFilterFlow, coreStatsFlow, habitStatsFlow) { tf, cs, hs -> Triple(tf, cs, hs) },
-                combine(pomodoroStatsFlow, routineStatsFlow, graphTypeFlow) { ps, rs, gt -> Triple(ps, rs, gt) }
+                combine(pomodoroStatsFlow, routineStatsFlow, graphTypeFlow) { ps, rs, gt -> Triple(ps, rs, gt) },
             ) { (timeFilter, coreStats, habitStats), (pomodoroStats, routineStats, graphType) ->
                 val range = coreStats.range
                 val fetchRange = coreStats.fetchRange
@@ -316,9 +327,16 @@ class StatsViewModel
                 val habitRate = if (totalHabitTargets > 0) completedHabits.toFloat() / totalHabitTargets else 0f
 
                 val workSessions = pomodoroSessions.filter { it.sessionType == PomodoroType.WORK }
-                val focusSeconds = workSessions.sumOf { it.actualDurationSeconds ?: 0 } + pomodoroStats.activeWorkSeconds
-                val completedWorkSessions = workSessions.count { (it.actualDurationSeconds ?: 0) > 0 }
-                val completedRounds = if (timeFilter == 0) pomodoroPreferences.getTodaysRounds() else completedWorkSessions
+                val focusSeconds =
+                    workSessions.sumOf { it.actualDurationSeconds ?: 0 } + pomodoroStats.activeWorkSeconds
+                val completedWorkSessions =
+                    workSessions.count { (it.actualDurationSeconds ?: 0) > 0 }
+                val completedRounds =
+                    if (timeFilter == 0) {
+                        pomodoroPreferences.getTodaysRounds()
+                    } else {
+                        completedWorkSessions
+                    }
 
                 val activityData =
                     if (timeFilter == 0) {
@@ -328,8 +346,10 @@ class StatsViewModel
                             taskStats = taskStats,
                         )
                     } else {
-                        val habitsCompletedByDate = habitLogs.filter { it.isCompleted }.groupingBy { it.date }.eachCount()
-                        val routinesCompletedByDate = routineLogs.filter { it.isCompleted }.groupingBy { it.date }.eachCount()
+                        val habitsCompletedByDate =
+                            habitLogs.filter { it.isCompleted }.groupingBy { it.date }.eachCount()
+                        val routinesCompletedByDate =
+                            routineLogs.filter { it.isCompleted }.groupingBy { it.date }.eachCount()
 
                         fetchDates.map { date ->
                             ActivityDataPoint(
@@ -495,8 +515,7 @@ class StatsViewModel
         private fun Long.toLocalDate(zoneId: ZoneId): LocalDate =
             Instant.ofEpochMilli(this).atZone(zoneId).toLocalDate()
 
-        private fun Long.toLocalHour(zoneId: ZoneId): Int =
-            Instant.ofEpochMilli(this).atZone(zoneId).hour
+        private fun Long.toLocalHour(zoneId: ZoneId): Int = Instant.ofEpochMilli(this).atZone(zoneId).hour
 
         private suspend fun loadStreakSafe(habitId: String): StreakInfo {
             return habitRepository.calculateStreak(habitId)

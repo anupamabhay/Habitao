@@ -56,7 +56,10 @@ interface HabitRepository {
 
     fun observeLogsForDate(date: LocalDate): Flow<Result<Map<String, HabitLog>>>
 
-    fun observeLogsForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<Result<List<HabitLog>>>
+    fun observeLogsForDateRange(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): Flow<Result<List<HabitLog>>>
 
     suspend fun getWeeklyProgressForHabit(
         habitId: String,

@@ -16,8 +16,6 @@ import com.habitao.feature.pomodoro.service.TimerState
 import com.habitao.feature.pomodoro.service.TimerStateHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.time.LocalDate
-import javax.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +24,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.time.LocalDate
+import javax.inject.Inject
 
 enum class FocusLinkType {
     TASK,
@@ -86,7 +86,6 @@ class PomodoroViewModel
         private val pomodoroPreferences: PomodoroPreferences,
         @ApplicationContext private val context: Context,
     ) : ViewModel() {
-
         private val sessionsFlow =
             pomodoroRepository.observeSessionsForDate(LocalDate.now())
                 .map { result -> result.getOrElse { emptyList() } }
@@ -191,10 +190,11 @@ class PomodoroViewModel
                 )
             }
 
-        private val sessionsCountFlow = combine(
-            timerStateHolder.completedWorkSessions,
-            timerStateHolder.totalCompletedWorkSessions,
-        ) { cycle, total -> Pair(cycle, total) }
+        private val sessionsCountFlow =
+            combine(
+                timerStateHolder.completedWorkSessions,
+                timerStateHolder.totalCompletedWorkSessions,
+            ) { cycle, total -> Pair(cycle, total) }
 
         private val timerCombinedFlow =
             combine(
@@ -214,16 +214,18 @@ class PomodoroViewModel
                 )
             }
 
-        private val preferencesUpdateFlow = callbackFlow {
-            val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+        private val preferencesUpdateFlow =
+            callbackFlow {
+                val listener =
+                    SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+                        trySend(Unit)
+                    }
+                pomodoroPreferences.sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
                 trySend(Unit)
+                awaitClose {
+                    pomodoroPreferences.sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener)
+                }
             }
-            pomodoroPreferences.sharedPreferences.registerOnSharedPreferenceChangeListener(listener)
-            trySend(Unit)
-            awaitClose {
-                pomodoroPreferences.sharedPreferences.unregisterOnSharedPreferenceChangeListener(listener)
-            }
-        }
 
         val state: StateFlow<PomodoroState> =
             combine(
@@ -289,10 +291,11 @@ class PomodoroViewModel
                 PomodoroIntent.StopTimer -> sendServiceAction(TimerService.ACTION_STOP)
                 PomodoroIntent.SkipToNext -> sendServiceAction(TimerService.ACTION_SKIP)
                 is PomodoroIntent.AdjustTime -> {
-                    val adjustIntent = Intent(context, TimerService::class.java).apply {
-                        action = TimerService.ACTION_ADJUST_TIME
-                        putExtra(TimerService.EXTRA_DELTA_SECONDS, intent.deltaSeconds)
-                    }
+                    val adjustIntent =
+                        Intent(context, TimerService::class.java).apply {
+                            action = TimerService.ACTION_ADJUST_TIME
+                            putExtra(TimerService.EXTRA_DELTA_SECONDS, intent.deltaSeconds)
+                        }
                     context.startService(adjustIntent)
                 }
                 is PomodoroIntent.LinkTask -> timerStateHolder.linkTask(intent.taskId)

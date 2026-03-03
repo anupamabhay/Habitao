@@ -8,10 +8,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
@@ -28,11 +28,11 @@ import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -210,72 +210,75 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
     }
 
     HabitaoTheme(themeMode = settings.themeMode) {
+        // Request app permissions (notifications, exact alarms)
+        RequestAppPermissions()
 
-    // Request app permissions (notifications, exact alarms)
-    RequestAppPermissions()
-
-    val selectedTabs = remember(settings.bottomNavTabs, settings.maxVisibleTabs) {
-        resolveSelectedTabs(settings.bottomNavTabs, settings.maxVisibleTabs)
-    }
-    val hiddenTabs = remember(selectedTabs) {
-        Tab.entries.filterNot(selectedTabs::contains)
-    }
-    val defaultLaunchTab = remember(settings.defaultLaunchTab) {
-        resolveDefaultLaunchTab(settings.defaultLaunchTab)
-    }
-    val allTabOptions = remember {
-        Tab.entries.map { tab ->
-            SettingsTabOption(
-                id = tab.id,
-                label = tab.label,
-            )
-        }
-    }
-
-    var startDestinationTabId by rememberSaveable { mutableStateOf<String?>(null) }
-    LaunchedEffect(defaultLaunchTab.id) {
-        if (startDestinationTabId == null) {
-            startDestinationTabId = defaultLaunchTab.id
-        }
-    }
-
-    val startDestinationTab = Tab.fromId(startDestinationTabId ?: Tab.HABITS.id) ?: Tab.HABITS
-
-    val showBottomBar =
-        currentDestination?.let { destination ->
-            Tab.entries.any { tab -> destination.hasRoute(tab.route::class) }
-        } ?: true
-
-    val navigateToTab: (Tab) -> Unit = { tab ->
-        navController.navigate(tab.route) {
-            // Pop up to the start destination to avoid building up a large stack.
-            popUpTo(navController.graph.findStartDestination().id) {
-                saveState = true
+        val selectedTabs =
+            remember(settings.bottomNavTabs, settings.maxVisibleTabs) {
+                resolveSelectedTabs(settings.bottomNavTabs, settings.maxVisibleTabs)
             }
-            launchSingleTop = true
-            restoreState = true
-        }
-    }
+        val hiddenTabs =
+            remember(selectedTabs) {
+                Tab.entries.filterNot(selectedTabs::contains)
+            }
+        val defaultLaunchTab =
+            remember(settings.defaultLaunchTab) {
+                resolveDefaultLaunchTab(settings.defaultLaunchTab)
+            }
+        val allTabOptions =
+            remember {
+                Tab.entries.map { tab ->
+                    SettingsTabOption(
+                        id = tab.id,
+                        label = tab.label,
+                    )
+                }
+            }
 
-    if (showMoreSheet) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
-            onDismissRequest = { showMoreSheet = false },
-            sheetState = sheetState,
-        ) {
-            MoreMenuSheet(
-                hiddenTabs = hiddenTabs,
-                onHiddenTabSelected = { hiddenTab ->
-                    showMoreSheet = false
-                    navigateToTab(hiddenTab)
-                },
-                onSettingsSelected = {
-                    showMoreSheet = false
-                    navController.navigate(SettingsRoute)
-                },
-            )
+        var startDestinationTabId by rememberSaveable { mutableStateOf<String?>(null) }
+        LaunchedEffect(defaultLaunchTab.id) {
+            if (startDestinationTabId == null) {
+                startDestinationTabId = defaultLaunchTab.id
+            }
         }
-    }
+
+        val startDestinationTab = Tab.fromId(startDestinationTabId ?: Tab.HABITS.id) ?: Tab.HABITS
+
+        val showBottomBar =
+            currentDestination?.let { destination ->
+                Tab.entries.any { tab -> destination.hasRoute(tab.route::class) }
+            } ?: true
+
+        val navigateToTab: (Tab) -> Unit = { tab ->
+            navController.navigate(tab.route) {
+                // Pop up to the start destination to avoid building up a large stack.
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+
+        if (showMoreSheet) {
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            ModalBottomSheet(
+                onDismissRequest = { showMoreSheet = false },
+                sheetState = sheetState,
+            ) {
+                MoreMenuSheet(
+                    hiddenTabs = hiddenTabs,
+                    onHiddenTabSelected = { hiddenTab ->
+                        showMoreSheet = false
+                        navigateToTab(hiddenTab)
+                    },
+                    onSettingsSelected = {
+                        showMoreSheet = false
+                        navController.navigate(SettingsRoute)
+                    },
+                )
+            }
+        }
 
         Scaffold(
             bottomBar = {
@@ -297,60 +300,60 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
                 navController = navController,
                 startDestination = startDestinationTab.route,
             ) {
-            // -- Tab destinations --
-            composable<HabitsRoute> {
-                Box(modifier = bottomPad) {
-                    HabitsScreen(
-                        onAddHabit = { navController.navigate(CreateHabitRoute) },
-                        onEditHabit = { habitId ->
-                            navController.navigate(EditHabitRoute(habitId))
-                        },
+                // -- Tab destinations --
+                composable<HabitsRoute> {
+                    Box(modifier = bottomPad) {
+                        HabitsScreen(
+                            onAddHabit = { navController.navigate(CreateHabitRoute) },
+                            onEditHabit = { habitId ->
+                                navController.navigate(EditHabitRoute(habitId))
+                            },
+                        )
+                    }
+                }
+
+                composable<PomodoroRoute> {
+                    Box(modifier = bottomPad) {
+                        PomodoroScreen(
+                            onOpenFullScreen = { navController.navigate(FullScreenClockRoute) },
+                        )
+                    }
+                }
+
+                composable<StatsRoute> {
+                    Box(modifier = bottomPad) {
+                        StatsScreen()
+                    }
+                }
+
+                composable<RoutinesRoute> {
+                    Box(modifier = bottomPad) {
+                        RoutinesScreen(
+                            onAddRoutine = { navController.navigate(CreateRoutineRoute()) },
+                            onEditRoutine = { routineId ->
+                                navController.navigate(CreateRoutineRoute(routineId = routineId))
+                            },
+                            onNavigateToStats = { navController.navigate(RoutineStatsRoute) },
+                        )
+                    }
+                }
+
+                composable<RoutineStatsRoute> {
+                    RoutineStatsScreen(
+                        onNavigateBack = { navController.popBackStack() },
                     )
                 }
-            }
 
-            composable<PomodoroRoute> {
-                Box(modifier = bottomPad) {
-                    PomodoroScreen(
-                        onOpenFullScreen = { navController.navigate(FullScreenClockRoute) },
-                    )
+                composable<TasksRoute> {
+                    Box(modifier = bottomPad) {
+                        TasksScreen(
+                            onAddTask = { navController.navigate(CreateTaskRoute()) },
+                            onEditTask = { taskId ->
+                                navController.navigate(CreateTaskRoute(taskId = taskId))
+                            },
+                        )
+                    }
                 }
-            }
-
-            composable<StatsRoute> {
-                Box(modifier = bottomPad) {
-                    StatsScreen()
-                }
-            }
-
-            composable<RoutinesRoute> {
-                Box(modifier = bottomPad) {
-                    RoutinesScreen(
-                        onAddRoutine = { navController.navigate(CreateRoutineRoute()) },
-                        onEditRoutine = { routineId ->
-                            navController.navigate(CreateRoutineRoute(routineId = routineId))
-                        },
-                        onNavigateToStats = { navController.navigate(RoutineStatsRoute) },
-                    )
-                }
-            }
-
-            composable<RoutineStatsRoute> {
-                RoutineStatsScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                )
-            }
-
-            composable<TasksRoute> {
-                Box(modifier = bottomPad) {
-                    TasksScreen(
-                        onAddTask = { navController.navigate(CreateTaskRoute()) },
-                        onEditTask = { taskId ->
-                            navController.navigate(CreateTaskRoute(taskId = taskId))
-                        },
-                    )
-                }
-            }
 
                 composable<SettingsRoute> {
                     SettingsScreen(
@@ -421,46 +424,46 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
                     )
                 }
 
-            // -- Full-screen destinations (no bottom bar) --
-            composable<CreateRoutineRoute> { backStackEntry ->
-                val route = backStackEntry.toRoute<CreateRoutineRoute>()
-                CreateRoutineScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onRoutineCreated = { navController.popBackStack() },
-                    routineId = route.routineId,
-                )
-            }
+                // -- Full-screen destinations (no bottom bar) --
+                composable<CreateRoutineRoute> { backStackEntry ->
+                    val route = backStackEntry.toRoute<CreateRoutineRoute>()
+                    CreateRoutineScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onRoutineCreated = { navController.popBackStack() },
+                        routineId = route.routineId,
+                    )
+                }
 
-            composable<CreateTaskRoute> { backStackEntry ->
-                val route = backStackEntry.toRoute<CreateTaskRoute>()
-                CreateTaskScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onTaskCreated = { navController.popBackStack() },
-                    taskId = route.taskId,
-                )
-            }
+                composable<CreateTaskRoute> { backStackEntry ->
+                    val route = backStackEntry.toRoute<CreateTaskRoute>()
+                    CreateTaskScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onTaskCreated = { navController.popBackStack() },
+                        taskId = route.taskId,
+                    )
+                }
 
-            composable<CreateHabitRoute> {
-                CreateHabitScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onHabitCreated = { navController.popBackStack() },
-                )
-            }
+                composable<CreateHabitRoute> {
+                    CreateHabitScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onHabitCreated = { navController.popBackStack() },
+                    )
+                }
 
-            composable<EditHabitRoute> { backStackEntry ->
-                val route = backStackEntry.toRoute<EditHabitRoute>()
-                CreateHabitScreen(
-                    onNavigateBack = { navController.popBackStack() },
-                    onHabitCreated = { navController.popBackStack() },
-                    habitId = route.habitId,
-                )
-            }
+                composable<EditHabitRoute> { backStackEntry ->
+                    val route = backStackEntry.toRoute<EditHabitRoute>()
+                    CreateHabitScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onHabitCreated = { navController.popBackStack() },
+                        habitId = route.habitId,
+                    )
+                }
 
-            composable<FullScreenClockRoute> {
-                FullScreenClockScreen(
-                    onClose = { navController.popBackStack() },
-                )
-            }
+                composable<FullScreenClockRoute> {
+                    FullScreenClockScreen(
+                        onClose = { navController.popBackStack() },
+                    )
+                }
             }
         }
     }
@@ -497,11 +500,12 @@ private fun HabitaoNavigationBar(
                         contentDescription = tab.label,
                     )
                 },
-                label = if (showTabLabels) {
-                    { Text(tab.label, style = MaterialTheme.typography.labelSmall, fontSize = 10.sp, maxLines = 1) }
-                } else {
-                    null
-                },
+                label =
+                    if (showTabLabels) {
+                        { Text(tab.label, style = MaterialTheme.typography.labelSmall, fontSize = 10.sp, maxLines = 1) }
+                    } else {
+                        null
+                    },
                 alwaysShowLabel = showTabLabels,
             )
         }
@@ -520,11 +524,12 @@ private fun HabitaoNavigationBar(
                     contentDescription = "More",
                 )
             },
-            label = if (showTabLabels) {
-                { Text("More", style = MaterialTheme.typography.labelSmall, fontSize = 10.sp, maxLines = 1) }
-            } else {
-                null
-            },
+            label =
+                if (showTabLabels) {
+                    { Text("More", style = MaterialTheme.typography.labelSmall, fontSize = 10.sp, maxLines = 1) }
+                } else {
+                    null
+                },
             alwaysShowLabel = showTabLabels,
         )
     }
@@ -538,15 +543,16 @@ private fun MoreMenuSheet(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .padding(vertical = 16.dp)
-            .navigationBarsPadding()
-            .padding(bottom = 24.dp)
+        modifier =
+            modifier
+                .padding(vertical = 16.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 24.dp),
     ) {
         Text(
             text = "More",
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
         )
         hiddenTabs.forEach { hiddenTab ->
             ListItem(
@@ -557,10 +563,11 @@ private fun MoreMenuSheet(
                         contentDescription = hiddenTab.label,
                     )
                 },
-                modifier = Modifier
-                    .clickable { onHiddenTabSelected(hiddenTab) }
-                    .padding(vertical = 4.dp)
-                    .height(56.dp),
+                modifier =
+                    Modifier
+                        .clickable { onHiddenTabSelected(hiddenTab) }
+                        .padding(vertical = 4.dp)
+                        .height(56.dp),
             )
         }
 
@@ -574,15 +581,19 @@ private fun MoreMenuSheet(
                     contentDescription = "Settings",
                 )
             },
-            modifier = Modifier
-                .clickable(onClick = onSettingsSelected)
-                .padding(vertical = 4.dp)
-                .height(56.dp),
+            modifier =
+                Modifier
+                    .clickable(onClick = onSettingsSelected)
+                    .padding(vertical = 4.dp)
+                    .height(56.dp),
         )
     }
 }
 
-private fun resolveSelectedTabs(savedTabIds: List<String>, maxTabs: Int = 4): List<Tab> {
+private fun resolveSelectedTabs(
+    savedTabIds: List<String>,
+    maxTabs: Int = 4,
+): List<Tab> {
     val preferredTabs = savedTabIds.mapNotNull(Tab::fromId).distinct()
     val remainingTabs = Tab.entries.filterNot(preferredTabs::contains)
     return (preferredTabs + remainingTabs).take(maxTabs)

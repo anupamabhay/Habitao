@@ -14,5 +14,5 @@ data class RoutineLog(
     val updatedAt: Long = System.currentTimeMillis(),
     val completedAt: Long? = null,
     val syncStatus: SyncStatus = SyncStatus.LOCAL,
-    val deletedAt: Long? = null
+    val deletedAt: Long? = null,
 )

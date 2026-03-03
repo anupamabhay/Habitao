@@ -18,8 +18,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Fullscreen
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.CheckCircleOutline
@@ -50,7 +48,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.clickable
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.PomodoroType
@@ -106,16 +103,18 @@ fun PomodoroScreen(
             verticalArrangement = Arrangement.Center,
         ) {
             // Session type label (top)
-            val sessionTypeLabel = when (state.currentSessionType) {
-                PomodoroType.WORK -> "Focus"
-                PomodoroType.SHORT_BREAK -> "Short Break"
-                PomodoroType.LONG_BREAK -> "Long Break"
-            }
-            val sessionTypeColor = when (state.currentSessionType) {
-                PomodoroType.WORK -> MaterialTheme.colorScheme.primary
-                PomodoroType.SHORT_BREAK -> MaterialTheme.colorScheme.tertiary
-                PomodoroType.LONG_BREAK -> MaterialTheme.colorScheme.secondary
-            }
+            val sessionTypeLabel =
+                when (state.currentSessionType) {
+                    PomodoroType.WORK -> "Focus"
+                    PomodoroType.SHORT_BREAK -> "Short Break"
+                    PomodoroType.LONG_BREAK -> "Long Break"
+                }
+            val sessionTypeColor =
+                when (state.currentSessionType) {
+                    PomodoroType.WORK -> MaterialTheme.colorScheme.primary
+                    PomodoroType.SHORT_BREAK -> MaterialTheme.colorScheme.tertiary
+                    PomodoroType.LONG_BREAK -> MaterialTheme.colorScheme.secondary
+                }
             Text(
                 text = sessionTypeLabel,
                 style = MaterialTheme.typography.titleMedium,
@@ -125,11 +124,12 @@ fun PomodoroScreen(
 
             // Session counter
             val currentSession = (state.totalCompletedWorkSessions + 1).coerceAtMost(state.totalSessions)
-            val sessionCountText = if (state.totalCompletedWorkSessions >= state.totalSessions && state.timerState == TimerState.IDLE) {
-                "All sessions complete"
-            } else {
-                "Session $currentSession of ${state.totalSessions}"
-            }
+            val sessionCountText =
+                if (state.totalCompletedWorkSessions >= state.totalSessions && state.timerState == TimerState.IDLE) {
+                    "All sessions complete"
+                } else {
+                    "Session $currentSession of ${state.totalSessions}"
+                }
 
             Text(
                 text = sessionCountText,
@@ -145,12 +145,16 @@ fun PomodoroScreen(
                 totalSeconds = state.totalSeconds,
                 sessionType = state.currentSessionType,
                 timerState = state.timerState,
-                modifier = Modifier
-                    .size(280.dp)
-                    .then(
-                        if (isTimerActive) Modifier.clickable { showTimeAdjustDialog = true }
-                        else Modifier
-                    )
+                modifier =
+                    Modifier
+                        .size(280.dp)
+                        .then(
+                            if (isTimerActive) {
+                                Modifier.clickable { showTimeAdjustDialog = true }
+                            } else {
+                                Modifier
+                            },
+                        ),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -158,18 +162,19 @@ fun PomodoroScreen(
             // Task/Habit link selector (below timer, above controls)
             TextButton(
                 onClick = { showFocusSelector = true },
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
             ) {
                 val selectedOption = state.selectedFocusOption
-                val focusText = when {
-                    selectedOption != null -> selectedOption.title
-                    else -> "Link a task or habit"
-                }
+                val focusText =
+                    when {
+                        selectedOption != null -> selectedOption.title
+                        else -> "Link a task or habit"
+                    }
                 Text(
                     text = "$focusText >",
                     style = MaterialTheme.typography.bodyLarge,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
 
@@ -331,7 +336,9 @@ private fun FocusSelectionSheet(
                         ) { task ->
                             FocusSelectionRow(
                                 option = task,
-                                selected = selectedFocusOption?.type == FocusLinkType.TASK && selectedFocusOption.id == task.id,
+                                selected =
+                                    selectedFocusOption?.type == FocusLinkType.TASK &&
+                                        selectedFocusOption.id == task.id,
                                 onClick = { onSelectTask(task.id) },
                             )
                         }
@@ -348,7 +355,9 @@ private fun FocusSelectionSheet(
                         ) { habit ->
                             FocusSelectionRow(
                                 option = habit,
-                                selected = selectedFocusOption?.type == FocusLinkType.HABIT && selectedFocusOption.id == habit.id,
+                                selected =
+                                    selectedFocusOption?.type == FocusLinkType.HABIT &&
+                                        selectedFocusOption.id == habit.id,
                                 onClick = { onSelectHabit(habit.id) },
                             )
                         }
@@ -476,18 +485,20 @@ private fun TimerControls(
         TimerState.IDLE -> {
             Button(
                 onClick = onStart,
-                modifier = modifier
-                    .width(180.dp)
-                    .height(48.dp),
+                modifier =
+                    modifier
+                        .width(180.dp)
+                        .height(48.dp),
                 shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
             ) {
                 Text(
                     text = "Start",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 )
             }
         }
@@ -505,19 +516,21 @@ private fun TimerControls(
                 }
                 Button(
                     onClick = onPause,
-                    modifier = Modifier
-                        .width(180.dp)
-                        .height(48.dp),
+                    modifier =
+                        Modifier
+                            .width(180.dp)
+                            .height(48.dp),
                     shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        ),
                 ) {
                     Text(
                         text = "Pause",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     )
                 }
                 IconButton(onClick = onSkip, modifier = Modifier.padding(start = 16.dp)) {
@@ -542,19 +555,21 @@ private fun TimerControls(
                 }
                 Button(
                     onClick = onResume,
-                    modifier = Modifier
-                        .width(180.dp)
-                        .height(48.dp),
+                    modifier =
+                        Modifier
+                            .width(180.dp)
+                            .height(48.dp),
                     shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        ),
                 ) {
                     Text(
                         text = "Resume",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     )
                 }
                 IconButton(onClick = onSkip, modifier = Modifier.padding(start = 16.dp)) {
@@ -568,18 +583,20 @@ private fun TimerControls(
         TimerState.FINISHED -> {
             Button(
                 onClick = onStart,
-                modifier = modifier
-                    .width(180.dp)
-                    .height(48.dp),
+                modifier =
+                    modifier
+                        .width(180.dp)
+                        .height(48.dp),
                 shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
             ) {
                 Text(
                     text = "Start Next",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 )
             }
         }

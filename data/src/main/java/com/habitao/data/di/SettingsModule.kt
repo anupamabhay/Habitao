@@ -12,11 +12,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object SettingsModule {
-
     @Provides
     @Singleton
     fun provideAppSettingsManager(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
     ): AppSettingsManager {
         return AppSettingsManager(context)
     }

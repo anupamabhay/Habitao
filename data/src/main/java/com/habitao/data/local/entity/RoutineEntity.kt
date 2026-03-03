@@ -15,8 +15,8 @@ import java.util.UUID
     indices = [
         Index(value = ["createdAt"]),
         Index(value = ["isArchived"]),
-        Index(value = ["nextScheduledDate"])
-    ]
+        Index(value = ["nextScheduledDate"]),
+    ],
 )
 data class RoutineEntity(
     @PrimaryKey
@@ -40,5 +40,5 @@ data class RoutineEntity(
     val sortOrder: Int = 0,
     val syncStatus: SyncStatus = SyncStatus.LOCAL,
     val lastSyncedAt: Long? = null,
-    val deletedAt: Long? = null
+    val deletedAt: Long? = null,
 )

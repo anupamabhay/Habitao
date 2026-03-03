@@ -3,7 +3,6 @@ package com.habitao.feature.habits.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -20,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -90,12 +90,12 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                         IconButton(onClick = { showSettingsMenu = true }) {
                             Icon(
                                 imageVector = Icons.Outlined.Settings,
-                                contentDescription = "Settings"
+                                contentDescription = "Settings",
                             )
                         }
                         DropdownMenu(
                             expanded = showSettingsMenu,
-                            onDismissRequest = { showSettingsMenu = false }
+                            onDismissRequest = { showSettingsMenu = false },
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Bar Graph") },
@@ -103,9 +103,12 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                                     viewModel.setGraphType("BAR")
                                     showSettingsMenu = false
                                 },
-                                trailingIcon = if (state.graphType == "BAR") {
-                                    { Icon(Icons.Outlined.CheckCircle, contentDescription = null) }
-                                } else null
+                                trailingIcon =
+                                    if (state.graphType == "BAR") {
+                                        { Icon(Icons.Outlined.CheckCircle, contentDescription = null) }
+                                    } else {
+                                        null
+                                    },
                             )
                             DropdownMenuItem(
                                 text = { Text("Line Graph") },
@@ -113,9 +116,12 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                                     viewModel.setGraphType("LINE")
                                     showSettingsMenu = false
                                 },
-                                trailingIcon = if (state.graphType == "LINE") {
-                                    { Icon(Icons.Outlined.CheckCircle, contentDescription = null) }
-                                } else null
+                                trailingIcon =
+                                    if (state.graphType == "LINE") {
+                                        { Icon(Icons.Outlined.CheckCircle, contentDescription = null) }
+                                    } else {
+                                        null
+                                    },
                             )
                         }
                     }
@@ -126,9 +132,10 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     ) { paddingValues ->
         if (state.isLoading) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
                 contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator()
@@ -163,9 +170,10 @@ private fun StatsContent(
             else -> "this month"
         }
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = Dimensions.screenPaddingHorizontal),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(horizontal = Dimensions.screenPaddingHorizontal),
         verticalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
     ) {
         item(key = "top_spacer") {
@@ -177,13 +185,13 @@ private fun StatsContent(
             val options = listOf("Day", "Week", "Month")
 
             SingleChoiceSegmentedButtonRow(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 options.forEachIndexed { index, label ->
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
                         onClick = { onTimeFilterChanged(index) },
-                        selected = index == state.timeFilter
+                        selected = index == state.timeFilter,
                     ) {
                         Text(label)
                     }
@@ -207,25 +215,29 @@ private fun StatsContent(
                 verticalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Min),
-                    horizontalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min),
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
                 ) {
                     // Tasks Breakdown
                     Card(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                        ),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            ),
                         shape = RoundedCornerShape(16.dp),
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(Dimensions.cardPadding),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(Dimensions.cardPadding),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.SpaceBetween,
                         ) {
@@ -233,7 +245,7 @@ private fun StatsContent(
                                 text = "Tasks",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
                             )
                             Box(contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(
@@ -242,37 +254,40 @@ private fun StatsContent(
                                     strokeWidth = 8.dp,
                                     strokeCap = StrokeCap.Round,
                                     color = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
                                 )
                                 Text(
                                     text = "${(state.taskCompletionRate * 100).toInt()}%",
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
                                 )
                             }
                             Text(
                                 text = "${state.completedTasksToday} of ${state.totalTasks} done",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
                             )
                         }
                     }
 
                     // Daily Goal
                     Card(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                        ),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            ),
                         shape = RoundedCornerShape(16.dp),
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(Dimensions.cardPadding),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(Dimensions.cardPadding),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.SpaceBetween,
                         ) {
@@ -280,22 +295,27 @@ private fun StatsContent(
                                 text = "Daily Goal",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
                             )
                             Box(contentAlignment = Alignment.Center) {
-                                val progress = if (state.totalHabits > 0) state.completedToday.toFloat() / state.totalHabits else 0f
+                                val progress =
+                                    if (state.totalHabits > 0) {
+                                        state.completedToday.toFloat() / state.totalHabits
+                                    } else {
+                                        0f
+                                    }
                                 CircularProgressIndicator(
                                     progress = { progress },
                                     modifier = Modifier.size(80.dp),
                                     strokeWidth = 8.dp,
                                     strokeCap = StrokeCap.Round,
                                     color = MaterialTheme.colorScheme.tertiary,
-                                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
                                 )
                                 Text(
                                     text = "${state.completedToday}/${state.totalHabits}",
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
                                 )
                             }
                             val remaining = maxOf(0, state.totalHabits - state.completedToday)
@@ -303,7 +323,7 @@ private fun StatsContent(
                                 text = "$remaining more to hit your goal",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
                             )
                         }
                     }
@@ -312,15 +332,17 @@ private fun StatsContent(
                 // Routine Breakdown
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    ),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ),
                     shape = RoundedCornerShape(16.dp),
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(Dimensions.cardPadding),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(Dimensions.cardPadding),
                         horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -339,7 +361,8 @@ private fun StatsContent(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "${state.completedRoutinesToday} of ${state.totalRoutines} completed $periodSuffix",
+                                text =
+                                    "${state.completedRoutinesToday} of ${state.totalRoutines} completed $periodSuffix",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -369,10 +392,11 @@ private fun StatsContent(
                 text = "Current Streaks",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(
-                    top = Dimensions.sectionSpacing,
-                    bottom = Dimensions.elementSpacing,
-                ),
+                modifier =
+                    Modifier.padding(
+                        top = Dimensions.sectionSpacing,
+                        bottom = Dimensions.elementSpacing,
+                    ),
             )
         }
 
@@ -400,10 +424,11 @@ private fun StatsContent(
                 text = "Insights",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(
-                    top = Dimensions.sectionSpacing,
-                    bottom = Dimensions.elementSpacing,
-                ),
+                modifier =
+                    Modifier.padding(
+                        top = Dimensions.sectionSpacing,
+                        bottom = Dimensions.elementSpacing,
+                    ),
             )
         }
 
@@ -428,15 +453,17 @@ private fun ActivityGraphCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
         shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.cardPadding),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(Dimensions.cardPadding),
             verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
         ) {
             Text(
@@ -466,16 +493,24 @@ private fun ActivityGraphCard(
                         listOf(data.first().label, data[data.lastIndex / 2].label, data.last().label)
                     }
 
-                val rawMaxValue = data.maxOf { maxOf(it.habitsCompleted, it.routinesCompleted, it.tasksCompleted) }.coerceAtLeast(1)
+                val rawMaxValue =
+                    data.maxOf {
+                        maxOf(
+                            it.habitsCompleted,
+                            it.routinesCompleted,
+                            it.tasksCompleted,
+                        )
+                    }.coerceAtLeast(1)
                 val yAxisMax = calculateYAxisMax(rawMaxValue)
                 val yAxisTicks = listOf(yAxisMax, yAxisMax / 2, 0)
 
                 Row(modifier = Modifier.fillMaxWidth()) {
                     // Sticky Y-axis (outside scroll area)
                     Column(
-                        modifier = Modifier
-                            .height(180.dp)
-                            .padding(end = 6.dp),
+                        modifier =
+                            Modifier
+                                .height(180.dp)
+                                .padding(end = 6.dp),
                         verticalArrangement = Arrangement.SpaceBetween,
                         horizontalAlignment = Alignment.End,
                     ) {
@@ -491,33 +526,37 @@ private fun ActivityGraphCard(
                     // Scrollable chart area
                     BoxWithConstraints(modifier = Modifier.weight(1f)) {
                         val scrollState = rememberScrollState()
-                        val minPointWidth = when (timeFilter) {
-                            2 -> 24.dp
-                            0 -> 28.dp
-                            else -> 40.dp
-                        }
+                        val minPointWidth =
+                            when (timeFilter) {
+                                2 -> 24.dp
+                                0 -> 28.dp
+                                else -> 40.dp
+                            }
                         val desiredWidth = (data.size * minPointWidth.value).dp
                         val chartWidth = if (desiredWidth > maxWidth) desiredWidth else maxWidth
 
                         Column(
-                            modifier = Modifier
-                                .horizontalScroll(scrollState)
-                                .width(chartWidth),
+                            modifier =
+                                Modifier
+                                    .horizontalScroll(scrollState)
+                                    .width(chartWidth),
                             verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
                         ) {
                             if (graphType == "LINE") {
                                 ActivityLineChart(
                                     data = data,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(180.dp),
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .height(180.dp),
                                 )
                             } else {
                                 ActivityBarChart(
                                     data = data,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(180.dp),
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .height(180.dp),
                                 )
                             }
 
@@ -561,9 +600,10 @@ private fun ActivityLegend(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(
-            modifier = Modifier
-                .size(8.dp)
-                .background(color = color, shape = CircleShape),
+            modifier =
+                Modifier
+                    .size(8.dp)
+                    .background(color = color, shape = CircleShape),
         )
         Text(
             text = label,
@@ -581,12 +621,13 @@ private fun ActivityBarChart(
     val habitsColor = MaterialTheme.colorScheme.primary
     val routinesColor = MaterialTheme.colorScheme.secondary
     val tasksColor = MaterialTheme.colorScheme.tertiary
-    val rawMaxValue = maxOf(
-        data.maxOfOrNull { it.habitsCompleted } ?: 0,
-        data.maxOfOrNull { it.routinesCompleted } ?: 0,
-        data.maxOfOrNull { it.tasksCompleted } ?: 0,
-        1,
-    )
+    val rawMaxValue =
+        maxOf(
+            data.maxOfOrNull { it.habitsCompleted } ?: 0,
+            data.maxOfOrNull { it.routinesCompleted } ?: 0,
+            data.maxOfOrNull { it.tasksCompleted } ?: 0,
+            1,
+        )
     val yAxisMax = calculateYAxisMax(rawMaxValue)
 
     Canvas(modifier = modifier) {
@@ -603,7 +644,11 @@ private fun ActivityBarChart(
         data.forEachIndexed { index, point ->
             val groupLeft = index * groupWidth + gap
 
-            fun drawBar(barIndex: Int, value: Int, color: androidx.compose.ui.graphics.Color) {
+            fun drawBar(
+                barIndex: Int,
+                value: Int,
+                color: androidx.compose.ui.graphics.Color,
+            ) {
                 if (value == 0) return
                 val normalized = value.toFloat() / yAxisMax.toFloat()
                 val barHeight = (normalized * chartHeight).coerceAtLeast(2.dp.toPx())
@@ -632,12 +677,13 @@ private fun ActivityLineChart(
     val habitsColor = MaterialTheme.colorScheme.primary
     val routinesColor = MaterialTheme.colorScheme.secondary
     val tasksColor = MaterialTheme.colorScheme.tertiary
-    val rawMaxValue = maxOf(
-        data.maxOfOrNull { it.habitsCompleted } ?: 0,
-        data.maxOfOrNull { it.routinesCompleted } ?: 0,
-        data.maxOfOrNull { it.tasksCompleted } ?: 0,
-        1,
-    )
+    val rawMaxValue =
+        maxOf(
+            data.maxOfOrNull { it.habitsCompleted } ?: 0,
+            data.maxOfOrNull { it.routinesCompleted } ?: 0,
+            data.maxOfOrNull { it.tasksCompleted } ?: 0,
+            1,
+        )
     val yAxisMax = calculateYAxisMax(rawMaxValue)
 
     Canvas(modifier = modifier) {
@@ -648,25 +694,32 @@ private fun ActivityLineChart(
         if (count == 0) return@Canvas
         val stepX = if (count > 1) size.width / (count - 1) else 0f
 
-        fun point(index: Int, value: Int): Offset {
+        fun point(
+            index: Int,
+            value: Int,
+        ): Offset {
             val x = if (count > 1) index * stepX else size.width / 2f
             val normalized = value.toFloat() / yAxisMax.toFloat()
             val y = chartBottom - (normalized * chartHeight)
             return Offset(x, y)
         }
 
-        fun drawSeries(values: List<Int>, color: androidx.compose.ui.graphics.Color) {
+        fun drawSeries(
+            values: List<Int>,
+            color: androidx.compose.ui.graphics.Color,
+        ) {
             val points = values.mapIndexed { index, value -> point(index, value) }
             if (points.size > 1) {
-                val path = Path().apply {
-                    moveTo(points.first().x, points.first().y)
-                    for (i in 1 until points.size) {
-                        val prev = points[i - 1]
-                        val curr = points[i]
-                        val cx = (prev.x + curr.x) / 2f
-                        cubicTo(cx, prev.y, cx, curr.y, curr.x, curr.y)
+                val path =
+                    Path().apply {
+                        moveTo(points.first().x, points.first().y)
+                        for (i in 1 until points.size) {
+                            val prev = points[i - 1]
+                            val curr = points[i]
+                            val cx = (prev.x + curr.x) / 2f
+                            cubicTo(cx, prev.y, cx, curr.y, curr.x, curr.y)
+                        }
                     }
-                }
                 drawPath(path, color, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
             }
             points.forEach { p -> drawCircle(color, radius = 3.dp.toPx(), center = p) }
@@ -690,40 +743,44 @@ private fun CurrentStreakCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
         shape = RoundedCornerShape(16.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.cardPadding),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(Dimensions.cardPadding),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)
+                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .size(48.dp)
+                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = if (habitStat.currentStreak > 0) {
-                            Icons.Outlined.LocalFireDepartment
-                        } else {
-                            Icons.Outlined.CheckCircle
-                        },
+                        imageVector =
+                            if (habitStat.currentStreak > 0) {
+                                Icons.Outlined.LocalFireDepartment
+                            } else {
+                                Icons.Outlined.CheckCircle
+                            },
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
-                
+
                 Column {
                     Text(
                         text = habitStat.title,
@@ -742,7 +799,7 @@ private fun CurrentStreakCard(
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)
+                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
             ) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
@@ -757,12 +814,17 @@ private fun CurrentStreakCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                
+
                 Icon(
                     imageVector = Icons.Outlined.LocalFireDepartment,
                     contentDescription = null,
-                    tint = if (habitStat.currentStreak > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
+                    tint =
+                        if (habitStat.currentStreak > 0) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }
@@ -774,63 +836,81 @@ private fun DetailedSummaryCard(
     state: StatsState,
     modifier: Modifier = Modifier,
 ) {
-    val periodText = when (state.timeFilter) {
-        0 -> "today"
-        1 -> "this week"
-        else -> "this month"
-    }
+    val periodText =
+        when (state.timeFilter) {
+            0 -> "today"
+            1 -> "this week"
+            else -> "this month"
+        }
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
         shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.cardPadding),
-            verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(Dimensions.cardPadding),
+            verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
         ) {
             // Focus Insight
             InsightRow(
                 icon = Icons.Outlined.Timer,
                 iconTint = MaterialTheme.colorScheme.primary,
                 title = "Deep Work",
-                description = if (state.todaysFocusSeconds > 0 || state.todaysPomodoroSessions > 0) {
-                    "You've logged ${formatFocusTime(state.todaysFocusSeconds)} of focus time across ${state.todaysPomodoroSessions} sessions $periodText."
-                } else {
-                    "No focus sessions logged $periodText. Start a Pomodoro to track deep work."
-                }
+                description =
+                    if (state.todaysFocusSeconds > 0 || state.todaysPomodoroSessions > 0) {
+                        "You've logged ${formatFocusTime(
+                            state.todaysFocusSeconds,
+                        )} of focus time across ${state.todaysPomodoroSessions} sessions $periodText."
+                    } else {
+                        "No focus sessions logged $periodText. Start a Pomodoro to track deep work."
+                    },
             )
 
             // Habits Insight
             val habitRate = (state.overallCompletionRate * 100).toInt()
-            val streakText = if (state.currentBestStreak > 0) {
-                " Your best active streak is ${state.currentBestStreak} days."
-            } else {
-                ""
-            }
+            val streakText =
+                if (state.currentBestStreak > 0) {
+                    " Your best active streak is ${state.currentBestStreak} days."
+                } else {
+                    ""
+                }
             InsightRow(
                 icon = Icons.Outlined.CheckCircle,
                 iconTint = MaterialTheme.colorScheme.tertiary,
                 title = "Habit Consistency",
-                description = if (state.totalHabits > 0) {
-                    "You have a $habitRate% completion rate for your habits $periodText.$streakText"
-                } else {
-                    "No habits tracked yet. Create a habit to start building consistency."
-                }
+                description =
+                    if (state.totalHabits > 0) {
+                        "You have a $habitRate% completion rate for your habits $periodText.$streakText"
+                    } else {
+                        "No habits tracked yet. Create a habit to start building consistency."
+                    },
             )
 
             // Tasks & Routines Insight
-            val tasksText = if (state.completedTasksToday > 0) "${state.completedTasksToday} tasks" else "no tasks"
-            val routinesText = if (state.completedRoutinesToday > 0) "${state.completedRoutinesToday} routines" else "no routines"
+            val tasksText =
+                if (state.completedTasksToday > 0) {
+                    "${state.completedTasksToday} tasks"
+                } else {
+                    "no tasks"
+                }
+            val routinesText =
+                if (state.completedRoutinesToday > 0) {
+                    "${state.completedRoutinesToday} routines"
+                } else {
+                    "no routines"
+                }
             InsightRow(
                 icon = Icons.AutoMirrored.Outlined.ListAlt,
                 iconTint = MaterialTheme.colorScheme.secondary,
                 title = "Productivity",
-                description = "You've checked off $tasksText and completed $routinesText $periodText."
+                description = "You've checked off $tasksText and completed $routinesText $periodText.",
             )
         }
     }
@@ -846,35 +926,36 @@ private fun InsightRow(
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.Top,
     ) {
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .background(iconTint.copy(alpha = 0.1f), CircleShape),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .background(iconTint.copy(alpha = 0.1f), CircleShape),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = iconTint,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
         }
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 20.sp
+                lineHeight = 20.sp,
             )
         }
     }
@@ -883,9 +964,9 @@ private fun InsightRow(
 private fun formatFocusTime(seconds: Int): String {
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
-    
+
     return if (hours > 0) {
-        "${hours}.${(minutes / 6f).toInt()}h"
+        "$hours.${(minutes / 6f).toInt()}h"
     } else {
         "${minutes}m"
     }

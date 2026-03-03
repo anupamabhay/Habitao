@@ -2,7 +2,6 @@ package com.habitao.feature.routines.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.habitao.domain.model.Routine
 import com.habitao.domain.repository.RoutineRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -150,7 +149,12 @@ class RoutineStatsViewModel
                 RoutineStatsState(
                     totalRoutines = routines.size,
                     completedToday = completedPairs.count { (_, date) -> date == today },
-                    overallCompletionRate = if (totalScheduledDays > 0) totalCompletions.toFloat() / totalScheduledDays else 0f,
+                    overallCompletionRate =
+                        if (totalScheduledDays > 0) {
+                            totalCompletions.toFloat() / totalScheduledDays
+                        } else {
+                            0f
+                        },
                     routineStats = routineStats,
                     activityData = activityData,
                     timeFilter = timeFilter,

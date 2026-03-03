@@ -33,143 +33,162 @@ data class RoutinesState(
 // Intents for Routines screen
 sealed class RoutinesIntent {
     data class SelectDate(val date: LocalDate) : RoutinesIntent()
+
     data class CreateRoutine(val routine: Routine, val steps: List<RoutineStep>) : RoutinesIntent()
+
     data class DeleteRoutine(val routineId: String) : RoutinesIntent()
+
     data class ToggleStep(val routineId: String, val stepId: String, val isCompleted: Boolean) : RoutinesIntent()
+
     object ClearError : RoutinesIntent()
 }
 
 @HiltViewModel
-class RoutinesViewModel @Inject constructor(
-    private val routineRepository: RoutineRepository,
-) : ViewModel() {
+class RoutinesViewModel
+    @Inject
+    constructor(
+        private val routineRepository: RoutineRepository,
+    ) : ViewModel() {
+        private val selectedDateFlow = MutableStateFlow(LocalDate.now())
+        private val errorFlow = MutableStateFlow<String?>(null)
 
-    private val selectedDateFlow = MutableStateFlow(LocalDate.now())
-    private val errorFlow = MutableStateFlow<String?>(null)
-
-    private val routinesFlow = selectedDateFlow.flatMapLatest { date ->
-        routineRepository.observeAllRoutines()
-            .map { result ->
-                result.getOrElse { emptyList() }
-                    .filter { routine -> routine.isScheduledForDate(date) }
+        private val routinesFlow =
+            selectedDateFlow.flatMapLatest { date ->
+                routineRepository.observeAllRoutines()
+                    .map { result ->
+                        result.getOrElse { emptyList() }
+                            .filter { routine -> routine.isScheduledForDate(date) }
+                    }
+                    .catch { emit(emptyList()) }
             }
-            .catch { emit(emptyList()) }
-    }
 
-    private val stepsFlow = routinesFlow.flatMapLatest { routines ->
-        if (routines.isEmpty()) {
-            flowOf(emptyMap())
-        } else {
-            val stepFlows = routines.map { routine ->
-                routineRepository.observeRoutineSteps(routine.id)
-                    .map { result -> routine.id to result.getOrElse { emptyList() } }
-            }
-            combine(stepFlows) { pairs -> pairs.toMap() }
-        }
-    }
-
-    private val logsFlow = combine(routinesFlow, selectedDateFlow) { routines, date -> routines to date }
-        .flatMapLatest { (routines, date) ->
-            if (routines.isEmpty()) {
-                flowOf(emptyMap())
-            } else {
-                val logFlows = routines.map { routine ->
-                    routineRepository.observeRoutineLog(routine.id, date)
-                        .map { result -> routine.id to result.getOrNull() }
-                }
-                combine(logFlows) { pairs ->
-                    pairs.mapNotNull { (id, log) -> log?.let { id to it } }.toMap()
+        private val stepsFlow =
+            routinesFlow.flatMapLatest { routines ->
+                if (routines.isEmpty()) {
+                    flowOf(emptyMap())
+                } else {
+                    val stepFlows =
+                        routines.map { routine ->
+                            routineRepository.observeRoutineSteps(routine.id)
+                                .map { result -> routine.id to result.getOrElse { emptyList() } }
+                        }
+                    combine(stepFlows) { pairs -> pairs.toMap() }
                 }
             }
-        }
 
-    val state: StateFlow<RoutinesState> = combine(
-        selectedDateFlow,
-        routinesFlow,
-        stepsFlow,
-        logsFlow,
-        errorFlow
-    ) { date, routines, steps, logs, error ->
-        RoutinesState(
-            routines = routines,
-            steps = steps,
-            logs = logs,
-            isLoading = false,
-            error = error,
-            selectedDate = date
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = RoutinesState()
-    )
+        private val logsFlow =
+            combine(routinesFlow, selectedDateFlow) { routines, date -> routines to date }
+                .flatMapLatest { (routines, date) ->
+                    if (routines.isEmpty()) {
+                        flowOf(emptyMap())
+                    } else {
+                        val logFlows =
+                            routines.map { routine ->
+                                routineRepository.observeRoutineLog(routine.id, date)
+                                    .map { result -> routine.id to result.getOrNull() }
+                            }
+                        combine(logFlows) { pairs ->
+                            pairs.mapNotNull { (id, log) -> log?.let { id to it } }.toMap()
+                        }
+                    }
+                }
 
-    fun processIntent(intent: RoutinesIntent) {
-        when (intent) {
-            is RoutinesIntent.SelectDate -> selectDate(intent.date)
-            is RoutinesIntent.CreateRoutine -> createRoutine(intent.routine, intent.steps)
-            is RoutinesIntent.DeleteRoutine -> deleteRoutine(intent.routineId)
-            is RoutinesIntent.ToggleStep -> toggleStep(intent.routineId, intent.stepId, intent.isCompleted)
-            is RoutinesIntent.ClearError -> clearError()
-        }
-    }
-
-    fun refreshDate() {
-        val today = LocalDate.now()
-        if (selectedDateFlow.value != today) {
-            selectedDateFlow.value = today
-        }
-    }
-
-    private fun selectDate(date: LocalDate) {
-        selectedDateFlow.value = date
-    }
-
-    private fun createRoutine(routine: Routine, steps: List<RoutineStep>) {
-        viewModelScope.launch {
-            val saveResult = routineRepository.getRoutineById(routine.id).fold(
-                onSuccess = { existingRoutine ->
-                    routineRepository.upsertRoutine(
-                        routine.copy(
-                            createdAt = existingRoutine.createdAt,
-                            startDate = existingRoutine.startDate,
-                            nextScheduledDate = existingRoutine.nextScheduledDate,
-                            updatedAt = System.currentTimeMillis(),
-                        ),
-                        steps,
-                    )
-                },
-                onFailure = {
-                    routineRepository.upsertRoutine(routine, steps)
-                },
+        val state: StateFlow<RoutinesState> =
+            combine(
+                selectedDateFlow,
+                routinesFlow,
+                stepsFlow,
+                logsFlow,
+                errorFlow,
+            ) { date, routines, steps, logs, error ->
+                RoutinesState(
+                    routines = routines,
+                    steps = steps,
+                    logs = logs,
+                    isLoading = false,
+                    error = error,
+                    selectedDate = date,
+                )
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = RoutinesState(),
             )
 
-            saveResult.onFailure { error ->
-                errorFlow.value = error.message ?: "Failed to save routine"
+        fun processIntent(intent: RoutinesIntent) {
+            when (intent) {
+                is RoutinesIntent.SelectDate -> selectDate(intent.date)
+                is RoutinesIntent.CreateRoutine -> createRoutine(intent.routine, intent.steps)
+                is RoutinesIntent.DeleteRoutine -> deleteRoutine(intent.routineId)
+                is RoutinesIntent.ToggleStep -> toggleStep(intent.routineId, intent.stepId, intent.isCompleted)
+                is RoutinesIntent.ClearError -> clearError()
             }
         }
-    }
 
-    private fun deleteRoutine(routineId: String) {
-        viewModelScope.launch {
-            routineRepository.deleteRoutine(routineId)
-                .onFailure { error ->
-                    errorFlow.value = error.message ?: "Failed to delete routine"
+        fun refreshDate() {
+            val today = LocalDate.now()
+            if (selectedDateFlow.value != today) {
+                selectedDateFlow.value = today
+            }
+        }
+
+        private fun selectDate(date: LocalDate) {
+            selectedDateFlow.value = date
+        }
+
+        private fun createRoutine(
+            routine: Routine,
+            steps: List<RoutineStep>,
+        ) {
+            viewModelScope.launch {
+                val saveResult =
+                    routineRepository.getRoutineById(routine.id).fold(
+                        onSuccess = { existingRoutine ->
+                            routineRepository.upsertRoutine(
+                                routine.copy(
+                                    createdAt = existingRoutine.createdAt,
+                                    startDate = existingRoutine.startDate,
+                                    nextScheduledDate = existingRoutine.nextScheduledDate,
+                                    updatedAt = System.currentTimeMillis(),
+                                ),
+                                steps,
+                            )
+                        },
+                        onFailure = {
+                            routineRepository.upsertRoutine(routine, steps)
+                        },
+                    )
+
+                saveResult.onFailure { error ->
+                    errorFlow.value = error.message ?: "Failed to save routine"
                 }
+            }
+        }
+
+        private fun deleteRoutine(routineId: String) {
+            viewModelScope.launch {
+                routineRepository.deleteRoutine(routineId)
+                    .onFailure { error ->
+                        errorFlow.value = error.message ?: "Failed to delete routine"
+                    }
+            }
+        }
+
+        private fun toggleStep(
+            routineId: String,
+            stepId: String,
+            isCompleted: Boolean,
+        ) {
+            viewModelScope.launch {
+                val date = selectedDateFlow.value
+                routineRepository.logRoutineStep(routineId, stepId, date, isCompleted)
+                    .onFailure { error ->
+                        errorFlow.value = error.message ?: "Failed to update step"
+                    }
+            }
+        }
+
+        private fun clearError() {
+            errorFlow.value = null
         }
     }
-
-    private fun toggleStep(routineId: String, stepId: String, isCompleted: Boolean) {
-        viewModelScope.launch {
-            val date = selectedDateFlow.value
-            routineRepository.logRoutineStep(routineId, stepId, date, isCompleted)
-                .onFailure { error ->
-                    errorFlow.value = error.message ?: "Failed to update step"
-                }
-        }
-    }
-
-    private fun clearError() {
-        errorFlow.value = null
-    }
-}

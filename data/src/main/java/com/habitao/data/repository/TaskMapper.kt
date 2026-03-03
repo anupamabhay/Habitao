@@ -26,7 +26,7 @@ fun TaskEntity.toDomainModel(): Task {
         sortOrder = sortOrder,
         syncStatus = syncStatus,
         lastSyncedAt = lastSyncedAt,
-        deletedAt = deletedAt
+        deletedAt = deletedAt,
     )
 }
 
@@ -53,6 +53,6 @@ fun Task.toEntity(): TaskEntity {
         sortOrder = sortOrder,
         syncStatus = syncStatus,
         lastSyncedAt = lastSyncedAt,
-        deletedAt = deletedAt
+        deletedAt = deletedAt,
     )
 }

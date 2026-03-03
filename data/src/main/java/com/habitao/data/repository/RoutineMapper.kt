@@ -29,7 +29,7 @@ fun RoutineEntity.toDomainModel(): Routine {
         sortOrder = sortOrder,
         syncStatus = syncStatus,
         lastSyncedAt = lastSyncedAt,
-        deletedAt = deletedAt
+        deletedAt = deletedAt,
     )
 }
 
@@ -55,7 +55,7 @@ fun Routine.toEntity(): RoutineEntity {
         sortOrder = sortOrder,
         syncStatus = syncStatus,
         lastSyncedAt = lastSyncedAt,
-        deletedAt = deletedAt
+        deletedAt = deletedAt,
     )
 }
 
@@ -70,7 +70,7 @@ fun RoutineStepEntity.toDomainModel(): RoutineStep {
         createdAt = createdAt,
         updatedAt = updatedAt,
         syncStatus = syncStatus,
-        deletedAt = deletedAt
+        deletedAt = deletedAt,
     )
 }
 
@@ -85,7 +85,7 @@ fun RoutineStep.toEntity(): RoutineStepEntity {
         createdAt = createdAt,
         updatedAt = updatedAt,
         syncStatus = syncStatus,
-        deletedAt = deletedAt
+        deletedAt = deletedAt,
     )
 }
 
@@ -102,7 +102,7 @@ fun RoutineLogEntity.toDomainModel(): RoutineLog {
         updatedAt = updatedAt,
         completedAt = completedAt,
         syncStatus = syncStatus,
-        deletedAt = deletedAt
+        deletedAt = deletedAt,
     )
 }
 
@@ -119,6 +119,6 @@ fun RoutineLog.toEntity(): RoutineLogEntity {
         updatedAt = updatedAt,
         completedAt = completedAt,
         syncStatus = syncStatus,
-        deletedAt = deletedAt
+        deletedAt = deletedAt,
     )
 }

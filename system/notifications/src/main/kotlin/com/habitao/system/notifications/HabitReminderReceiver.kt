@@ -4,15 +4,15 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import com.habitao.core.datastore.AppSettingsManager
 import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_ID
 import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_TITLE
 import com.habitao.system.notifications.NotificationConstants.EXTRA_REMINDER_HOUR
 import com.habitao.system.notifications.NotificationConstants.EXTRA_REMINDER_MINUTE
-import com.habitao.core.datastore.AppSettingsManager
 import dagger.hilt.android.AndroidEntryPoint
-import java.time.LocalTime
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import java.time.LocalTime
 import javax.inject.Inject
 
 @AndroidEntryPoint

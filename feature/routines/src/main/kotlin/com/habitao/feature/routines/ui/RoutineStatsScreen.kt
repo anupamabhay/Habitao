@@ -79,9 +79,10 @@ fun RoutineStatsScreen(
     ) { paddingValues ->
         if (state.isLoading) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
                 contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator()
@@ -104,9 +105,10 @@ private fun RoutineStatsContent(
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = Dimensions.screenPaddingHorizontal),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(horizontal = Dimensions.screenPaddingHorizontal),
         verticalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
     ) {
         item(key = "top_spacer") {
@@ -198,14 +200,16 @@ private fun SummaryStatCard(
 ) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Dimensions.elementSpacingLarge, vertical = Dimensions.cardPadding),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Dimensions.elementSpacingLarge, vertical = Dimensions.cardPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
         ) {
@@ -235,14 +239,16 @@ private fun ActivityChartCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.cardPadding),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(Dimensions.cardPadding),
             verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
         ) {
             Text(
@@ -277,16 +283,18 @@ private fun ActivityChartCard(
                     val chartWidth = if (desiredWidth > maxWidth) desiredWidth else maxWidth
 
                     Column(
-                        modifier = Modifier
-                            .horizontalScroll(scrollState)
-                            .width(chartWidth),
+                        modifier =
+                            Modifier
+                                .horizontalScroll(scrollState)
+                                .width(chartWidth),
                         verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
                     ) {
                         RoutineActivityBarChart(
                             data = data,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp),
                         )
 
                         Row(
@@ -352,14 +360,16 @@ private fun RoutineStatCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.cardPadding),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(Dimensions.cardPadding),
             verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
         ) {
             Row(

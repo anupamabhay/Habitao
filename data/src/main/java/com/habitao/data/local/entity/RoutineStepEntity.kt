@@ -14,12 +14,12 @@ import java.util.UUID
             entity = RoutineEntity::class,
             parentColumns = ["id"],
             childColumns = ["routineId"],
-            onDelete = ForeignKey.CASCADE
-        )
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
     indices = [
-        Index(value = ["routineId", "stepOrder"])
-    ]
+        Index(value = ["routineId", "stepOrder"]),
+    ],
 )
 data class RoutineStepEntity(
     @PrimaryKey
@@ -32,5 +32,5 @@ data class RoutineStepEntity(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val syncStatus: SyncStatus = SyncStatus.LOCAL,
-    val deletedAt: Long? = null
+    val deletedAt: Long? = null,
 )
