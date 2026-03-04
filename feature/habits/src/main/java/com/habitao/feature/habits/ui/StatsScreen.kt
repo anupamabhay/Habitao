@@ -7,9 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -219,7 +219,7 @@ private fun StatsContent(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .height(IntrinsicSize.Min),
+                            .defaultMinSize(minHeight = 220.dp),
                     horizontalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
                 ) {
                     // Tasks Breakdown
@@ -520,11 +520,16 @@ private fun ActivityGraphCard(
             } else {
                 val axisLabels =
                     if (timeFilter == 0) {
+                        // Day view: show every 3rd label
                         data.mapIndexed { i, p -> if (i % 3 == 0) p.label else "" }
                     } else if (data.size <= 7) {
+                        // Week view: show all labels
                         data.map { it.label }
                     } else {
-                        listOf(data.first().label, data[data.lastIndex / 2].label, data.last().label)
+                        // Month view: show every 5th label, aligned per data point
+                        data.mapIndexed { i, p ->
+                            if (i % 5 == 0 || i == data.lastIndex) p.label else ""
+                        }
                     }
 
                 val rawMaxValue =

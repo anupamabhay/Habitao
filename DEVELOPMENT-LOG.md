@@ -108,8 +108,20 @@
 | Nested Subtasks | Recursive subtask saving, recursive ViewModel tree, depth-based UI rendering | Complete |
 | Security Audit | No sensitive files tracked, added nul to .gitignore | Complete |
 
+#### tasks7 (All Complete)
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Stats Card Gaps | Added defaultMinSize(220.dp) for proper spacing between text and ring | Complete |
+| Month X-axis Labels | Fixed label logic: per-data-point labels, every 5th shown for month view | Complete |
+| Day Chip Text | Single-letter abbreviations (M,T,W,T,F,S,S), maxLines=1, centered text | Complete |
+| Markdown Cursor Fix | Switched to TextFieldValue for cursor control after auto-format | Complete |
+| Checkbox Auto-Continue | Added [x] checkbox continuation on Enter | Complete |
+| Formatting Toolbar | Added inline toolbar (Bold, Italic, Strikethrough, Code, H1, List, Checkbox) | Complete |
+| Repo Audit | Source dirs mixed (java/kotlin) noted as cosmetic; no sensitive files tracked | Complete |
+
 #### Key Architecture Decisions:
 - MarkdownVisualTransformation uses identity offset mapping to avoid cursor desync.
+- Switched description field to TextFieldValue for cursor position control after auto-formatting.
 - Subtasks use flat `parentTaskId` references in Room, with recursive tree-building in ViewModel.
 - Auto-formatting uses character diff detection to identify Enter key presses.
 - Cross-feature dependency (settings -> pomodoro) documented as tech debt with TODO.

@@ -80,8 +80,12 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -461,6 +465,57 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
+private fun MarkdownFormattingToolbar(
+    onFormat: (prefix: String, suffix: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        FormatButton("B", FontWeight.Bold) { onFormat("**", "**") }
+        FormatButton("I", fontStyle = FontStyle.Italic) { onFormat("*", "*") }
+        FormatButton("S", textDecoration = TextDecoration.LineThrough) { onFormat("~~", "~~") }
+        FormatButton("<>") { onFormat("`", "`") }
+        FormatButton("H1") { onFormat("# ", "") }
+        FormatButton("--") { onFormat("- ", "") }
+        FormatButton("[]") { onFormat("[ ] ", "") }
+    }
+}
+
+@Composable
+private fun FormatButton(
+    label: String,
+    fontWeight: FontWeight = FontWeight.Normal,
+    fontStyle: FontStyle = FontStyle.Normal,
+    textDecoration: TextDecoration = TextDecoration.None,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = Modifier.size(36.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = label,
+                style =
+                    MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = fontWeight,
+                        fontStyle = fontStyle,
+                        textDecoration = textDecoration,
+                    ),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    }
+}
+
+@Composable
 private fun MarkdownDescriptionField(
     value: String,
     onValueChange: (String) -> Unit,
@@ -472,14 +527,27 @@ private fun MarkdownDescriptionField(
             MarkdownVisualTransformation(baseColor)
         }
 
-    val autoFormatOnChange: (String) -> Unit = { newValue: String ->
-        val formatted = handleMarkdownAutoFormat(value, newValue)
-        onValueChange(formatted)
+    // Use TextFieldValue for cursor control
+    var textFieldValue by remember(value) {
+        mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length)))
+    }
+
+    // Sync external value changes
+    LaunchedEffect(value) {
+        if (textFieldValue.text != value) {
+            textFieldValue = TextFieldValue(text = value, selection = TextRange(value.length))
+        }
     }
 
     BasicTextField(
-        value = value,
-        onValueChange = autoFormatOnChange,
+        value = textFieldValue,
+        onValueChange = { newTfv ->
+            val result = handleMarkdownAutoFormat(textFieldValue.text, newTfv.text, newTfv.selection)
+            textFieldValue = result
+            if (result.text != textFieldValue.text || result.text != value) {
+                onValueChange(result.text)
+            }
+        },
         textStyle =
             MaterialTheme.typography.bodyLarge.copy(
                 color = baseColor,
@@ -488,84 +556,143 @@ private fun MarkdownDescriptionField(
         modifier = modifier.fillMaxWidth(),
         visualTransformation = markdownTransformation,
         decorationBox = { innerTextField ->
-            if (value.isEmpty()) {
-                Text(
-                    text = "Add description... (supports markdown)",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            Column {
+                if (value.isEmpty()) {
+                    Text(
+                        text = "Add description... (supports markdown)",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    )
+                }
+                innerTextField()
+                Spacer(modifier = Modifier.height(8.dp))
+                MarkdownFormattingToolbar(
+                    onFormat = { prefix, suffix ->
+                        val sel = textFieldValue.selection
+                        val text = textFieldValue.text
+                        if (sel.start != sel.end) {
+                            // Wrap selected text
+                            val before = text.substring(0, sel.start)
+                            val selected = text.substring(sel.start, sel.end)
+                            val after = text.substring(sel.end)
+                            val newText = before + prefix + selected + suffix + after
+                            val newCursor = sel.end + prefix.length + suffix.length
+                            textFieldValue =
+                                TextFieldValue(
+                                    text = newText,
+                                    selection = TextRange(newCursor),
+                                )
+                            onValueChange(newText)
+                        } else {
+                            // Insert at cursor for line-level markers (like - , [ ] )
+                            val before = text.substring(0, sel.start)
+                            val after = text.substring(sel.start)
+                            val newText = before + prefix + suffix + after
+                            val newCursor = sel.start + prefix.length
+                            textFieldValue =
+                                TextFieldValue(
+                                    text = newText,
+                                    selection = TextRange(newCursor),
+                                )
+                            onValueChange(newText)
+                        }
+                    },
                 )
             }
-            innerTextField()
         },
     )
 }
 
 private fun handleMarkdownAutoFormat(
-    oldValue: String,
-    newValue: String,
-): String {
+    oldText: String,
+    newText: String,
+    currentSelection: TextRange,
+): TextFieldValue {
     // Only trigger on newline insertion (user pressed Enter)
-    if (newValue.length <= oldValue.length) return newValue
-    val insertedChar = newValue.length - oldValue.length
-    if (insertedChar != 1) return newValue
+    if (newText.length <= oldText.length) {
+        return TextFieldValue(text = newText, selection = currentSelection)
+    }
+    val insertedCount = newText.length - oldText.length
+    if (insertedCount != 1) {
+        return TextFieldValue(text = newText, selection = currentSelection)
+    }
 
     // Find where the newline was inserted
     val diffIndex =
-        newValue.indices.firstOrNull { i ->
-            i >= oldValue.length || newValue[i] != oldValue[i]
-        } ?: return newValue
+        newText.indices.firstOrNull { i ->
+            i >= oldText.length || newText[i] != oldText[i]
+        } ?: return TextFieldValue(text = newText, selection = currentSelection)
 
-    if (newValue[diffIndex] != '\n') return newValue
+    if (newText[diffIndex] != '\n') {
+        return TextFieldValue(text = newText, selection = currentSelection)
+    }
 
     // Get the line BEFORE the newline
-    val beforeNewline = newValue.substring(0, diffIndex)
+    val beforeNewline = newText.substring(0, diffIndex)
     val prevLineStart = beforeNewline.lastIndexOf('\n').let { if (it == -1) 0 else it + 1 }
     val prevLine = beforeNewline.substring(prevLineStart)
     val trimmedPrev = prevLine.trimStart()
 
     // Unordered list: "- text" -> auto-add "- " on next line
     if (trimmedPrev.startsWith("- ") && trimmedPrev.length > 2) {
-        val after = newValue.substring(diffIndex + 1)
-        return beforeNewline + "\n- " + after
+        val after = newText.substring(diffIndex + 1)
+        val result = beforeNewline + "\n- " + after
+        return TextFieldValue(text = result, selection = TextRange(diffIndex + 3))
     }
 
     // Empty unordered list marker: just "- " with no text -> remove it
     if (trimmedPrev == "-" || trimmedPrev == "- ") {
-        val beforePrevLine = newValue.substring(0, prevLineStart)
-        val after = newValue.substring(diffIndex + 1)
-        return beforePrevLine + after
+        val beforePrevLine = newText.substring(0, prevLineStart)
+        val after = newText.substring(diffIndex + 1)
+        val result = beforePrevLine + after
+        return TextFieldValue(text = result, selection = TextRange(beforePrevLine.length))
     }
 
     // Numbered list: "1. text" -> auto-add "2. " on next line
     val numberedMatch = Regex("^(\\d+)\\.\\s(.+)$").find(trimmedPrev)
     if (numberedMatch != null) {
         val nextNumber = (numberedMatch.groupValues[1].toIntOrNull() ?: 0) + 1
-        val after = newValue.substring(diffIndex + 1)
-        return beforeNewline + "\n$nextNumber. " + after
+        val prefix = "$nextNumber. "
+        val after = newText.substring(diffIndex + 1)
+        val result = beforeNewline + "\n" + prefix + after
+        return TextFieldValue(
+            text = result,
+            selection = TextRange(diffIndex + 1 + prefix.length),
+        )
     }
 
     // Empty numbered list marker: "1. " with no text -> remove it
     val emptyNumberedMatch = Regex("^(\\d+)\\.\\s?$").find(trimmedPrev)
     if (emptyNumberedMatch != null) {
-        val beforePrevLine = newValue.substring(0, prevLineStart)
-        val after = newValue.substring(diffIndex + 1)
-        return beforePrevLine + after
+        val beforePrevLine = newText.substring(0, prevLineStart)
+        val after = newText.substring(diffIndex + 1)
+        val result = beforePrevLine + after
+        return TextFieldValue(text = result, selection = TextRange(beforePrevLine.length))
     }
 
     // Checkbox: "[ ] text" -> auto-add "[ ] " on next line
     if (trimmedPrev.startsWith("[ ] ") && trimmedPrev.length > 4) {
-        val after = newValue.substring(diffIndex + 1)
-        return beforeNewline + "\n[ ] " + after
+        val after = newText.substring(diffIndex + 1)
+        val result = beforeNewline + "\n[ ] " + after
+        return TextFieldValue(text = result, selection = TextRange(diffIndex + 5))
+    }
+
+    // Checked checkbox: "[x] text" -> auto-add "[ ] " on next line
+    if ((trimmedPrev.startsWith("[x] ") || trimmedPrev.startsWith("[X] ")) && trimmedPrev.length > 4) {
+        val after = newText.substring(diffIndex + 1)
+        val result = beforeNewline + "\n[ ] " + after
+        return TextFieldValue(text = result, selection = TextRange(diffIndex + 5))
     }
 
     // Empty checkbox: "[ ] " -> remove
     if (trimmedPrev == "[ ]" || trimmedPrev == "[ ] ") {
-        val beforePrevLine = newValue.substring(0, prevLineStart)
-        val after = newValue.substring(diffIndex + 1)
-        return beforePrevLine + after
+        val beforePrevLine = newText.substring(0, prevLineStart)
+        val after = newText.substring(diffIndex + 1)
+        val result = beforePrevLine + after
+        return TextFieldValue(text = result, selection = TextRange(beforePrevLine.length))
     }
 
-    return newValue
+    return TextFieldValue(text = newText, selection = currentSelection)
 }
 
 @Composable

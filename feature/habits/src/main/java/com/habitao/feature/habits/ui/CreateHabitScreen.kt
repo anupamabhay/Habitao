@@ -81,6 +81,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -613,9 +614,11 @@ private fun DaySelector(
                     onClick = { onDayToggled(day) },
                     label = {
                         Text(
-                            text = day.shortName,
+                            text = day.shortName.take(1),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            maxLines = 1,
+                            textAlign = TextAlign.Center,
                         )
                     },
                     modifier = Modifier.weight(1f),
