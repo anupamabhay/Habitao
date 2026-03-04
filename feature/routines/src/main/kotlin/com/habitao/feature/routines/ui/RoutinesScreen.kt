@@ -5,8 +5,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,31 +24,33 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.automirrored.outlined.ListAlt
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,13 +63,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.habitao.core.ui.theme.AppShapes
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.Routine
 import com.habitao.domain.model.RoutineLog
@@ -81,10 +85,25 @@ import com.habitao.feature.routines.viewmodel.RoutinesViewModel
 fun RoutinesScreen(
     onAddRoutine: () -> Unit,
     onEditRoutine: (String) -> Unit,
+    onNavigateToStats: () -> Unit,
     viewModel: RoutinesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    viewModel.refreshDate()
+                }
+            }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     LaunchedEffect(state.error) {
         state.error?.let { error ->
@@ -100,18 +119,24 @@ fun RoutinesScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Routines") },
+                actions = {
+                    IconButton(onClick = onNavigateToStats) {
+                        Icon(
+                            imageVector = Icons.Outlined.BarChart,
+                            contentDescription = "Routine Stats",
+                        )
+                    }
+                },
                 scrollBehavior = scrollBehavior,
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            androidx.compose.material3.FloatingActionButton(
                 onClick = onAddRoutine,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(Dimensions.elementSpacing))
-                Text("New Routine")
+                Icon(Icons.Default.Add, contentDescription = "New Routine")
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -149,12 +174,13 @@ private fun RoutinesContent(
             else -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        start = Dimensions.screenPaddingHorizontal,
-                        top = Dimensions.elementSpacing,
-                        end = Dimensions.screenPaddingHorizontal,
-                        bottom = Dimensions.fabClearance,
-                    ),
+                    contentPadding =
+                        PaddingValues(
+                            start = Dimensions.screenPaddingHorizontal,
+                            top = Dimensions.elementSpacing,
+                            end = Dimensions.screenPaddingHorizontal,
+                            bottom = Dimensions.fabClearance,
+                        ),
                     verticalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
                 ) {
                     item(key = "routine_overview") {
@@ -191,14 +217,15 @@ private fun RoutineCard(
     modifier: Modifier = Modifier,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
-    
+
     val completedStepsCount = log?.completedStepIds?.size ?: 0
     val totalStepsCount = steps.size
-    val progress = if (totalStepsCount > 0) {
-        completedStepsCount.toFloat() / totalStepsCount
-    } else {
-        0f
-    }
+    val progress =
+        if (totalStepsCount > 0) {
+            completedStepsCount.toFloat() / totalStepsCount
+        } else {
+            0f
+        }
     val isCompleted = totalStepsCount > 0 && completedStepsCount == totalStepsCount
 
     val cardContainerColor by animateColorAsState(
@@ -213,26 +240,30 @@ private fun RoutineCard(
     )
 
     ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = { isExpanded = !isExpanded }),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable(onClick = { isExpanded = !isExpanded }),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = cardContainerColor,
-        ),
-        elevation = CardDefaults.elevatedCardElevation(
-            defaultElevation =
-                if (isCompleted) {
-                    Dimensions.cardElevationCompleted
-                } else {
-                    Dimensions.cardElevation
-                },
-        ),
+        colors =
+            CardDefaults.elevatedCardColors(
+                containerColor = cardContainerColor,
+            ),
+        elevation =
+            CardDefaults.elevatedCardElevation(
+                defaultElevation =
+                    if (isCompleted) {
+                        Dimensions.cardElevationCompleted
+                    } else {
+                        Dimensions.cardElevation
+                    },
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.cardPadding),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(Dimensions.cardPadding),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -264,17 +295,18 @@ private fun RoutineCard(
                             overflow = TextOverflow.Ellipsis,
                             textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
                         Text(
                             text = "$completedStepsCount of $totalStepsCount steps completed",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                alpha = if (isCompleted) 0.5f else 1f,
-                            ),
+                            color =
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                    alpha = if (isCompleted) 0.5f else 1f,
+                                ),
                         )
 
                         if (totalStepsCount > 0) {
-                            Spacer(modifier = Modifier.height(2.dp))
+                            Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
                             Text(
                                 text = "${(progress * 100).toInt()}% complete",
                                 style = MaterialTheme.typography.labelSmall,
@@ -288,16 +320,17 @@ private fun RoutineCard(
                 Spacer(modifier = Modifier.width(Dimensions.elementSpacingLarge))
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     FilledIconButton(
                         onClick = onEditRoutine,
                         modifier = Modifier.size(40.dp),
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        colors =
+                            IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
@@ -310,21 +343,23 @@ private fun RoutineCard(
                         checked = isExpanded,
                         onCheckedChange = { isExpanded = it },
                         modifier = Modifier.size(40.dp),
-                        colors = IconButtonDefaults.filledIconToggleButtonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                            checkedContainerColor = MaterialTheme.colorScheme.tertiary,
-                            checkedContentColor = MaterialTheme.colorScheme.onTertiary,
-                        ),
+                        colors =
+                            IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                checkedContainerColor = MaterialTheme.colorScheme.tertiary,
+                                checkedContentColor = MaterialTheme.colorScheme.onTertiary,
+                            ),
                     ) {
                         Icon(
                             imageVector = Icons.Default.ExpandMore,
                             contentDescription = if (isExpanded) "Collapse" else "Expand",
-                            modifier = Modifier
-                                .size(20.dp)
-                                .graphicsLayer {
-                                    rotationZ = if (isExpanded) 180f else 0f
-                                },
+                            modifier =
+                                Modifier
+                                    .size(20.dp)
+                                    .graphicsLayer {
+                                        rotationZ = if (isExpanded) 180f else 0f
+                                    },
                         )
                     }
                 }
@@ -334,10 +369,11 @@ private fun RoutineCard(
                 Spacer(modifier = Modifier.height(Dimensions.elementSpacingLarge))
                 LinearProgressIndicator(
                     progress = { progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(3.dp)
-                        .clip(CircleShape),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .clip(CircleShape),
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
                     trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                     strokeCap = StrokeCap.Round,
@@ -350,9 +386,10 @@ private fun RoutineCard(
                 exit = shrinkVertically(animationSpec = tween(durationMillis = 200)),
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = Dimensions.elementSpacing),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = Dimensions.elementSpacing),
                     verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
                 ) {
                     steps.sortedBy { it.stepOrder }.forEach { step ->
@@ -410,12 +447,13 @@ private fun RoutineStepRow(
     )
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(color = rowBackgroundColor)
-            .clickable(onClick = onToggle)
-            .padding(horizontal = Dimensions.elementSpacing, vertical = 10.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(color = rowBackgroundColor)
+                .clickable(onClick = onToggle)
+                .padding(horizontal = Dimensions.elementSpacing, vertical = Dimensions.elementSpacingLarge),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
     ) {
@@ -447,11 +485,12 @@ private fun RoutineOverviewCard(
     modifier: Modifier = Modifier,
 ) {
     val totalRoutines = state.routines.size
-    val completedRoutines = state.routines.count { routine ->
-        val routineSteps = state.steps[routine.id] ?: emptyList()
-        val completedStepsCount = state.logs[routine.id]?.completedStepIds?.size ?: 0
-        routineSteps.isNotEmpty() && completedStepsCount >= routineSteps.size
-    }
+    val completedRoutines =
+        state.routines.count { routine ->
+            val routineSteps = state.steps[routine.id] ?: emptyList()
+            val completedStepsCount = state.logs[routine.id]?.completedStepIds?.size ?: 0
+            routineSteps.isNotEmpty() && completedStepsCount >= routineSteps.size
+        }
 
     val completionRate =
         if (totalRoutines > 0) {
@@ -462,14 +501,16 @@ private fun RoutineOverviewCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.cardPadding),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(Dimensions.cardPadding),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -483,7 +524,7 @@ private fun RoutineOverviewCard(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
                     Text(
                         text = "$completedRoutines of $totalRoutines routines complete",
                         style = MaterialTheme.typography.bodySmall,
@@ -493,9 +534,9 @@ private fun RoutineOverviewCard(
 
                 Text(
                     text = "${(completionRate * 100).toInt()}%",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
 

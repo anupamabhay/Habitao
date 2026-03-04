@@ -9,14 +9,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -43,7 +43,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -61,6 +60,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -81,9 +81,11 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.DayOfWeek
 import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.HabitType
@@ -156,35 +158,34 @@ fun CreateHabitScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.surface,
         bottomBar = {
-            Surface(
-                tonalElevation = 3.dp,
-                shadowElevation = 8.dp,
-            ) {
-                Button(
-                    onClick = { viewModel.processIntent(CreateHabitIntent.SaveHabit) },
-                    enabled = !state.isSaving,
-                    shape = MaterialTheme.shapes.large,
-                    colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
+            Button(
+                onClick = { viewModel.processIntent(CreateHabitIntent.SaveHabit) },
+                enabled = !state.isSaving,
+                shape = RoundedCornerShape(16.dp),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(
+                            horizontal = Dimensions.screenPaddingHorizontal,
+                            vertical = Dimensions.elementSpacingLarge,
                         ),
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 12.dp)
-                            .height(56.dp),
-                ) {
-                    Text(
-                        text =
-                            when {
-                                state.isSaving -> "Saving..."
-                                state.isEditMode -> "Save Changes"
-                                else -> "Create Habit"
-                            },
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
+                contentPadding = PaddingValues(vertical = 16.dp),
+            ) {
+                Text(
+                    text =
+                        when {
+                            state.isSaving -> "Saving..."
+                            state.isEditMode -> "Save Changes"
+                            else -> "Create Habit"
+                        },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         },
     ) { paddingValues ->
@@ -589,7 +590,6 @@ private fun FrequencyTypeSelector(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DaySelector(
     selectedDays: Set<DayOfWeek>,
@@ -600,13 +600,12 @@ private fun DaySelector(
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        FlowRow(
+        Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             DayOfWeek.entries.forEach { day ->
                 val isSelected = selectedDays.contains(day)
@@ -615,11 +614,14 @@ private fun DaySelector(
                     onClick = { onDayToggled(day) },
                     label = {
                         Text(
-                            text = day.shortName,
-                            style = MaterialTheme.typography.labelMedium,
+                            text = day.shortName.take(1),
+                            style = MaterialTheme.typography.labelSmall,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            maxLines = 1,
+                            textAlign = TextAlign.Center,
                         )
                     },
+                    modifier = Modifier.weight(1f),
                     colors =
                         FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primary,

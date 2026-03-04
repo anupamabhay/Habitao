@@ -25,7 +25,7 @@ data class Task(
     val sortOrder: Int = 0,
     val syncStatus: SyncStatus = SyncStatus.LOCAL,
     val lastSyncedAt: Long? = null,
-    val deletedAt: Long? = null
+    val deletedAt: Long? = null,
 )
 
 enum class TaskPriority { NONE, LOW, MEDIUM, HIGH }

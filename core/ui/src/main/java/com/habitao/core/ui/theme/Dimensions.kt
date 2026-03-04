@@ -38,4 +38,7 @@ object Dimensions {
 
     // Bottom spacer (for FAB clearance)
     val fabClearance = 88.dp
+
+    // About screen
+    val logoSize = 120.dp
 }

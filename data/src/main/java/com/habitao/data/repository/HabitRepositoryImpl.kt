@@ -228,7 +228,10 @@ class HabitRepositoryImpl
                 .flowOn(dispatcher)
         }
 
-        override fun observeLogsForDateRange(startDate: LocalDate, endDate: LocalDate): Flow<Result<List<HabitLog>>> {
+        override fun observeLogsForDateRange(
+            startDate: LocalDate,
+            endDate: LocalDate,
+        ): Flow<Result<List<HabitLog>>> {
             val zone = java.time.ZoneId.systemDefault()
             val startMillis = startDate.atStartOfDay(zone).toInstant().toEpochMilli()
             val endMillis = endDate.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()

@@ -60,8 +60,14 @@ interface TaskDao {
     @Query("DELETE FROM tasks WHERE parentTaskId = :parentId")
     suspend fun deleteSubtasksByParentId(parentId: String)
 
-    @Query("SELECT COUNT(*) FROM tasks WHERE parentTaskId IS NULL AND isCompleted = 1 AND completedAt >= :startMillis AND completedAt < :endMillis")
-    suspend fun getCompletedTaskCountInRange(startMillis: Long, endMillis: Long): Int
+    @Query(
+        "SELECT COUNT(*) FROM tasks WHERE parentTaskId IS NULL AND isCompleted = 1 " +
+            "AND completedAt >= :startMillis AND completedAt < :endMillis",
+    )
+    suspend fun getCompletedTaskCountInRange(
+        startMillis: Long,
+        endMillis: Long,
+    ): Int
 
     @Query("SELECT COUNT(*) FROM tasks WHERE parentTaskId IS NULL")
     suspend fun getTotalTopLevelTaskCount(): Int

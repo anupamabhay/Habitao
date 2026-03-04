@@ -3,13 +3,13 @@ package com.habitao.feature.habits.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +19,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -52,14 +54,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,12 +91,12 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                         IconButton(onClick = { showSettingsMenu = true }) {
                             Icon(
                                 imageVector = Icons.Outlined.Settings,
-                                contentDescription = "Settings"
+                                contentDescription = "Settings",
                             )
                         }
                         DropdownMenu(
                             expanded = showSettingsMenu,
-                            onDismissRequest = { showSettingsMenu = false }
+                            onDismissRequest = { showSettingsMenu = false },
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Bar Graph") },
@@ -100,9 +104,12 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                                     viewModel.setGraphType("BAR")
                                     showSettingsMenu = false
                                 },
-                                trailingIcon = if (state.graphType == "BAR") {
-                                    { Icon(Icons.Outlined.CheckCircle, contentDescription = null) }
-                                } else null
+                                trailingIcon =
+                                    if (state.graphType == "BAR") {
+                                        { Icon(Icons.Outlined.CheckCircle, contentDescription = null) }
+                                    } else {
+                                        null
+                                    },
                             )
                             DropdownMenuItem(
                                 text = { Text("Line Graph") },
@@ -110,9 +117,12 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
                                     viewModel.setGraphType("LINE")
                                     showSettingsMenu = false
                                 },
-                                trailingIcon = if (state.graphType == "LINE") {
-                                    { Icon(Icons.Outlined.CheckCircle, contentDescription = null) }
-                                } else null
+                                trailingIcon =
+                                    if (state.graphType == "LINE") {
+                                        { Icon(Icons.Outlined.CheckCircle, contentDescription = null) }
+                                    } else {
+                                        null
+                                    },
                             )
                         }
                     }
@@ -123,9 +133,10 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     ) { paddingValues ->
         if (state.isLoading) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
                 contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator()
@@ -160,9 +171,10 @@ private fun StatsContent(
             else -> "this month"
         }
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = Dimensions.screenPaddingHorizontal),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(horizontal = Dimensions.screenPaddingHorizontal),
         verticalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
     ) {
         item(key = "top_spacer") {
@@ -174,13 +186,13 @@ private fun StatsContent(
             val options = listOf("Day", "Week", "Month")
 
             SingleChoiceSegmentedButtonRow(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 options.forEachIndexed { index, label ->
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
                         onClick = { onTimeFilterChanged(index) },
-                        selected = index == state.timeFilter
+                        selected = index == state.timeFilter,
                     ) {
                         Text(label)
                     }
@@ -204,94 +216,124 @@ private fun StatsContent(
                 verticalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 220.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
                 ) {
                     // Tasks Breakdown
                     Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                        )
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            ),
+                        shape = RoundedCornerShape(16.dp),
                     ) {
                         Column(
-                            modifier = Modifier.padding(Dimensions.sectionSpacing),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = Dimensions.cardPadding, vertical = 24.dp),
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text(
-                                text = "Tasks",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.align(Alignment.Start)
-                            )
-                            Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
-                            Box(contentAlignment = Alignment.Center) {
+                            Column {
+                                Text(
+                                    text = "Tasks",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "${state.completedTasksToday} of ${state.totalTasks} done",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center,
+                            ) {
                                 CircularProgressIndicator(
                                     progress = { state.taskCompletionRate },
-                                    modifier = Modifier.size(80.dp),
-                                    strokeWidth = 8.dp,
+                                    modifier = Modifier.size(72.dp),
+                                    strokeWidth = 6.dp,
                                     strokeCap = StrokeCap.Round,
                                     color = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
                                 )
                                 Text(
                                     text = "${(state.taskCompletionRate * 100).toInt()}%",
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
                                 )
                             }
-                            Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
-                            Text(
-                                text = "${state.completedTasksToday} of ${state.totalTasks} done",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
                         }
                     }
 
                     // Daily Goal
                     Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                        )
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            ),
+                        shape = RoundedCornerShape(16.dp),
                     ) {
                         Column(
-                            modifier = Modifier.padding(Dimensions.sectionSpacing),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = Dimensions.cardPadding, vertical = 24.dp),
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text(
-                                text = "Daily Goal",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.align(Alignment.Start)
-                            )
-                            Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
-                            Box(contentAlignment = Alignment.Center) {
-                                val progress = if (state.totalHabits > 0) state.completedToday.toFloat() / state.totalHabits else 0f
+                            Column {
+                                Text(
+                                    text = "Daily Goal",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                val remaining = maxOf(0, state.totalHabits - state.completedToday)
+                                Text(
+                                    text = "$remaining more to hit your goal",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                val progress =
+                                    if (state.totalHabits > 0) {
+                                        state.completedToday.toFloat() / state.totalHabits
+                                    } else {
+                                        0f
+                                    }
                                 CircularProgressIndicator(
                                     progress = { progress },
-                                    modifier = Modifier.size(80.dp),
-                                    strokeWidth = 8.dp,
+                                    modifier = Modifier.size(72.dp),
+                                    strokeWidth = 6.dp,
                                     strokeCap = StrokeCap.Round,
                                     color = MaterialTheme.colorScheme.tertiary,
-                                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
                                 )
                                 Text(
                                     text = "${state.completedToday}/${state.totalHabits}",
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
                                 )
                             }
-                            Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
-                            val remaining = maxOf(0, state.totalHabits - state.completedToday)
-                            Text(
-                                text = "$remaining more targets to hit your goal.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
                         }
                     }
                 }
@@ -299,50 +341,79 @@ private fun StatsContent(
                 // Routine Breakdown
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    )
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ),
+                    shape = RoundedCornerShape(16.dp),
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(Dimensions.sectionSpacing),
-                        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
-                        verticalAlignment = Alignment.CenterVertically,
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Dimensions.cardPadding, vertical = 24.dp),
+                        verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Repeat,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.size(24.dp),
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Row(
+                                horizontalArrangement =
+                                    Arrangement.spacedBy(Dimensions.elementSpacingLarge),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .size(40.dp)
+                                            .background(
+                                                MaterialTheme.colorScheme.secondaryContainer,
+                                                RoundedCornerShape(12.dp),
+                                            ),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Repeat,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = "Routines",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        text =
+                                            "${state.completedRoutinesToday} of " +
+                                                "${state.totalRoutines} completed $periodSuffix",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
 
-                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Routines",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "${state.completedRoutinesToday} of ${state.totalRoutines} completed $periodSuffix",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
-                            LinearProgressIndicator(
-                                progress = { state.routineCompletionRate },
-                                modifier = Modifier.fillMaxWidth(),
+                                text = "${(state.routineCompletionRate * 100).toInt()}%",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.secondary,
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
                             )
                         }
 
-                        Text(
-                            text = "${(state.routineCompletionRate * 100).toInt()}%",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                        LinearProgressIndicator(
+                            progress = { state.routineCompletionRate },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
+                                    .clip(RoundedCornerShape(4.dp)),
                             color = MaterialTheme.colorScheme.secondary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
                         )
                     }
                 }
@@ -355,10 +426,11 @@ private fun StatsContent(
                 text = "Current Streaks",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(
-                    top = Dimensions.sectionSpacing,
-                    bottom = Dimensions.elementSpacing,
-                ),
+                modifier =
+                    Modifier.padding(
+                        top = Dimensions.sectionSpacing,
+                        bottom = Dimensions.elementSpacing,
+                    ),
             )
         }
 
@@ -386,10 +458,11 @@ private fun StatsContent(
                 text = "Insights",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(
-                    top = Dimensions.sectionSpacing,
-                    bottom = Dimensions.elementSpacing,
-                ),
+                modifier =
+                    Modifier.padding(
+                        top = Dimensions.sectionSpacing,
+                        bottom = Dimensions.elementSpacing,
+                    ),
             )
         }
 
@@ -414,14 +487,17 @@ private fun ActivityGraphCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.sectionSpacing),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(Dimensions.cardPadding),
             verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
         ) {
             Text(
@@ -444,56 +520,97 @@ private fun ActivityGraphCard(
             } else {
                 val axisLabels =
                     if (timeFilter == 0) {
-                        listOf("00:00", "06:00", "12:00", "18:00", "24:00")
+                        // Day view: show every 3rd label
+                        data.mapIndexed { i, p -> if (i % 3 == 0) p.label else "" }
                     } else if (data.size <= 7) {
+                        // Week view: show all labels
                         data.map { it.label }
                     } else {
-                        listOf(data.first().label, data[data.lastIndex / 2].label, data.last().label)
+                        // Month view: show every 5th label, aligned per data point
+                        data.mapIndexed { i, p ->
+                            if (i % 5 == 0 || i == data.lastIndex) p.label else ""
+                        }
                     }
 
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val scrollState = rememberScrollState()
-                    val minPointWidth = when (timeFilter) {
-                        2 -> 24.dp
-                        0 -> 12.dp
-                        else -> 18.dp
-                    }
-                    val desiredWidth = (data.size * minPointWidth.value).dp
-                    val chartWidth = if (desiredWidth > maxWidth) desiredWidth else maxWidth
+                val rawMaxValue =
+                    data.maxOf {
+                        maxOf(
+                            it.habitsCompleted,
+                            it.routinesCompleted,
+                            it.tasksCompleted,
+                        )
+                    }.coerceAtLeast(1)
+                val yAxisMax = calculateYAxisMax(rawMaxValue)
+                val yAxisTicks = listOf(yAxisMax, yAxisMax / 2, 0)
 
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    // Sticky Y-axis (outside scroll area)
                     Column(
-                        modifier = Modifier
-                            .horizontalScroll(scrollState)
-                            .width(chartWidth),
-                        verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
+                        modifier =
+                            Modifier
+                                .height(180.dp)
+                                .padding(end = 6.dp),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        horizontalAlignment = Alignment.End,
                     ) {
-                        if (graphType == "LINE") {
-                            ActivityLineChart(
-                                data = data,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(180.dp),
-                            )
-                        } else {
-                            ActivityBarChart(
-                                data = data,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(180.dp),
+                        yAxisTicks.forEach { tick ->
+                            Text(
+                                text = tick.toString(),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
+                    }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                    // Scrollable chart area
+                    BoxWithConstraints(modifier = Modifier.weight(1f)) {
+                        val scrollState = rememberScrollState()
+                        val minPointWidth =
+                            when (timeFilter) {
+                                2 -> 24.dp
+                                0 -> 28.dp
+                                else -> 40.dp
+                            }
+                        val desiredWidth = (data.size * minPointWidth.value).dp
+                        val chartWidth = if (desiredWidth > maxWidth) desiredWidth else maxWidth
+
+                        Column(
+                            modifier =
+                                Modifier
+                                    .horizontalScroll(scrollState)
+                                    .width(chartWidth),
+                            verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
                         ) {
-                            axisLabels.forEach { label ->
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
+                            if (graphType == "LINE") {
+                                ActivityLineChart(
+                                    data = data,
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .height(180.dp),
                                 )
+                            } else {
+                                ActivityBarChart(
+                                    data = data,
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .height(180.dp),
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                axisLabels.forEach { label ->
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                    )
+                                }
                             }
                         }
                     }
@@ -522,9 +639,10 @@ private fun ActivityLegend(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(
-            modifier = Modifier
-                .size(8.dp)
-                .background(color = color, shape = CircleShape),
+            modifier =
+                Modifier
+                    .size(8.dp)
+                    .background(color = color, shape = CircleShape),
         )
         Text(
             text = label,
@@ -539,75 +657,56 @@ private fun ActivityBarChart(
     data: List<ActivityDataPoint>,
     modifier: Modifier = Modifier,
 ) {
-    val habitsValues = data.map { it.habitsCompleted }
-    val routinesValues = data.map { it.routinesCompleted }
-    val tasksValues = data.map { it.tasksCompleted }
     val habitsColor = MaterialTheme.colorScheme.primary
     val routinesColor = MaterialTheme.colorScheme.secondary
     val tasksColor = MaterialTheme.colorScheme.tertiary
-    val rawMaxValue = maxOf(
-        habitsValues.maxOrNull() ?: 0,
-        routinesValues.maxOrNull() ?: 0,
-        tasksValues.maxOrNull() ?: 0,
-        1,
-    )
-
+    val rawMaxValue =
+        maxOf(
+            data.maxOfOrNull { it.habitsCompleted } ?: 0,
+            data.maxOfOrNull { it.routinesCompleted } ?: 0,
+            data.maxOfOrNull { it.tasksCompleted } ?: 0,
+            1,
+        )
     val yAxisMax = calculateYAxisMax(rawMaxValue)
-    val yAxisTicks = listOf(yAxisMax, yAxisMax / 2, 0)
 
-    Row(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(end = 6.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.End,
-        ) {
-            yAxisTicks.forEach { tick ->
-                Text(
-                    text = tick.toString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+    Canvas(modifier = modifier) {
+        val chartTop = 8.dp.toPx()
+        val chartBottom = size.height - 8.dp.toPx()
+        val chartHeight = chartBottom - chartTop
+        val count = data.size
+        if (count == 0) return@Canvas
 
-        Canvas(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-        ) {
-            val chartTop = 12.dp.toPx()
-            val chartBottom = size.height - 12.dp.toPx()
-            val chartHeight = chartBottom - chartTop
-            val count = data.size
-            val stepX = if (count > 1) size.width / (count - 1) else 0f
-            val barWidth = if (count > 1) (stepX * 0.6f) / 3f else size.width * 0.1f
+        val groupWidth = size.width / count
+        val barSpacing = 2.dp.toPx()
+        val totalBarArea = groupWidth * 0.55f
+        val barWidth = (totalBarArea - barSpacing * 2f) / 3f
+        val gap = (groupWidth - totalBarArea) / 2f
 
-            fun drawBar(index: Int, value: Int, color: Color, offsetMultiplier: Float) {
+        data.forEachIndexed { index, point ->
+            val groupLeft = index * groupWidth + gap
+
+            fun drawBar(
+                barIndex: Int,
+                value: Int,
+                color: androidx.compose.ui.graphics.Color,
+            ) {
                 if (value == 0) return
-                val x = if (count > 1) index * stepX else size.width / 2f
                 val normalized = value.toFloat() / yAxisMax.toFloat()
-                val barHeight = normalized * chartHeight
-                val y = chartBottom - barHeight
+                val barHeight = (normalized * chartHeight).coerceAtLeast(2.dp.toPx())
+                val left = groupLeft + barIndex * (barWidth + barSpacing)
+                val top = chartBottom - barHeight
 
-                val barX = x + (offsetMultiplier * barWidth) - (barWidth / 2f)
-
-                drawPath(
-                    path = Path().apply {
-                        moveTo(barX, chartBottom)
-                        lineTo(barX, y + (barWidth / 2f))
-                    },
+                drawRoundRect(
                     color = color,
-                    style = Stroke(width = barWidth, cap = StrokeCap.Round),
+                    topLeft = Offset(left, top),
+                    size = Size(width = barWidth, height = barHeight),
+                    cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f),
                 )
             }
 
-            for (i in 0 until count) {
-                drawBar(i, habitsValues[i], habitsColor, -1f)
-                drawBar(i, routinesValues[i], routinesColor, 0f)
-                drawBar(i, tasksValues[i], tasksColor, 1f)
-            }
+            drawBar(0, point.habitsCompleted, habitsColor)
+            drawBar(1, point.routinesCompleted, routinesColor)
+            drawBar(2, point.tasksCompleted, tasksColor)
         }
     }
 }
@@ -617,99 +716,60 @@ private fun ActivityLineChart(
     data: List<ActivityDataPoint>,
     modifier: Modifier = Modifier,
 ) {
-    val habitsValues = data.map { it.habitsCompleted }
-    val routinesValues = data.map { it.routinesCompleted }
-    val tasksValues = data.map { it.tasksCompleted }
     val habitsColor = MaterialTheme.colorScheme.primary
     val routinesColor = MaterialTheme.colorScheme.secondary
     val tasksColor = MaterialTheme.colorScheme.tertiary
-    val rawMaxValue = maxOf(
-        habitsValues.maxOrNull() ?: 0,
-        routinesValues.maxOrNull() ?: 0,
-        tasksValues.maxOrNull() ?: 0,
-        1,
-    )
-
+    val rawMaxValue =
+        maxOf(
+            data.maxOfOrNull { it.habitsCompleted } ?: 0,
+            data.maxOfOrNull { it.routinesCompleted } ?: 0,
+            data.maxOfOrNull { it.tasksCompleted } ?: 0,
+            1,
+        )
     val yAxisMax = calculateYAxisMax(rawMaxValue)
-    val yAxisTicks = listOf(yAxisMax, yAxisMax / 2, 0)
 
-    Row(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(end = 6.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.End,
-        ) {
-            yAxisTicks.forEach { tick ->
-                Text(
-                    text = tick.toString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+    Canvas(modifier = modifier) {
+        val chartTop = 8.dp.toPx()
+        val chartBottom = size.height - 8.dp.toPx()
+        val chartHeight = chartBottom - chartTop
+        val count = data.size
+        if (count == 0) return@Canvas
+        val stepX = if (count > 1) size.width / (count - 1) else 0f
+
+        fun point(
+            index: Int,
+            value: Int,
+        ): Offset {
+            val x = if (count > 1) index * stepX else size.width / 2f
+            val normalized = value.toFloat() / yAxisMax.toFloat()
+            val y = chartBottom - (normalized * chartHeight)
+            return Offset(x, y)
         }
 
-        Canvas(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
+        fun drawSeries(
+            values: List<Int>,
+            color: androidx.compose.ui.graphics.Color,
         ) {
-            val chartTop = 12.dp.toPx()
-            val chartBottom = size.height - 12.dp.toPx()
-            val chartHeight = chartBottom - chartTop
-            val count = data.size
-            val stepX = if (count > 1) size.width / (count - 1) else 0f
-
-            fun point(index: Int, value: Int): Offset {
-                val x = if (count > 1) index * stepX else size.width / 2f
-                val normalized = value.toFloat() / yAxisMax.toFloat()
-                val y = chartBottom - (normalized * chartHeight)
-                return Offset(x, y)
-            }
-
-            fun drawSeries(values: List<Int>, color: Color) {
-                if (values.isEmpty()) return
-                val points = values.mapIndexed { index, value -> point(index, value) }
-
-                if (points.size > 1) {
-                    val path = Path().apply {
+            val points = values.mapIndexed { index, value -> point(index, value) }
+            if (points.size > 1) {
+                val path =
+                    Path().apply {
                         moveTo(points.first().x, points.first().y)
-                        for (index in 1 until points.size) {
-                            val previous = points[index - 1]
-                            val current = points[index]
-                            val controlX = (previous.x + current.x) / 2f
-                            cubicTo(
-                                controlX,
-                                previous.y,
-                                controlX,
-                                current.y,
-                                current.x,
-                                current.y,
-                            )
+                        for (i in 1 until points.size) {
+                            val prev = points[i - 1]
+                            val curr = points[i]
+                            val cx = (prev.x + curr.x) / 2f
+                            cubicTo(cx, prev.y, cx, curr.y, curr.x, curr.y)
                         }
                     }
-
-                    drawPath(
-                        path = path,
-                        color = color,
-                        style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round),
-                    )
-                }
-
-                points.forEach { p ->
-                    drawCircle(
-                        color = color,
-                        radius = 3.dp.toPx(),
-                        center = p,
-                    )
-                }
+                drawPath(path, color, style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round))
             }
-
-            drawSeries(habitsValues, habitsColor)
-            drawSeries(routinesValues, routinesColor)
-            drawSeries(tasksValues, tasksColor)
+            points.forEach { p -> drawCircle(color, radius = 3.dp.toPx(), center = p) }
         }
+
+        drawSeries(data.map { it.habitsCompleted }, habitsColor)
+        drawSeries(data.map { it.routinesCompleted }, routinesColor)
+        drawSeries(data.map { it.tasksCompleted }, tasksColor)
     }
 }
 
@@ -725,35 +785,44 @@ private fun CurrentStreakCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.sectionSpacing),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(Dimensions.cardPadding),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)
+                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .size(48.dp)
+                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.CheckCircle, // Placeholder icon
+                        imageVector =
+                            if (habitStat.currentStreak > 0) {
+                                Icons.Outlined.LocalFireDepartment
+                            } else {
+                                Icons.Outlined.CheckCircle
+                            },
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
-                
+
                 Column {
                     Text(
                         text = habitStat.title,
@@ -763,7 +832,7 @@ private fun CurrentStreakCard(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = "Target: Daily", // Placeholder subtitle
+                        text = "Target: ${habitStat.frequency}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -772,7 +841,7 @@ private fun CurrentStreakCard(
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)
+                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
             ) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
@@ -787,12 +856,17 @@ private fun CurrentStreakCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                
+
                 Icon(
                     imageVector = Icons.Outlined.LocalFireDepartment,
                     contentDescription = null,
-                    tint = if (habitStat.currentStreak > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
+                    tint =
+                        if (habitStat.currentStreak > 0) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }
@@ -804,51 +878,81 @@ private fun DetailedSummaryCard(
     state: StatsState,
     modifier: Modifier = Modifier,
 ) {
-    val periodText = when (state.timeFilter) {
-        0 -> "today"
-        1 -> "this week"
-        else -> "this month"
-    }
+    val periodText =
+        when (state.timeFilter) {
+            0 -> "today"
+            1 -> "this week"
+            else -> "this month"
+        }
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimensions.sectionSpacing),
-            verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(Dimensions.cardPadding),
+            verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
         ) {
             // Focus Insight
-            if (state.todaysFocusSeconds > 0) {
-                InsightRow(
-                    icon = Icons.Outlined.Timer,
-                    iconTint = MaterialTheme.colorScheme.primary,
-                    title = "Deep Work",
-                    description = "You've logged ${formatFocusTime(state.todaysFocusSeconds)} of focus time across ${state.todaysPomodoroSessions} sessions $periodText."
-                )
-            }
+            InsightRow(
+                icon = Icons.Outlined.Timer,
+                iconTint = MaterialTheme.colorScheme.primary,
+                title = "Deep Work",
+                description =
+                    if (state.todaysFocusSeconds > 0 || state.todaysPomodoroSessions > 0) {
+                        "You've logged ${formatFocusTime(
+                            state.todaysFocusSeconds,
+                        )} of focus time across ${state.todaysPomodoroSessions} sessions $periodText."
+                    } else {
+                        "No focus sessions logged $periodText. Start a Pomodoro to track deep work."
+                    },
+            )
 
             // Habits Insight
             val habitRate = (state.overallCompletionRate * 100).toInt()
+            val streakText =
+                if (state.currentBestStreak > 0) {
+                    " Your best active streak is ${state.currentBestStreak} days."
+                } else {
+                    ""
+                }
             InsightRow(
                 icon = Icons.Outlined.CheckCircle,
                 iconTint = MaterialTheme.colorScheme.tertiary,
                 title = "Habit Consistency",
-                description = "You have a $habitRate% completion rate for your habits $periodText. Your best active streak is ${state.currentBestStreak} days."
+                description =
+                    if (state.totalHabits > 0) {
+                        "You have a $habitRate% completion rate for your habits $periodText.$streakText"
+                    } else {
+                        "No habits tracked yet. Create a habit to start building consistency."
+                    },
             )
 
             // Tasks & Routines Insight
-            val tasksText = if (state.completedTasksToday > 0) "${state.completedTasksToday} tasks" else "no tasks"
-            val routinesText = if (state.completedRoutinesToday > 0) "${state.completedRoutinesToday} routines" else "no routines"
+            val tasksText =
+                if (state.completedTasksToday > 0) {
+                    "${state.completedTasksToday} tasks"
+                } else {
+                    "no tasks"
+                }
+            val routinesText =
+                if (state.completedRoutinesToday > 0) {
+                    "${state.completedRoutinesToday} routines"
+                } else {
+                    "no routines"
+                }
             InsightRow(
                 icon = Icons.AutoMirrored.Outlined.ListAlt,
                 iconTint = MaterialTheme.colorScheme.secondary,
                 title = "Productivity",
-                description = "You've checked off $tasksText and completed $routinesText $periodText."
+                description = "You've checked off $tasksText and completed $routinesText $periodText.",
             )
         }
     }
@@ -864,35 +968,36 @@ private fun InsightRow(
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.Top,
     ) {
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .background(iconTint.copy(alpha = 0.1f), CircleShape),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .background(iconTint.copy(alpha = 0.1f), CircleShape),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = iconTint,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
         }
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 20.sp
+                lineHeight = 20.sp,
             )
         }
     }
@@ -901,9 +1006,9 @@ private fun InsightRow(
 private fun formatFocusTime(seconds: Int): String {
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
-    
+
     return if (hours > 0) {
-        "${hours}.${(minutes / 6f).toInt()}h"
+        "$hours.${(minutes / 6f).toInt()}h"
     } else {
         "${minutes}m"
     }

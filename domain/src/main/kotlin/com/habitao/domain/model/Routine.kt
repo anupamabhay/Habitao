@@ -2,6 +2,7 @@ package com.habitao.domain.model
 
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 
 data class Routine(
     val id: String,
@@ -24,5 +25,27 @@ data class Routine(
     val sortOrder: Int = 0,
     val syncStatus: SyncStatus = SyncStatus.LOCAL,
     val lastSyncedAt: Long? = null,
-    val deletedAt: Long? = null
-)
+    val deletedAt: Long? = null,
+) {
+    /** Check if this routine is scheduled for the given date based on its repeat pattern. */
+    fun isScheduledForDate(date: LocalDate): Boolean {
+        if (date.isBefore(startDate)) return false
+        if (endDate != null && date.isAfter(endDate)) return false
+
+        return when (repeatPattern) {
+            RepeatPattern.DAILY -> true
+            // WEEKLY and SPECIFIC_DATES both use repeatDays to define specific days of the week.
+            // SPECIFIC_DATES is named for legacy/Habits compatibility but functionally means
+            // "repeat on specific weekdays" — identical scheduling logic to WEEKLY.
+            RepeatPattern.WEEKLY, RepeatPattern.SPECIFIC_DATES -> {
+                val days = repeatDays
+                if (days.isNullOrEmpty()) true else date.dayOfWeek in days
+            }
+            RepeatPattern.CUSTOM -> {
+                val interval = customInterval ?: 1
+                val daysBetween = ChronoUnit.DAYS.between(startDate, date)
+                daysBetween >= 0 && daysBetween % interval == 0L
+            }
+        }
+    }
+}

@@ -14,8 +14,7 @@ import java.time.ZoneId
 class Converters {
     // LocalDate <-> Long (epoch millis at start of day)
     @TypeConverter
-    fun fromLocalDate(date: LocalDate?): Long? =
-        date?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
+    fun fromLocalDate(date: LocalDate?): Long? = date?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
 
     @TypeConverter
     fun toLocalDate(millis: Long?): LocalDate? =
@@ -23,12 +22,10 @@ class Converters {
 
     // LocalTime <-> Int (minutes from midnight)
     @TypeConverter
-    fun fromLocalTime(time: LocalTime?): Int? =
-        time?.let { it.hour * 60 + it.minute }
+    fun fromLocalTime(time: LocalTime?): Int? = time?.let { it.hour * 60 + it.minute }
 
     @TypeConverter
-    fun toLocalTime(minutes: Int?): LocalTime? =
-        minutes?.let { LocalTime.of(it / 60, it % 60) }
+    fun toLocalTime(minutes: Int?): LocalTime? = minutes?.let { LocalTime.of(it / 60, it % 60) }
 
     // List<DayOfWeek> <-> String (JSON)
     @TypeConverter
@@ -63,22 +60,19 @@ class Converters {
     fun fromRepeatPattern(pattern: RepeatPattern?): String? = pattern?.name
 
     @TypeConverter
-    fun toRepeatPattern(name: String?): RepeatPattern? =
-        name?.let { RepeatPattern.valueOf(it) }
+    fun toRepeatPattern(name: String?): RepeatPattern? = name?.let { RepeatPattern.valueOf(it) }
 
     // SyncStatus <-> String
     @TypeConverter
     fun fromSyncStatus(status: SyncStatus?): String? = status?.name
 
     @TypeConverter
-    fun toSyncStatus(name: String?): SyncStatus? =
-        name?.let { SyncStatus.valueOf(it) }
+    fun toSyncStatus(name: String?): SyncStatus? = name?.let { SyncStatus.valueOf(it) }
 
     // TaskPriority <-> String
     @TypeConverter
     fun fromTaskPriority(priority: TaskPriority?): String? = priority?.name
 
     @TypeConverter
-    fun toTaskPriority(name: String?): TaskPriority? =
-        name?.let { TaskPriority.valueOf(it) }
+    fun toTaskPriority(name: String?): TaskPriority? = name?.let { TaskPriority.valueOf(it) }
 }

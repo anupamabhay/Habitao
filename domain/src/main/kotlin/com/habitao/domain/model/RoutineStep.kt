@@ -10,5 +10,5 @@ data class RoutineStep(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val syncStatus: SyncStatus = SyncStatus.LOCAL,
-    val deletedAt: Long? = null
+    val deletedAt: Long? = null,
 )

@@ -13,7 +13,9 @@ interface PomodoroSessionDao {
     suspend fun insertSession(entity: PomodoroSessionEntity)
 
     @Query(
-        "SELECT * FROM pomodoro_sessions WHERE startedAt >= :startOfDay AND startedAt < :endOfDay ORDER BY startedAt DESC",
+        "SELECT * FROM pomodoro_sessions " +
+            "WHERE startedAt >= :startOfDay AND startedAt < :endOfDay " +
+            "ORDER BY startedAt DESC",
     )
     suspend fun getSessionsForDateRange(
         startOfDay: Long,
@@ -21,7 +23,9 @@ interface PomodoroSessionDao {
     ): List<PomodoroSessionEntity>
 
     @Query(
-        "SELECT * FROM pomodoro_sessions WHERE startedAt >= :startOfDay AND startedAt < :endOfDay ORDER BY startedAt DESC",
+        "SELECT * FROM pomodoro_sessions " +
+            "WHERE startedAt >= :startOfDay AND startedAt < :endOfDay " +
+            "ORDER BY startedAt DESC",
     )
     fun observeSessionsForDateRange(
         startOfDay: Long,
@@ -29,7 +33,11 @@ interface PomodoroSessionDao {
     ): Flow<List<PomodoroSessionEntity>>
 
     @Query(
-        "SELECT COALESCE(SUM(actualDurationSeconds), 0) FROM pomodoro_sessions WHERE sessionType = 'WORK' AND startedAt >= :startOfDay AND startedAt < :endOfDay AND wasInterrupted = 0",
+        "SELECT COALESCE(SUM(actualDurationSeconds), 0) " +
+            "FROM pomodoro_sessions " +
+            "WHERE sessionType = 'WORK' " +
+            "AND wasInterrupted = 0 " +
+            "AND startedAt >= :startOfDay AND startedAt < :endOfDay",
     )
     suspend fun getTotalFocusSeconds(
         startOfDay: Long,

@@ -9,7 +9,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -59,7 +58,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextRange
@@ -68,14 +66,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.habitao.feature.pomodoro.service.PomodoroPreferences
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PomodoroSettingsSheet(
-    onDismiss: () -> Unit,
-) {
+fun PomodoroSettingsSheet(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val prefs = remember { PomodoroPreferences(context) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -97,39 +92,41 @@ fun PomodoroSettingsSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
-        dragHandle = null
+        dragHandle = null,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(bottom = 24.dp)
-                .imePadding()
-                .verticalScroll(rememberScrollState())
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(bottom = 24.dp)
+                    .imePadding()
+                    .verticalScroll(rememberScrollState()),
         ) {
             // Drag handle spacer
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(
                     onClick = onDismiss,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(40.dp),
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back"
+                        contentDescription = "Back",
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Pomodoro Settings",
                     style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
             }
 
@@ -140,7 +137,7 @@ fun PomodoroSettingsSheet(
                     suffix = "min",
                     range = 1..180,
                     icon = Icons.Filled.Timer,
-                    onValueChange = { workDuration = it }
+                    onValueChange = { workDuration = it },
                 )
                 SettingsDivider()
                 SettingsNumberItem(
@@ -149,7 +146,7 @@ fun PomodoroSettingsSheet(
                     suffix = "min",
                     range = 1..60,
                     icon = Icons.Filled.Timer,
-                    onValueChange = { shortBreakDuration = it }
+                    onValueChange = { shortBreakDuration = it },
                 )
                 SettingsDivider()
                 SettingsNumberItem(
@@ -158,7 +155,7 @@ fun PomodoroSettingsSheet(
                     suffix = "min",
                     range = 1..120,
                     icon = Icons.Filled.Timer,
-                    onValueChange = { longBreakDuration = it }
+                    onValueChange = { longBreakDuration = it },
                 )
             }
 
@@ -169,7 +166,7 @@ fun PomodoroSettingsSheet(
                     suffix = "sessions",
                     range = 1..10,
                     icon = Icons.Filled.Refresh,
-                    onValueChange = { sessionsBeforeLongBreak = it }
+                    onValueChange = { sessionsBeforeLongBreak = it },
                 )
                 SettingsDivider()
                 SettingsNumberItem(
@@ -178,20 +175,20 @@ fun PomodoroSettingsSheet(
                     suffix = "sessions",
                     range = 1..20,
                     icon = Icons.Filled.Refresh,
-                    onValueChange = { totalSessions = it }
+                    onValueChange = { totalSessions = it },
                 )
                 SettingsSwitchItem(
                     label = "Auto-start next pomodoro",
                     checked = autoStartNextPomo,
                     icon = Icons.Filled.PlayArrow,
-                    onCheckedChange = { autoStartNextPomo = it }
+                    onCheckedChange = { autoStartNextPomo = it },
                 )
                 SettingsDivider()
                 SettingsSwitchItem(
                     label = "Auto-start break",
                     checked = autoStartBreak,
                     icon = Icons.Filled.PlayArrow,
-                    onCheckedChange = { autoStartBreak = it }
+                    onCheckedChange = { autoStartBreak = it },
                 )
             }
 
@@ -200,21 +197,21 @@ fun PomodoroSettingsSheet(
                     label = "Pomodoro ending sound",
                     selectedUri = pomoEndingSoundUri,
                     icon = Icons.Filled.Notifications,
-                    onSelect = { pomoEndingSoundUri = it }
+                    onSelect = { pomoEndingSoundUri = it },
                 )
                 SettingsDivider()
                 SettingsSoundItem(
                     label = "Break ending sound",
                     selectedUri = breakEndingSoundUri,
                     icon = Icons.Filled.Notifications,
-                    onSelect = { breakEndingSoundUri = it }
+                    onSelect = { breakEndingSoundUri = it },
                 )
                 SettingsDivider()
                 SettingsSwitchItem(
                     label = "Vibrate on completion",
                     checked = vibrateEnabled,
                     icon = Icons.Filled.Vibration,
-                    onCheckedChange = { vibrateEnabled = it }
+                    onCheckedChange = { vibrateEnabled = it },
                 )
                 if (vibrateEnabled) {
                     SettingsDivider()
@@ -224,7 +221,7 @@ fun PomodoroSettingsSheet(
                         suffix = "sec",
                         range = 1..10,
                         icon = Icons.Filled.Timer,
-                        onValueChange = { vibrateDurationSeconds = it }
+                        onValueChange = { vibrateDurationSeconds = it },
                     )
                 }
             }
@@ -244,9 +241,10 @@ fun PomodoroSettingsSheet(
                     prefs.vibrateDurationSeconds = vibrateDurationSeconds
                     onDismiss()
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 24.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 24.dp),
             ) {
                 Text("Save Settings")
             }
@@ -257,26 +255,29 @@ fun PomodoroSettingsSheet(
 @Composable
 private fun SettingsGroup(
     title: String,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier
-                .padding(start = 16.dp, bottom = 8.dp)
-                .fillMaxWidth()
+            modifier =
+                Modifier
+                    .padding(start = 16.dp, bottom = 8.dp)
+                    .fillMaxWidth(),
         )
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow),
         ) {
             content()
         }
@@ -287,7 +288,7 @@ private fun SettingsGroup(
 private fun SettingsDivider() {
     HorizontalDivider(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        thickness = 1.dp
+        thickness = 1.dp,
     )
 }
 
@@ -299,35 +300,36 @@ private fun SettingsSwitchItem(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable { onCheckedChange(!checked) }
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         ) {
             if (icon != null) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
         Spacer(modifier = Modifier.width(12.dp))
         Switch(
             checked = checked,
-            onCheckedChange = onCheckedChange
+            onCheckedChange = onCheckedChange,
         )
     }
 }
@@ -339,7 +341,7 @@ private fun SettingsNumberItem(
     suffix: String,
     range: IntRange,
     icon: ImageVector? = null,
-    onValueChange: (Int) -> Unit
+    onValueChange: (Int) -> Unit,
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
@@ -352,37 +354,38 @@ private fun SettingsNumberItem(
             onConfirm = {
                 onValueChange(it)
                 showDialog = false
-            }
+            },
         )
     }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { showDialog = true }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable { showDialog = true }
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         ) {
             if (icon != null) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
-        
+
         Spacer(modifier = Modifier.width(12.dp))
         Surface(
             modifier = Modifier.widthIn(min = 80.dp),
@@ -394,7 +397,7 @@ private fun SettingsNumberItem(
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             )
         }
     }
@@ -406,15 +409,15 @@ private fun NumberInputDialog(
     initialValue: Int,
     range: IntRange,
     onDismiss: () -> Unit,
-    onConfirm: (Int) -> Unit
+    onConfirm: (Int) -> Unit,
 ) {
-    var textFieldValue by remember { 
+    var textFieldValue by remember {
         mutableStateOf(
             TextFieldValue(
                 text = initialValue.toString(),
-                selection = TextRange(0, initialValue.toString().length)
-            )
-        ) 
+                selection = TextRange(0, initialValue.toString().length),
+            ),
+        )
     }
     var isError by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
@@ -433,14 +436,15 @@ private fun NumberInputDialog(
                     isError = isError,
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester),
                     supportingText = {
                         if (isError) {
                             Text("Enter a value between ${range.first} and ${range.last}")
                         }
-                    }
+                    },
                 )
                 LaunchedEffect(Unit) {
                     focusRequester.requestFocus()
@@ -458,7 +462,7 @@ private fun NumberInputDialog(
                         }
                     }
                 },
-                enabled = !isError && textFieldValue.text.isNotEmpty()
+                enabled = !isError && textFieldValue.text.isNotEmpty(),
             ) {
                 Text("OK")
             }
@@ -467,7 +471,7 @@ private fun NumberInputDialog(
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
-        }
+        },
     )
 }
 
@@ -479,82 +483,90 @@ private fun SettingsSoundItem(
     onSelect: (String) -> Unit,
 ) {
     val context = LocalContext.current
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val uri: Uri? = result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-            onSelect(uri?.toString() ?: "SILENT")
-        }
-    }
-
-    val ringtoneName = remember(selectedUri) {
-        if (selectedUri.isEmpty()) {
-            "Default"
-        } else if (selectedUri == "SILENT") {
-            "Silent"
-        } else {
-            try {
-                val uri = Uri.parse(selectedUri)
-                val ringtone = RingtoneManager.getRingtone(context, uri)
-                ringtone?.getTitle(context) ?: "Unknown"
-            } catch (e: Exception) {
-                "Unknown"
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val uri: Uri? = result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                onSelect(uri?.toString() ?: "SILENT")
             }
         }
-    }
+
+    val ringtoneName =
+        remember(selectedUri) {
+            if (selectedUri.isEmpty()) {
+                "Default"
+            } else if (selectedUri == "SILENT") {
+                "Silent"
+            } else {
+                try {
+                    val uri = Uri.parse(selectedUri)
+                    val ringtone = RingtoneManager.getRingtone(context, uri)
+                    ringtone?.getTitle(context) ?: "Unknown"
+                } catch (e: Exception) {
+                    "Unknown"
+                }
+            }
+        }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-                    putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION or RingtoneManager.TYPE_ALARM)
-                    putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-                    putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
-                    if (selectedUri.isNotEmpty() && selectedUri != "SILENT") {
-                        putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(selectedUri))
-                    }
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable {
+                    val intent =
+                        Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                            putExtra(
+                                RingtoneManager.EXTRA_RINGTONE_TYPE,
+                                RingtoneManager.TYPE_NOTIFICATION or RingtoneManager.TYPE_ALARM,
+                            )
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
+                            if (selectedUri.isNotEmpty() && selectedUri != "SILENT") {
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(selectedUri))
+                            }
+                        }
+                    launcher.launch(intent)
                 }
-                launcher.launch(intent)
-            }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         ) {
             if (icon != null) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
-        
+
         Spacer(modifier = Modifier.width(12.dp))
         Surface(
             modifier = Modifier.widthIn(min = 80.dp, max = 120.dp),
             color = MaterialTheme.colorScheme.surfaceVariant,
             shape = RoundedCornerShape(6.dp),
         ) {
-             Text(
+            Text(
                 text = ringtoneName,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .widthIn(max = 120.dp)
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                modifier =
+                    Modifier
+                        .widthIn(max = 120.dp)
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
             )
         }
     }

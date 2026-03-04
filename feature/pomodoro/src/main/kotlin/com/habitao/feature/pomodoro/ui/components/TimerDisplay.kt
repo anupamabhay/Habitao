@@ -34,10 +34,11 @@ fun TimerDisplay(
     timerState: TimerState = TimerState.IDLE,
     modifier: Modifier = Modifier,
 ) {
-    val progress = remember(remainingSeconds, totalSeconds) {
-        val safeTotalSeconds = totalSeconds.coerceAtLeast(1L)
-        (remainingSeconds.toFloat() / safeTotalSeconds.toFloat()).coerceIn(0f, 1f)
-    }
+    val progress =
+        remember(remainingSeconds, totalSeconds) {
+            val safeTotalSeconds = totalSeconds.coerceAtLeast(1L)
+            (remainingSeconds.toFloat() / safeTotalSeconds.toFloat()).coerceIn(0f, 1f)
+        }
     val accentColor =
         if (sessionType == PomodoroType.WORK) {
             MaterialTheme.colorScheme.primary
@@ -50,11 +51,12 @@ fun TimerDisplay(
     val pulseAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseAlpha"
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(1000, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "pulseAlpha",
     )
 
     val currentAlpha = if (timerState == TimerState.RUNNING) pulseAlpha else 1f

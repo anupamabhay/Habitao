@@ -17,8 +17,8 @@ import java.util.UUID
         Index(value = ["dueDate"]),
         Index(value = ["priority"]),
         Index(value = ["isCompleted"]),
-        Index(value = ["projectId"])
-    ]
+        Index(value = ["projectId"]),
+    ],
 )
 data class TaskEntity(
     @PrimaryKey
@@ -43,5 +43,5 @@ data class TaskEntity(
     val sortOrder: Int = 0,
     val syncStatus: SyncStatus = SyncStatus.LOCAL,
     val lastSyncedAt: Long? = null,
-    val deletedAt: Long? = null
+    val deletedAt: Long? = null,
 )

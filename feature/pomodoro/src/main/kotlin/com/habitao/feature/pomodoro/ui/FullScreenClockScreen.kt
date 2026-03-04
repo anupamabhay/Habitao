@@ -3,6 +3,7 @@ package com.habitao.feature.pomodoro.ui
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -12,32 +13,37 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,6 +52,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.habitao.domain.model.PomodoroType
 import com.habitao.feature.pomodoro.ui.components.TimerDisplay
 import com.habitao.feature.pomodoro.viewmodel.PomodoroViewModel
 import kotlin.math.cos
@@ -57,81 +64,152 @@ fun FullScreenClockScreen(
     viewModel: PomodoroViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    var clockStyle by remember { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(pageCount = { 4 })
 
     EnterImmersiveMode()
     BackHandler(onBack = onClose)
 
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center,
-    ) {
-        IconButton(
-            onClick = onClose,
-            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+    // Force dark color scheme for AOD — ensures visibility on black background in both themes
+    MaterialTheme(colorScheme = darkColorScheme()) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black),
         ) {
-            Icon(
-                imageVector = Icons.Filled.Close,
-                contentDescription = "Close full screen clock",
-                tint = MaterialTheme.colorScheme.onBackground,
-            )
-        }
+            // Pager fills background - must be rendered FIRST (below overlays)
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+            ) { page ->
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    when (page) {
+                        0 -> {
+                            TimerDisplay(
+                                remainingSeconds = state.remainingSeconds,
+                                totalSeconds = state.totalSeconds,
+                                sessionType = state.currentSessionType,
+                                timerState = state.timerState,
+                                modifier = Modifier.size(400.dp),
+                            )
+                        }
+                        1 -> {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                AnalogClock(
+                                    remainingSeconds = state.remainingSeconds,
+                                    totalSeconds = state.totalSeconds,
+                                    modifier = Modifier.size(360.dp),
+                                )
+                                Spacer(modifier = Modifier.height(48.dp))
+                                DigitalTimeText(state.remainingSeconds)
+                            }
+                        }
+                        2 -> {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                PlantClock(
+                                    remainingSeconds = state.remainingSeconds,
+                                    totalSeconds = state.totalSeconds,
+                                    modifier = Modifier.size(360.dp),
+                                )
+                                Spacer(modifier = Modifier.height(48.dp))
+                                DigitalTimeText(state.remainingSeconds)
+                            }
+                        }
+                        3 -> {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                TomatoClock(
+                                    remainingSeconds = state.remainingSeconds,
+                                    totalSeconds = state.totalSeconds,
+                                    modifier = Modifier.size(360.dp),
+                                )
+                                Spacer(modifier = Modifier.height(48.dp))
+                                DigitalTimeText(state.remainingSeconds)
+                            }
+                        }
+                    }
+                }
+            }
 
-        when (clockStyle) {
-            0 -> {
-                TimerDisplay(
-                    remainingSeconds = state.remainingSeconds,
-                    totalSeconds = state.totalSeconds,
-                    sessionType = state.currentSessionType,
-                    timerState = state.timerState,
-                    modifier = Modifier.size(400.dp)
+            // Session type label - rendered ON TOP of pager
+            val sessionTypeLabel =
+                when (state.currentSessionType) {
+                    PomodoroType.WORK -> "Focus"
+                    PomodoroType.SHORT_BREAK -> "Short Break"
+                    PomodoroType.LONG_BREAK -> "Long Break"
+                }
+            val sessionTypeColor =
+                when (state.currentSessionType) {
+                    PomodoroType.WORK -> MaterialTheme.colorScheme.primary
+                    PomodoroType.SHORT_BREAK -> MaterialTheme.colorScheme.tertiary
+                    PomodoroType.LONG_BREAK -> MaterialTheme.colorScheme.secondary
+                }
+            Text(
+                text = sessionTypeLabel,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = sessionTypeColor,
+                modifier =
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 56.dp),
+            )
+
+            // Close button - rendered ON TOP of pager (last = highest z-order)
+            IconButton(
+                onClick = onClose,
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Close full screen clock",
+                    tint = Color.White.copy(alpha = 0.8f),
                 )
             }
-            1 -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    AnalogClock(
-                        remainingSeconds = state.remainingSeconds,
-                        totalSeconds = state.totalSeconds,
-                        modifier = Modifier.size(360.dp)
-                    )
-                    Spacer(modifier = Modifier.height(48.dp))
-                    DigitalTimeText(state.remainingSeconds)
-                }
-            }
-            2 -> {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    PlantClock(
-                        remainingSeconds = state.remainingSeconds,
-                        totalSeconds = state.totalSeconds,
-                        modifier = Modifier.size(360.dp)
-                    )
-                    Spacer(modifier = Modifier.height(48.dp))
-                    DigitalTimeText(state.remainingSeconds)
-                }
-            }
-        }
 
-        IconButton(
-            onClick = { clockStyle = (clockStyle + 1) % 3 },
-            modifier = Modifier.align(Alignment.BottomCenter).padding(32.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Palette,
-                contentDescription = "Change clock style",
-                tint = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.size(32.dp)
-            )
+            // Page indicator dots
+            Row(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 48.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                repeat(pagerState.pageCount) { index ->
+                    val isSelected = pagerState.currentPage == index
+                    Box(
+                        modifier =
+                            Modifier
+                                .padding(horizontal = 4.dp)
+                                .size(if (isSelected) 10.dp else 8.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isSelected) {
+                                        Color.White.copy(alpha = 0.9f)
+                                    } else {
+                                        Color.White.copy(alpha = 0.3f)
+                                    },
+                                ),
+                    )
+                }
+            }
         }
-    }
+    } // MaterialTheme
 }
 
 @Composable
@@ -139,14 +217,15 @@ fun DigitalTimeText(remainingSeconds: Long) {
     val minutes = remainingSeconds / 60
     val seconds = remainingSeconds % 60
     val timeString = "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
-    
+
     Text(
         text = timeString,
-        style = MaterialTheme.typography.displayLarge.copy(
-            fontSize = 64.sp,
-            fontWeight = FontWeight.Bold
-        ),
-        color = MaterialTheme.colorScheme.onBackground
+        style =
+            MaterialTheme.typography.displayLarge.copy(
+                fontSize = 64.sp,
+                fontWeight = FontWeight.Bold,
+            ),
+        color = Color.White,
     )
 }
 
@@ -154,7 +233,7 @@ fun DigitalTimeText(remainingSeconds: Long) {
 fun AnalogClock(
     remainingSeconds: Long,
     totalSeconds: Long,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val progress = if (totalSeconds > 0L) remainingSeconds.toFloat() / totalSeconds else 0f
     val sweepAngle = 360f * progress
@@ -165,7 +244,7 @@ fun AnalogClock(
     val animatedSweep by animateFloatAsState(
         targetValue = sweepAngle,
         animationSpec = tween(durationMillis = 500, easing = LinearOutSlowInEasing),
-        label = "analog_sweep"
+        label = "analog_sweep",
     )
     val backgroundColor = MaterialTheme.colorScheme.background
 
@@ -179,7 +258,7 @@ fun AnalogClock(
             color = trackColor,
             radius = radius,
             center = center,
-            style = Stroke(width = strokeWidth)
+            style = Stroke(width = strokeWidth),
         )
 
         // Draw progress arc
@@ -190,17 +269,17 @@ fun AnalogClock(
             useCenter = false,
             style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
             size = Size(radius * 2, radius * 2),
-            topLeft = Offset(center.x - radius, center.y - radius)
+            topLeft = Offset(center.x - radius, center.y - radius),
         )
-        
+
         // Draw outer ring
         drawCircle(
             color = trackColor.copy(alpha = 0.5f),
             radius = radius + strokeWidth / 2 + 4.dp.toPx(),
             center = center,
-            style = Stroke(width = 2.dp.toPx())
+            style = Stroke(width = 2.dp.toPx()),
         )
-        
+
         // Draw tick marks
         for (i in 0 until 60) {
             val angle = i * 6f * (Math.PI / 180f)
@@ -208,28 +287,28 @@ fun AnalogClock(
             val tickLength = if (isHour) 12.dp.toPx() else 6.dp.toPx()
             val tickStroke = if (isHour) 3.dp.toPx() else 1.5.dp.toPx()
             val tickColor = if (isHour) secondaryColor else trackColor
-            
+
             val innerRadius = radius - strokeWidth / 2 - 16.dp.toPx()
             val startX = center.x + (innerRadius * cos(angle)).toFloat()
             val startY = center.y + (innerRadius * sin(angle)).toFloat()
             val endX = center.x + ((innerRadius - tickLength) * cos(angle)).toFloat()
             val endY = center.y + ((innerRadius - tickLength) * sin(angle)).toFloat()
-            
+
             drawLine(
                 color = tickColor,
                 start = Offset(startX, startY),
                 end = Offset(endX, endY),
                 strokeWidth = tickStroke,
-                cap = StrokeCap.Round
+                cap = StrokeCap.Round,
             )
         }
-        
+
         // Draw hand
         val angleInRadians = (animatedSweep - 90f) * (Math.PI / 180f)
         val handLength = radius * 0.85f
         val handX = center.x + (handLength * cos(angleInRadians)).toFloat()
         val handY = center.y + (handLength * sin(angleInRadians)).toFloat()
-        
+
         // Hand tail
         val tailLength = radius * 0.15f
         val tailX = center.x - (tailLength * cos(angleInRadians)).toFloat()
@@ -240,19 +319,19 @@ fun AnalogClock(
             start = Offset(tailX, tailY),
             end = Offset(handX, handY),
             strokeWidth = 6.dp.toPx(),
-            cap = StrokeCap.Round
+            cap = StrokeCap.Round,
         )
-        
+
         // Draw center dot
         drawCircle(
             color = secondaryColor,
             radius = 8.dp.toPx(),
-            center = center
+            center = center,
         )
         drawCircle(
             color = backgroundColor,
             radius = 3.dp.toPx(),
-            center = center
+            center = center,
         )
     }
 }
@@ -261,82 +340,91 @@ fun AnalogClock(
 fun PlantClock(
     remainingSeconds: Long,
     totalSeconds: Long,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val progress = if (totalSeconds > 0L) 1f - (remainingSeconds.toFloat() / totalSeconds) else 1f
     val plantColor = MaterialTheme.colorScheme.tertiary
     val potColor = MaterialTheme.colorScheme.tertiaryContainer
     val potRimColor = MaterialTheme.colorScheme.onTertiaryContainer
-    
+
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
         animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing),
-        label = "plant_growth"
+        label = "plant_growth",
     )
 
     Canvas(modifier = modifier) {
         val width = size.width
         val height = size.height
-        
+
         // Pot dimensions
         val potWidthTop = width * 0.45f
         val potWidthBottom = width * 0.3f
         val potHeight = height * 0.25f
         val potTop = height - potHeight
-        
+
         // Draw Pot Base
         drawPath(
-            path = Path().apply {
-                moveTo(width / 2f - potWidthTop / 2f, potTop)
-                lineTo(width / 2f + potWidthTop / 2f, potTop)
-                // Curved sides
-                quadraticTo(
-                    width / 2f + potWidthTop / 2.2f, height - potHeight / 2f,
-                    width / 2f + potWidthBottom / 2f, height
-                )
-                lineTo(width / 2f - potWidthBottom / 2f, height)
-                quadraticTo(
-                    width / 2f - potWidthTop / 2.2f, height - potHeight / 2f,
-                    width / 2f - potWidthTop / 2f, potTop
-                )
-                close()
-            },
-            color = potColor
+            path =
+                Path().apply {
+                    moveTo(width / 2f - potWidthTop / 2f, potTop)
+                    lineTo(width / 2f + potWidthTop / 2f, potTop)
+                    // Curved sides
+                    quadraticTo(
+                        width / 2f + potWidthTop / 2.2f,
+                        height - potHeight / 2f,
+                        width / 2f + potWidthBottom / 2f,
+                        height,
+                    )
+                    lineTo(width / 2f - potWidthBottom / 2f, height)
+                    quadraticTo(
+                        width / 2f - potWidthTop / 2.2f,
+                        height - potHeight / 2f,
+                        width / 2f - potWidthTop / 2f,
+                        potTop,
+                    )
+                    close()
+                },
+            color = potColor,
         )
-        
+
         // Draw Pot Rim
         val rimHeight = height * 0.04f
         drawPath(
-            path = Path().apply {
-                moveTo(width / 2f - potWidthTop / 1.8f, potTop - rimHeight)
-                lineTo(width / 2f + potWidthTop / 1.8f, potTop - rimHeight)
-                lineTo(width / 2f + potWidthTop / 1.9f, potTop)
-                lineTo(width / 2f - potWidthTop / 1.9f, potTop)
-                close()
-            },
-            color = potRimColor.copy(alpha = 0.8f)
+            path =
+                Path().apply {
+                    moveTo(width / 2f - potWidthTop / 1.8f, potTop - rimHeight)
+                    lineTo(width / 2f + potWidthTop / 1.8f, potTop - rimHeight)
+                    lineTo(width / 2f + potWidthTop / 1.9f, potTop)
+                    lineTo(width / 2f - potWidthTop / 1.9f, potTop)
+                    close()
+                },
+            color = potRimColor.copy(alpha = 0.8f),
         )
-        
+
         // Stem
         val maxStemHeight = height * 0.65f
         val currentStemHeight = maxStemHeight * animatedProgress
-        
+
         if (currentStemHeight > 0) {
             // Curvy stem
-            val stemPath = Path().apply {
-                moveTo(width / 2f, potTop - rimHeight)
-                quadraticTo(
-                    width / 2f - width * 0.05f * animatedProgress, potTop - rimHeight - currentStemHeight * 0.5f,
-                    width / 2f + width * 0.02f * animatedProgress, potTop - rimHeight - currentStemHeight
-                )
-            }
-            
+            val stemPath =
+                Path().apply {
+                    moveTo(width / 2f, potTop - rimHeight)
+                    quadraticTo(
+                        width / 2f - width * 0.05f * animatedProgress,
+                        potTop - rimHeight - currentStemHeight * 0.5f,
+                        width / 2f + width * 0.02f * animatedProgress,
+                        potTop - rimHeight - currentStemHeight,
+                    )
+                }
+
             drawPath(
                 path = stemPath,
                 color = plantColor,
-                style = Stroke(width = 12.dp.toPx(), cap = StrokeCap.Round)
+                style = Stroke(width = 12.dp.toPx(), cap = StrokeCap.Round),
             )
-            
+
             // Leaves
             val numLeaves = 8
             for (i in 1..numLeaves) {
@@ -344,42 +432,225 @@ fun PlantClock(
                 if (animatedProgress > leafProgressThreshold) {
                     val leafGrowth = (animatedProgress - leafProgressThreshold) / (1f - leafProgressThreshold)
                     val clampedGrowth = leafGrowth.coerceIn(0f, 1f)
-                    
+
                     // Overshoot effect for leaf pop
                     val t = clampedGrowth - 1.0f
                     val sizeAnim = (t * t * (3f * t + 2f) + 1.0f).coerceAtLeast(0f)
-                    
+
                     val leafSizeX = width * 0.18f * sizeAnim
                     val leafSizeY = width * 0.12f * sizeAnim
-                    
+
                     val yPos = potTop - rimHeight - (maxStemHeight * leafProgressThreshold)
                     val isRight = i % 2 == 0
                     val dir = if (isRight) 1f else -1f
-                    
+
                     // Add some curve based on position
-                    val xOffset = width / 2f + (if(isRight) -width * 0.02f else width * 0.01f)
-                    
+                    val xOffset = width / 2f + (if (isRight) -width * 0.02f else width * 0.01f)
+
                     drawPath(
-                        path = Path().apply {
-                            moveTo(xOffset, yPos)
-                            // Bottom curve of leaf
-                            cubicTo(
-                                xOffset + (leafSizeX * 0.5f * dir), yPos + leafSizeY * 0.2f,
-                                xOffset + (leafSizeX * 0.8f * dir), yPos - leafSizeY * 0.2f,
-                                xOffset + (leafSizeX * dir), yPos - leafSizeY * 0.8f
-                            )
-                            // Top curve of leaf
-                            cubicTo(
-                                xOffset + (leafSizeX * 0.5f * dir), yPos - leafSizeY * 1.2f,
-                                xOffset + (leafSizeX * 0.2f * dir), yPos - leafSizeY * 0.5f,
-                                xOffset, yPos
-                            )
-                        },
-                        color = plantColor.copy(alpha = 0.9f)
+                        path =
+                            Path().apply {
+                                moveTo(xOffset, yPos)
+                                // Bottom curve of leaf
+                                cubicTo(
+                                    xOffset + (leafSizeX * 0.5f * dir),
+                                    yPos + leafSizeY * 0.2f,
+                                    xOffset + (leafSizeX * 0.8f * dir),
+                                    yPos - leafSizeY * 0.2f,
+                                    xOffset + (leafSizeX * dir),
+                                    yPos - leafSizeY * 0.8f,
+                                )
+                                // Top curve of leaf
+                                cubicTo(
+                                    xOffset + (leafSizeX * 0.5f * dir),
+                                    yPos - leafSizeY * 1.2f,
+                                    xOffset + (leafSizeX * 0.2f * dir),
+                                    yPos - leafSizeY * 0.5f,
+                                    xOffset,
+                                    yPos,
+                                )
+                            },
+                        color = plantColor.copy(alpha = 0.9f),
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun TomatoClock(
+    remainingSeconds: Long,
+    totalSeconds: Long,
+    modifier: Modifier = Modifier,
+) {
+    val progress = if (totalSeconds > 0L) 1f - (remainingSeconds.toFloat() / totalSeconds) else 1f
+    val tomatoRed = Color(0xFFE53935)
+    val tomatoRedDark = Color(0xFFB71C1C)
+    val leafGreen = Color(0xFF43A047)
+    val stemGreen = Color(0xFF2E7D32)
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing),
+        label = "tomato_fill",
+    )
+
+    Canvas(modifier = modifier) {
+        val width = size.width
+        val height = size.height
+        val cx = width / 2f
+        val cy = height / 2f
+
+        // Tomato body dimensions
+        val tomatoWidth = width * 0.7f
+        val tomatoHeight = height * 0.55f
+        val tomatoTop = cy - tomatoHeight * 0.35f
+        val tomatoBottom = tomatoTop + tomatoHeight
+
+        // Stem
+        val stemWidth = width * 0.03f
+        val stemHeight = height * 0.08f
+        drawRect(
+            color = stemGreen,
+            topLeft = Offset(cx - stemWidth / 2f, tomatoTop - stemHeight),
+            size = Size(stemWidth, stemHeight + 4.dp.toPx()),
+        )
+
+        // Leaf (left)
+        drawPath(
+            path =
+                Path().apply {
+                    moveTo(cx - stemWidth / 2f, tomatoTop - stemHeight * 0.4f)
+                    cubicTo(
+                        cx - width * 0.12f,
+                        tomatoTop - stemHeight * 1.4f,
+                        cx - width * 0.2f,
+                        tomatoTop - stemHeight * 0.8f,
+                        cx - width * 0.06f,
+                        tomatoTop - stemHeight * 0.1f,
+                    )
+                },
+            color = leafGreen,
+        )
+
+        // Leaf (right)
+        drawPath(
+            path =
+                Path().apply {
+                    moveTo(cx + stemWidth / 2f, tomatoTop - stemHeight * 0.4f)
+                    cubicTo(
+                        cx + width * 0.12f,
+                        tomatoTop - stemHeight * 1.4f,
+                        cx + width * 0.2f,
+                        tomatoTop - stemHeight * 0.8f,
+                        cx + width * 0.06f,
+                        tomatoTop - stemHeight * 0.1f,
+                    )
+                },
+            color = leafGreen,
+        )
+
+        // Tomato outline (unfilled, dark)
+        drawPath(
+            path = createTomatoPath(cx, tomatoTop, tomatoWidth, tomatoHeight),
+            color = tomatoRedDark.copy(alpha = 0.3f),
+        )
+
+        // Tomato filled portion (rising from bottom based on progress)
+        val fillHeight = tomatoHeight * animatedProgress
+        val clipTop = tomatoBottom - fillHeight
+
+        drawContext.canvas.save()
+        drawContext.canvas.clipRect(
+            left = 0f,
+            top = clipTop,
+            right = width,
+            bottom = tomatoBottom + 20.dp.toPx(),
+        )
+        drawPath(
+            path = createTomatoPath(cx, tomatoTop, tomatoWidth, tomatoHeight),
+            color = tomatoRed,
+        )
+        drawContext.canvas.restore()
+
+        // Tomato outline stroke
+        drawPath(
+            path = createTomatoPath(cx, tomatoTop, tomatoWidth, tomatoHeight),
+            color = tomatoRedDark.copy(alpha = 0.6f),
+            style = Stroke(width = 2.dp.toPx()),
+        )
+
+        // Percentage text in center
+        val percentText = "${(animatedProgress * 100).toInt()}%"
+        val paint =
+            android.graphics.Paint().apply {
+                textSize = width * 0.08f
+                color = android.graphics.Color.WHITE
+                textAlign = android.graphics.Paint.Align.CENTER
+                isAntiAlias = true
+                typeface =
+                    android.graphics.Typeface.create(
+                        android.graphics.Typeface.DEFAULT,
+                        android.graphics.Typeface.BOLD,
+                    )
+            }
+        drawContext.canvas.nativeCanvas.drawText(
+            percentText,
+            cx,
+            cy + paint.textSize * 0.35f,
+            paint,
+        )
+    }
+}
+
+private fun createTomatoPath(
+    cx: Float,
+    top: Float,
+    width: Float,
+    height: Float,
+): Path {
+    val halfW = width / 2f
+    val bottom = top + height
+    val midY = top + height * 0.5f
+
+    return Path().apply {
+        moveTo(cx, top)
+        // Right side
+        cubicTo(
+            cx + halfW * 0.6f,
+            top,
+            cx + halfW,
+            top + height * 0.15f,
+            cx + halfW,
+            midY,
+        )
+        cubicTo(
+            cx + halfW,
+            bottom - height * 0.1f,
+            cx + halfW * 0.6f,
+            bottom,
+            cx,
+            bottom,
+        )
+        // Left side
+        cubicTo(
+            cx - halfW * 0.6f,
+            bottom,
+            cx - halfW,
+            bottom - height * 0.1f,
+            cx - halfW,
+            midY,
+        )
+        cubicTo(
+            cx - halfW,
+            top + height * 0.15f,
+            cx - halfW * 0.6f,
+            top,
+            cx,
+            top,
+        )
+        close()
     }
 }
 
@@ -397,6 +668,12 @@ private fun EnterImmersiveMode() {
                 )
             controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             controller.hide(WindowInsetsCompat.Type.systemBars())
+            targetActivity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+            // AOD-style: dim screen brightness to minimum
+            val layoutParams = targetActivity.window.attributes
+            layoutParams.screenBrightness = AOD_BRIGHTNESS
+            targetActivity.window.attributes = layoutParams
         }
 
         onDispose {
@@ -407,10 +684,19 @@ private fun EnterImmersiveMode() {
                         targetActivity.window.decorView,
                     )
                 controller.show(WindowInsetsCompat.Type.systemBars())
+                targetActivity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+                // Restore system brightness
+                val layoutParams = targetActivity.window.attributes
+                layoutParams.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                targetActivity.window.attributes = layoutParams
             }
         }
     }
 }
+
+/** AOD brightness: very dim but still visible on OLED */
+private const val AOD_BRIGHTNESS = 0.01f
 
 private tailrec fun Context.findActivity(): Activity? =
     when (this) {

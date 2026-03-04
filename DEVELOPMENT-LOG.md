@@ -2,17 +2,17 @@
 
 **Purpose:** Track implementation progress, document decisions, record solutions, and maintain context across development sessions.
 
-**Last Updated:** February 27, 2026 - Stats Graph Fixes, Routine UI Redesign, and Settings Updates
+**Last Updated:** March 4, 2026 - UI/UX Overhaul, Nested Subtasks, Live Markdown, Security Audit
 
 ---
 
-## Current Phase: Feature Hardening and UI Refinement
+## Current Phase: Production-Quality UI/UX and Feature Completeness
 
-**Goal:** Stabilize multi-feature UX with accurate analytics, improved routine workflows, and production-ready settings controls.
+**Goal:** Achieve pixel-perfect Material Design 3 consistency, fix nested data hierarchies, implement live WYSIWYG markdown editing, and pass security audit.
 
-**Branch:** `feature/routines-and-tasks`
+**Branch:** `feature/improvements`
 
-**Status:** Stats, routines, and settings updates are implemented and currently under integration verification.
+**Status:** All tasks1 through tasks6 completed. PR #6 open to merge into `dev`.
 
 ---
 
@@ -76,12 +76,63 @@
 | "Daily reminder" misleading | Changed to "Remind me" with schedule-based description | Fixed |
 | TIMES_PER_WEEK not hiding | Added filter in HabitsViewModel to hide after target met | Fixed |
 
+### Phase 4: UI/UX Overhaul (feature/improvements branch)
+**Session: Mar 3-4, 2026**
+
+#### tasks1-tasks4 (All Complete)
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Priority Color Standardization | LOW=Blue, MEDIUM=Amber, HIGH=Red (TickTick convention) | Complete |
+| Specific Days for Routines | Added SPECIFIC_DATES repeat pattern to routines schedule | Complete |
+| Stats Page Layout | Reordered card hierarchy: Title+Stat top, Ring bottom | Complete |
+| Task Spacing | Adjusted spacing constants across task list items | Complete |
+| Markdown Support | Added MarkdownText composable with inline rendering | Complete |
+| Copilot PR Fixes (Round 2) | 13 findings: ANR fixes, alarm rationale, abs(hashCode), stale date, etc. | Complete |
+
+#### tasks5 (All Complete)
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Routine Schedule Selector | 2-row segmented grid (Daily/Specific days, Every X days) | Complete |
+| Stats Card Hierarchy | Title+stat at top, progress ring pushed to bottom | Complete |
+| Create Button Consistency | All 3 create screens use identical bottomBar Button with navigationBarsPadding | Complete |
+| Chart Bars | Thinner bars (0.55f width), scrollable Day view, per-point X-axis labels | Complete |
+| Live Markdown VT | MarkdownVisualTransformation with identity offset mapping, no separate preview | Complete |
+
+#### tasks6 (All Complete)
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Day Selector Full Width | Replaced FlowRow with weighted Row so chips span full container width | Complete |
+| Stats Cards Polish | Left-aligned text, taller cards, redesigned routine card with icon badge | Complete |
+| Markdown Headers | Added #1-6 header rendering with scaled font sizes, markers dimmed | Complete |
+| Markdown Auto-Format | Auto-continue lists/numbered lists/checkboxes on Enter, remove empty markers | Complete |
+| Nested Subtasks | Recursive subtask saving, recursive ViewModel tree, depth-based UI rendering | Complete |
+| Security Audit | No sensitive files tracked, added nul to .gitignore | Complete |
+
+#### tasks7 (All Complete)
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Stats Card Gaps | Added defaultMinSize(220.dp) for proper spacing between text and ring | Complete |
+| Month X-axis Labels | Fixed label logic: per-data-point labels, every 5th shown for month view | Complete |
+| Day Chip Text | Single-letter abbreviations (M,T,W,T,F,S,S), maxLines=1, centered text | Complete |
+| Markdown Cursor Fix | Switched to TextFieldValue for cursor control after auto-format | Complete |
+| Checkbox Auto-Continue | Added [x] checkbox continuation on Enter | Complete |
+| Formatting Toolbar | Added inline toolbar (Bold, Italic, Strikethrough, Code, H1, List, Checkbox) | Complete |
+| Repo Audit | Source dirs mixed (java/kotlin) noted as cosmetic; no sensitive files tracked | Complete |
+
+#### Key Architecture Decisions:
+- MarkdownVisualTransformation uses identity offset mapping to avoid cursor desync.
+- Switched description field to TextFieldValue for cursor position control after auto-formatting.
+- Subtasks use flat `parentTaskId` references in Room, with recursive tree-building in ViewModel.
+- Auto-formatting uses character diff detection to identify Enter key presses.
+- Cross-feature dependency (settings -> pomodoro) documented as tech debt with TODO.
+- BroadcastReceivers use goAsync() + coroutine pattern instead of runBlocking.
+
 ---
 
 ## In Progress
 
 ### Cross-Feature UX and Analytics (feature/routines-and-tasks branch)
-**Status:** In active polish and verification
+**Status:** Merged into dev.
 
 #### Completed Work:
 | Feature | Description | Status |
@@ -106,17 +157,17 @@
 ## Next Up (Prioritized)
 
 ### After This Session
-1. **Integration Verification** (Priority: High)
-   - Validate Stats graph rendering across day/week/month datasets
-   - Validate settings persistence and restore behavior after app restart
+1. **PR #6 Review and Merge** (Priority: High)
+   - Merge feature/improvements into dev after Copilot review passes
+   - Run full CI pipeline validation
 
-2. **Routine and Task QA Pass** (Priority: High)
-   - Verify redesigned routine interaction states and completion flow
-   - Verify task date-range aggregation used by Stats
-
-3. **Test Coverage Improvement** (Priority: Medium)
+2. **Test Coverage Improvement** (Priority: Medium)
    - Unit tests for StatsViewModel aggregation paths
-   - UI tests for settings sub-views and tab-limit controls
+   - Unit tests for nested subtask tree building in TasksViewModel
+   - Unit tests for markdown auto-formatting logic
+
+3. **Widget Implementation** (Priority: Medium)
+   - Home screen widget for habit/task quick-check
 
 ---
 
@@ -191,13 +242,13 @@ Features Complete: 4/4 core modules implemented (Habits, Pomodoro, Routines, Tas
 Test Coverage: TBD (next phase)
 ```
 
-### Recent Commits (feature/routines-and-tasks branch)
-- `198feee` - fix: resolve build errors in CreateTaskScreen imports
-- `92e658b` - feat: implement Settings page, tab customization, and Pomodoro enhancements
-- `540ccb9` - fix: resolve core task logic, UI alignment, and missing functionality
-- `a3a0b70` - feat: implement Tasks screen features and redesign Create screens
-- `2125145` - refactor: redesign Create Task and Create Routine screens for production UX
-- `043b9d5` - feat: implement Routines and Tasks modules with full data, domain, and UI layers
+### Recent Commits (feature/improvements branch)
+- `f967af8` - feat: tasks5 - routine selector grid, stats card hierarchy, consistent create buttons, thinner chart bars, live markdown VisualTransformation
+- `189f500` - fix: Stats card padding, chart bar gaps, segmented button wrapping, bottom nav padding
+- `2c7d6d2` - fix: Address Copilot PR review - ANR fixes, alarm rationale, markdown parsing, hashCode safety, stale date
+- `8830e63` - style: Fix ktlint violations - line length, trailing commas, import ordering
+- `beac80b` - feat: implement tasks4.md - fix priority colors, add specific days, improve stats layout, task spacing, markdown support
+- `d8ad133` - fix: address Copilot PR review + implement tasks3.md improvements
 
 ---
 
@@ -221,6 +272,26 @@ Test Coverage: TBD (next phase)
 ## Notes & Learnings
 
 ### Session Notes
+
+#### 2026-03-04: UI/UX Overhaul, Nested Subtasks, Live Markdown (tasks6)
+- Replaced FlowRow day selectors with weighted Row layout so day chips span full container width.
+- Left-aligned stat card text (Tasks, Daily Goal), increased card padding to 24dp for better proportions.
+- Redesigned Routine stats card with icon badge in rounded container and thicker 8dp progress bar.
+- Added header rendering (#1 through #6) to MarkdownVisualTransformation with scaled font sizes and dimmed markers.
+- Implemented auto-formatting: list continuation on Enter (bullets, numbered, checkboxes), empty marker removal.
+- Fixed nested subtasks: removed parentTaskId guard in saveTask(), built recursive subtask tree in TasksViewModel, added depth-based indentation in TasksScreen.
+- Security audit: no sensitive files tracked. Added `nul` to .gitignore (Windows git add artifact).
+- Build verified: ktlintCheck + assembleDebug pass with 0 errors.
+
+**Key Insight:** VisualTransformation with identity OffsetMapping is the correct approach for live inline markdown; it avoids cursor position desync that occurs with text replacement approaches.
+
+#### 2026-03-03: UI/UX Overhaul (tasks5)
+- Routine schedule selector changed to 2-row segmented grid matching Habits layout.
+- Stats cards reordered: Title+Stat text at top, progress ring at bottom (SpaceBetween arrangement).
+- Create buttons standardized across all 3 screens: bottomBar Button with navigationBarsPadding(), no Surface wrapper.
+- Chart bars thinned (0.55f group width), Day view made scrollable, per-data-point X-axis labels.
+- Live markdown VisualTransformation implemented with identity offset mapping, markers dimmed in-place.
+- Copilot PR review (13 items) addressed: goAsync() for receivers, abs(hashCode), alarm rationale dialog, stale date fix.
 
 #### 2026-02-27: Stats, Routines, and Settings Updates
 - Fixed Stats activity graph to use real aggregated data from habits, routines, and tasks.
@@ -340,7 +411,10 @@ Test Coverage: TBD (next phase)
 - Wear OS support (v2.0+)
 
 ### Technical Debt to Address
-- None yet - will track as it accumulates
+- Cross-feature dependency: `feature/settings` depends on `feature/pomodoro` for `PomodoroSettingsSheet` (TODO in settings/build.gradle.kts)
+- No unit tests for markdown auto-formatting or nested subtask tree building
+- Hardcoded dp values remain in some older composables (pre-tasks1 code)
+- `SPECIFIC_DATES` enum value is functionally identical to `WEEKLY` for routines (kept for Habits compatibility)
 
 ---
 

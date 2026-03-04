@@ -5,9 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,27 +18,30 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
+import androidx.compose.material.icons.outlined.SubdirectoryArrowRight
 import androidx.compose.material.icons.outlined.TaskAlt
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,8 +56,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.habitao.core.ui.theme.Dimensions
@@ -62,6 +69,7 @@ import com.habitao.feature.tasks.viewmodel.TaskSortOrder
 import com.habitao.feature.tasks.viewmodel.TasksIntent
 import com.habitao.feature.tasks.viewmodel.TasksState
 import com.habitao.feature.tasks.viewmodel.TasksViewModel
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,7 +77,7 @@ import java.time.format.DateTimeFormatter
 fun TasksScreen(
     onAddTask: () -> Unit,
     onEditTask: (String) -> Unit,
-    viewModel: TasksViewModel = hiltViewModel()
+    viewModel: TasksViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -93,50 +101,49 @@ fun TasksScreen(
                         IconButton(onClick = { sortMenuExpanded = true }) {
                             Icon(
                                 imageVector = Icons.Default.Sort,
-                                contentDescription = "Sort tasks"
+                                contentDescription = "Sort tasks",
                             )
                         }
 
                         DropdownMenu(
                             expanded = sortMenuExpanded,
-                            onDismissRequest = { sortMenuExpanded = false }
+                            onDismissRequest = { sortMenuExpanded = false },
                         ) {
                             TaskSortOrder.values().forEach { sortOrder ->
                                 DropdownMenuItem(
                                     text = {
                                         Text(
                                             text = sortOrderLabel(sortOrder),
-                                            color = if (state.sortOrder == sortOrder) {
-                                                MaterialTheme.colorScheme.primary
-                                            } else {
-                                                MaterialTheme.colorScheme.onSurface
-                                            }
+                                            color =
+                                                if (state.sortOrder == sortOrder) {
+                                                    MaterialTheme.colorScheme.primary
+                                                } else {
+                                                    MaterialTheme.colorScheme.onSurface
+                                                },
                                         )
                                     },
                                     onClick = {
                                         viewModel.processIntent(TasksIntent.SetSortOrder(sortOrder))
                                         sortMenuExpanded = false
-                                    }
+                                    },
                                 )
                             }
                         }
                     }
                 },
-                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior,
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            FloatingActionButton(
                 onClick = onAddTask,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(Dimensions.elementSpacing))
-                Text("New Task")
+                Icon(Icons.Default.Add, contentDescription = "New Task")
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
         TasksContent(
             state = state,
@@ -144,7 +151,7 @@ fun TasksScreen(
                 viewModel.processIntent(TasksIntent.ToggleComplete(taskId, isCompleted))
             },
             onTaskClick = onEditTask,
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier.padding(paddingValues),
         )
     }
 }
@@ -154,17 +161,19 @@ private fun TasksContent(
     state: TasksState,
     onToggleComplete: (String, Boolean) -> Unit,
     onTaskClick: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    val sectionExpanded = remember {
-        mutableStateMapOf(
-            "Overdue" to true,
-            "Today" to true,
-            "Tomorrow" to true,
-            "Upcoming" to true,
-            "Completed" to false
-        )
-    }
+    val sectionExpanded =
+        remember {
+            mutableStateMapOf(
+                "Overdue" to true,
+                "Today" to true,
+                "Tomorrow" to true,
+                "Upcoming" to true,
+                "No Date" to true,
+                "Completed" to false,
+            )
+        }
     val expandedTaskIds = remember { mutableStateMapOf<String, Boolean>() }
 
     val hasActiveTasks =
@@ -190,16 +199,31 @@ private fun TasksContent(
                 val secondaryColor = MaterialTheme.colorScheme.secondary
                 val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
 
+                val totalActive =
+                    state.overdueTasks.size + state.todayTasks.size +
+                        state.tomorrowTasks.size + state.upcomingTasks.size
+                val totalCompleted = state.completedTasks.size
+                val totalAll = totalActive + totalCompleted
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        start = Dimensions.screenPaddingHorizontal,
-                        top = Dimensions.elementSpacing,
-                        end = Dimensions.screenPaddingHorizontal,
-                        bottom = Dimensions.fabClearance
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)
+                    contentPadding =
+                        PaddingValues(
+                            top = Dimensions.elementSpacing,
+                            bottom = Dimensions.fabClearance,
+                        ),
                 ) {
+                    // Task overview stats
+                    if (totalAll > 0) {
+                        item(key = "task_overview") {
+                            TaskOverviewRow(
+                                totalTasks = totalAll,
+                                completedTasks = totalCompleted,
+                                overdueTasks = state.overdueTasks.size,
+                            )
+                        }
+                    }
+
                     section(
                         title = "Overdue",
                         color = errorColor,
@@ -208,7 +232,7 @@ private fun TasksContent(
                         expandedTaskIds = expandedTaskIds,
                         subTasks = state.subTasks,
                         onToggleComplete = onToggleComplete,
-                        onTaskClick = onTaskClick
+                        onTaskClick = onTaskClick,
                     )
 
                     section(
@@ -219,7 +243,7 @@ private fun TasksContent(
                         expandedTaskIds = expandedTaskIds,
                         subTasks = state.subTasks,
                         onToggleComplete = onToggleComplete,
-                        onTaskClick = onTaskClick
+                        onTaskClick = onTaskClick,
                     )
 
                     section(
@@ -230,7 +254,7 @@ private fun TasksContent(
                         expandedTaskIds = expandedTaskIds,
                         subTasks = state.subTasks,
                         onToggleComplete = onToggleComplete,
-                        onTaskClick = onTaskClick
+                        onTaskClick = onTaskClick,
                     )
 
                     section(
@@ -241,7 +265,7 @@ private fun TasksContent(
                         expandedTaskIds = expandedTaskIds,
                         subTasks = state.subTasks,
                         onToggleComplete = onToggleComplete,
-                        onTaskClick = onTaskClick
+                        onTaskClick = onTaskClick,
                     )
 
                     if (hasCompletedTasks) {
@@ -249,13 +273,14 @@ private fun TasksContent(
                             TaskSectionHeader(
                                 title = "Completed",
                                 color = onSurfaceVariantColor,
-                                count = state.completedTasks.size +
-                                    state.completedSubTasks.values.sumOf { it.size } +
-                                    state.orphanCompletedSubTasks.size,
+                                count =
+                                    state.completedTasks.size +
+                                        state.completedSubTasks.values.sumOf { it.size } +
+                                        state.orphanCompletedSubTasks.size,
                                 isExpanded = sectionExpanded["Completed"] ?: false,
                                 onToggle = {
                                     sectionExpanded["Completed"] = !(sectionExpanded["Completed"] ?: false)
-                                }
+                                },
                             )
                         }
 
@@ -269,7 +294,8 @@ private fun TasksContent(
                                     isExpanded = expandedTaskIds[task.id] ?: true,
                                     onToggleExpanded = {
                                         expandedTaskIds[task.id] = !(expandedTaskIds[task.id] ?: true)
-                                    }
+                                    },
+                                    allSubTasks = state.completedSubTasks,
                                 )
                             }
 
@@ -279,9 +305,10 @@ private fun TasksContent(
                                     onToggleComplete = { onToggleComplete(task.id, it) },
                                     onClick = { onTaskClick(task.id) },
                                     isSubtask = false,
+                                    subtaskCount = 0,
                                     showSubtaskChevron = false,
                                     onToggleExpanded = null,
-                                    isExpanded = true
+                                    isExpanded = true,
                                 )
                             }
                         }
@@ -300,7 +327,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
     expandedTaskIds: MutableMap<String, Boolean>,
     subTasks: Map<String, List<Task>>,
     onToggleComplete: (String, Boolean) -> Unit,
-    onTaskClick: (String) -> Unit
+    onTaskClick: (String) -> Unit,
 ) {
     if (tasks.isEmpty()) return
 
@@ -312,7 +339,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
             isExpanded = sectionExpanded[title] ?: true,
             onToggle = {
                 sectionExpanded[title] = !(sectionExpanded[title] ?: true)
-            }
+            },
         )
     }
 
@@ -326,7 +353,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
                 isExpanded = expandedTaskIds[task.id] ?: true,
                 onToggleExpanded = {
                     expandedTaskIds[task.id] = !(expandedTaskIds[task.id] ?: true)
-                }
+                },
+                allSubTasks = subTasks,
             )
         }
     }
@@ -338,32 +366,37 @@ private fun TaskSectionHeader(
     color: Color,
     count: Int,
     isExpanded: Boolean,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.small)
-            .clickable(onClick = onToggle)
-            .padding(vertical = Dimensions.elementSpacingSmall),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggle)
+                .padding(
+                    horizontal = Dimensions.screenPaddingHorizontal,
+                    vertical = Dimensions.elementSpacing,
+                ),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
             contentDescription = if (isExpanded) "Collapse $title" else "Expand $title",
-            tint = color
+            tint = color,
+            modifier = Modifier.size(20.dp),
         )
         Spacer(modifier = Modifier.width(Dimensions.elementSpacingSmall))
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
             color = color,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         Text(
             text = count.toString(),
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -383,30 +416,48 @@ private fun TaskItemWithSubtasks(
     onToggleComplete: (String, Boolean) -> Unit,
     onTaskClick: (String) -> Unit,
     isExpanded: Boolean,
-    onToggleExpanded: () -> Unit
+    onToggleExpanded: () -> Unit,
+    allSubTasks: Map<String, List<Task>> = emptyMap(),
+    depth: Int = 0,
 ) {
     Column {
         TaskRow(
             task = task,
             onToggleComplete = { onToggleComplete(task.id, it) },
             onClick = { onTaskClick(task.id) },
-            isSubtask = false,
+            isSubtask = depth > 0,
+            subtaskCount = subtasks.size,
             showSubtaskChevron = subtasks.isNotEmpty(),
             onToggleExpanded = if (subtasks.isNotEmpty()) onToggleExpanded else null,
-            isExpanded = isExpanded
+            isExpanded = isExpanded,
+            nestingDepth = depth,
         )
 
         if (subtasks.isNotEmpty() && isExpanded) {
-            Column {
-                subtasks.forEach { subtask ->
+            subtasks.forEach { subtask ->
+                val nestedSubtasks = allSubTasks[subtask.id] ?: emptyList()
+                if (nestedSubtasks.isNotEmpty()) {
+                    TaskItemWithSubtasks(
+                        task = subtask,
+                        subtasks = nestedSubtasks,
+                        onToggleComplete = onToggleComplete,
+                        onTaskClick = onTaskClick,
+                        isExpanded = true,
+                        onToggleExpanded = {},
+                        allSubTasks = allSubTasks,
+                        depth = depth + 1,
+                    )
+                } else {
                     TaskRow(
                         task = subtask,
                         onToggleComplete = { onToggleComplete(subtask.id, it) },
                         onClick = { onTaskClick(subtask.id) },
                         isSubtask = true,
+                        subtaskCount = 0,
                         showSubtaskChevron = false,
                         onToggleExpanded = null,
-                        isExpanded = true
+                        isExpanded = true,
+                        nestingDepth = depth + 1,
                     )
                 }
             }
@@ -414,78 +465,192 @@ private fun TaskItemWithSubtasks(
     }
 }
 
+/**
+ * TickTick-inspired task row with:
+ * - Priority color bar on left (consistent height via IntrinsicSize)
+ * - Colored priority checkbox
+ * - Title + optional description/subtask icons
+ * - Due date on the right
+ * - Expand chevron for subtasks
+ */
 @Composable
 private fun TaskRow(
     task: Task,
     onToggleComplete: (Boolean) -> Unit,
     onClick: () -> Unit,
     isSubtask: Boolean,
+    subtaskCount: Int,
     showSubtaskChevron: Boolean,
     onToggleExpanded: (() -> Unit)?,
-    isExpanded: Boolean
+    isExpanded: Boolean,
+    nestingDepth: Int = 0,
 ) {
+    val priorityColor = getPriorityColor(task.priority)
+    val hasPriority = task.priority != TaskPriority.NONE
+    val today = remember { LocalDate.now() }
+    val isOverdue = task.dueDate?.isBefore(today) == true && !task.isCompleted
+
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .clickable(onClick = onClick)
-            .padding(
-                start = if (isSubtask) 48.dp else Dimensions.elementSpacing,
-                end = Dimensions.elementSpacing,
-                top = Dimensions.elementSpacingSmall,
-                bottom = Dimensions.elementSpacingSmall
-            ),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+                .clickable(onClick = onClick)
+                .padding(
+                    start = Dimensions.screenPaddingHorizontal + (nestingDepth * 32).dp,
+                    end = Dimensions.screenPaddingHorizontal,
+                ),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Checkbox(
-            checked = task.isCompleted,
-            onCheckedChange = onToggleComplete
-        )
+        // Priority color bar — consistent height using fillMaxHeight
+        if (hasPriority && !isSubtask) {
+            Box(
+                modifier =
+                    Modifier
+                        .width(3.dp)
+                        .fillMaxHeight()
+                        .padding(vertical = 4.dp)
+                        .clip(RoundedCornerShape(1.5.dp))
+                        .background(priorityColor),
+            )
+            Spacer(modifier = Modifier.width(Dimensions.elementSpacingSmall))
+        }
 
-        Spacer(modifier = Modifier.width(Dimensions.elementSpacingSmall))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                    color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+        // Checkbox with priority color
+        IconButton(
+            onClick = { onToggleComplete(!task.isCompleted) },
+            modifier = Modifier.size(40.dp),
+        ) {
+            if (task.isCompleted) {
+                Icon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    contentDescription = "Completed",
+                    tint =
+                        if (hasPriority) {
+                            priorityColor
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
+                    modifier = Modifier.size(22.dp),
                 )
-
-                if (task.priority != TaskPriority.NONE) {
-                    Spacer(modifier = Modifier.width(Dimensions.elementSpacingSmall))
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(getPriorityColor(task.priority))
-                    )
-                }
-            }
-
-            task.dueDate?.let { date ->
-                Text(
-                    text = date.format(DateTimeFormatter.ofPattern("MMM d, yyyy")),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                Icon(
+                    imageVector = Icons.Outlined.RadioButtonUnchecked,
+                    contentDescription = "Incomplete",
+                    tint =
+                        if (hasPriority) {
+                            priorityColor
+                        } else {
+                            MaterialTheme.colorScheme.outline
+                        },
+                    modifier = Modifier.size(22.dp),
                 )
             }
         }
 
+        // Content column
+        Column(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .padding(vertical = Dimensions.elementSpacingLarge),
+        ) {
+            Text(
+                text = task.title,
+                style = MaterialTheme.typography.bodyLarge,
+                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                color =
+                    if (task.isCompleted) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            // Meta row: description icon, subtask count, due date
+            val hasDescription = !task.description.isNullOrBlank()
+            val hasDueDate = task.dueDate != null
+            val hasSubtasks = subtaskCount > 0
+
+            if (hasDescription || hasDueDate || hasSubtasks) {
+                Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
+                ) {
+                    if (hasDescription) {
+                        Icon(
+                            imageVector = Icons.Outlined.Description,
+                            contentDescription = "Has description",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+
+                    if (hasSubtasks && !isSubtask) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.SubdirectoryArrowRight,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text = "$subtaskCount",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+
+                    if (hasDueDate) {
+                        Text(
+                            text = formatDueDate(task.dueDate!!, today),
+                            style = MaterialTheme.typography.labelSmall,
+                            color =
+                                if (isOverdue) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                        )
+                    }
+                }
+            }
+        }
+
+        // Expand/Collapse chevron for subtasks
         if (showSubtaskChevron && onToggleExpanded != null) {
-            Spacer(modifier = Modifier.width(Dimensions.elementSpacingSmall))
             IconButton(
                 onClick = onToggleExpanded,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(32.dp),
             ) {
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
                     contentDescription = if (isExpanded) "Collapse subtasks" else "Expand subtasks",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }
+    }
+}
+
+private fun formatDueDate(
+    dueDate: LocalDate,
+    today: LocalDate,
+): String {
+    return when {
+        dueDate.isEqual(today) -> "Today"
+        dueDate.isEqual(today.plusDays(1)) -> "Tomorrow"
+        dueDate.isEqual(today.minusDays(1)) -> "Yesterday"
+        dueDate.year == today.year -> dueDate.format(DateTimeFormatter.ofPattern("MMM d"))
+        else -> dueDate.format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
     }
 }
 
@@ -500,17 +665,57 @@ private fun getPriorityColor(priority: TaskPriority): Color {
 }
 
 @Composable
+private fun TaskOverviewRow(
+    totalTasks: Int,
+    completedTasks: Int,
+    overdueTasks: Int,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = Dimensions.screenPaddingHorizontal,
+                    vertical = Dimensions.elementSpacing,
+                ),
+        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val completionRate = if (totalTasks > 0) completedTasks.toFloat() / totalTasks else 0f
+        Text(
+            text = "$completedTasks/$totalTasks done",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (overdueTasks > 0) {
+            Text(
+                text = "· $overdueTasks overdue",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = "${(completionRate * 100).toInt()}%",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
+}
+
+@Composable
 private fun EmptyState(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             imageVector = Icons.Outlined.TaskAlt,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
         )
 
         Spacer(modifier = Modifier.height(Dimensions.sectionSpacing))
@@ -519,7 +724,7 @@ private fun EmptyState(modifier: Modifier = Modifier) {
             text = "No tasks yet",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }

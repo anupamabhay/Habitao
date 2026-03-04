@@ -3,17 +3,18 @@ package com.habitao.feature.tasks.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,15 +32,15 @@ import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -79,12 +80,17 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.habitao.core.ui.components.MarkdownVisualTransformation
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.TaskPriority
 import com.habitao.feature.tasks.viewmodel.CreateTaskIntent
@@ -103,7 +109,7 @@ fun CreateTaskScreen(
     onNavigateBack: () -> Unit,
     onTaskCreated: () -> Unit,
     taskId: String? = null,
-    viewModel: CreateTaskViewModel = hiltViewModel()
+    viewModel: CreateTaskViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -137,7 +143,7 @@ fun CreateTaskScreen(
                     Text(
                         text = if (state.isEditMode) "Edit Task" else "New Task",
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 18.sp
+                        fontSize = 18.sp,
                     )
                 },
                 navigationIcon = {
@@ -149,36 +155,46 @@ fun CreateTaskScreen(
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = {
-            FloatingActionButton(
+        bottomBar = {
+            Button(
                 onClick = { viewModel.processIntent(CreateTaskIntent.SaveTask) },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimensions.screenPaddingHorizontal),
-                shape = RoundedCornerShape(100)
+                enabled = !state.isSaving,
+                shape = RoundedCornerShape(16.dp),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(
+                            horizontal = Dimensions.screenPaddingHorizontal,
+                            vertical = Dimensions.elementSpacingLarge,
+                        ),
+                contentPadding = PaddingValues(vertical = 16.dp),
             ) {
                 Text(
-                    text = when {
-                        state.isSaving -> "Saving..."
-                        state.isEditMode -> "Save Changes"
-                        else -> "Create Task"
-                    },
+                    text =
+                        when {
+                            state.isSaving -> "Saving..."
+                            state.isEditMode -> "Save Changes"
+                            else -> "Create Task"
+                        },
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
         },
-        floatingActionButtonPosition = FabPosition.Center
     ) { paddingValues ->
         CreateTaskForm(
             state = state,
@@ -210,11 +226,12 @@ private fun CreateTaskForm(
     }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = Dimensions.screenPaddingHorizontal),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = Dimensions.screenPaddingHorizontal),
         verticalArrangement = Arrangement.spacedBy(Dimensions.sectionSpacing),
     ) {
         Spacer(modifier = Modifier.height(8.dp))
@@ -224,10 +241,11 @@ private fun CreateTaskForm(
             BasicTextField(
                 value = state.title,
                 onValueChange = { onIntent(CreateTaskIntent.SetTitle(it)) },
-                textStyle = MaterialTheme.typography.headlineSmall.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Medium
-                ),
+                textStyle =
+                    MaterialTheme.typography.headlineSmall.copy(
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Medium,
+                    ),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth(),
                 decorationBox = { innerTextField ->
@@ -235,31 +253,16 @@ private fun CreateTaskForm(
                         Text(
                             text = "What would you like to do?",
                             style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         )
                     }
                     innerTextField()
-                }
+                },
             )
 
-            BasicTextField(
+            MarkdownDescriptionField(
                 value = state.description,
                 onValueChange = { onIntent(CreateTaskIntent.SetDescription(it)) },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                modifier = Modifier.fillMaxWidth(),
-                decorationBox = { innerTextField ->
-                    if (state.description.isEmpty()) {
-                        Text(
-                            text = "Add description...",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        )
-                    }
-                    innerTextField()
-                }
             )
         }
 
@@ -270,18 +273,18 @@ private fun CreateTaskForm(
             SectionHeader("Schedule")
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge)
+                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
             ) {
                 DatePickerField(
                     date = state.dueDate,
                     onDateSelected = { onIntent(CreateTaskIntent.SetDueDate(it)) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
 
                 TimePickerField(
                     time = state.dueTime,
                     onTimeSelected = { onIntent(CreateTaskIntent.SetDueTime(it)) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -290,16 +293,17 @@ private fun CreateTaskForm(
         Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)) {
             SectionHeader("Priority")
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
             ) {
                 TaskPriority.entries.forEach { priority ->
                     PriorityChip(
                         priority = priority,
                         isSelected = state.priority == priority,
-                        onClick = { onIntent(CreateTaskIntent.SetPriority(priority)) }
+                        onClick = { onIntent(CreateTaskIntent.SetPriority(priority)) },
                     )
                 }
             }
@@ -311,70 +315,79 @@ private fun CreateTaskForm(
             Surface(
                 shape = inputShape,
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
             ) {
                 Column {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Notifications,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             Text(
                                 text = "Enable Reminder",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
                         }
                         Switch(
                             checked = state.reminderEnabled,
                             onCheckedChange = { onIntent(CreateTaskIntent.SetReminderEnabled(it)) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                checkedTrackColor = MaterialTheme.colorScheme.primary,
-                            )
+                            colors =
+                                SwitchDefaults.colors(
+                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                ),
                         )
                     }
 
                     AnimatedVisibility(visible = state.reminderEnabled) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                                    .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            val options = listOf(
-                                0 to "At time",
-                                10 to "10 min",
-                                30 to "30 min",
-                                60 to "1 hour"
-                            )
+                            val options =
+                                listOf(
+                                    0 to "At time",
+                                    10 to "10 min",
+                                    30 to "30 min",
+                                    60 to "1 hour",
+                                )
                             options.forEach { (minutes, label) ->
                                 FilterChip(
                                     selected = state.reminderMinutesBefore == minutes,
                                     onClick = { onIntent(CreateTaskIntent.SetReminderMinutesBefore(minutes)) },
                                     label = { Text(label) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                        selectedLabelColor = MaterialTheme.colorScheme.primary,
-                                    ),
-                                    border = FilterChipDefaults.filterChipBorder(
-                                        enabled = true,
-                                        selected = state.reminderMinutesBefore == minutes,
-                                        borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-                                        selectedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                                    )
+                                    colors =
+                                        FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor =
+                                                MaterialTheme.colorScheme.primary.copy(
+                                                    alpha = 0.1f,
+                                                ),
+                                            selectedLabelColor = MaterialTheme.colorScheme.primary,
+                                        ),
+                                    border =
+                                        FilterChipDefaults.filterChipBorder(
+                                            enabled = true,
+                                            selected = state.reminderMinutesBefore == minutes,
+                                            borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                                            selectedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                        ),
                                 )
                             }
                         }
@@ -386,7 +399,7 @@ private fun CreateTaskForm(
         // Subtasks Section
         Column(verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing)) {
             SectionHeader("Subtasks")
-            
+
             state.subtasks.forEach { subtask ->
                 key(subtask.id) {
                     SubtaskRow(
@@ -401,7 +414,7 @@ private fun CreateTaskForm(
                             if (subtaskIdToFocus == subtask.id) {
                                 subtaskIdToFocus = null
                             }
-                        }
+                        },
                     )
                 }
             }
@@ -411,23 +424,23 @@ private fun CreateTaskForm(
                 shape = inputShape,
                 color = Color.Transparent,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
                     horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        Icons.Default.Add, 
+                        Icons.Default.Add,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         "Add subtask",
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     )
                 }
             }
@@ -441,13 +454,245 @@ private fun CreateTaskForm(
 private fun SectionHeader(text: String) {
     Text(
         text = text.uppercase(),
-        style = MaterialTheme.typography.labelSmall.copy(
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp
-        ),
+        style =
+            MaterialTheme.typography.labelSmall.copy(
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+            ),
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(horizontal = 4.dp)
+        modifier = Modifier.padding(horizontal = 4.dp),
     )
+}
+
+@Composable
+private fun MarkdownFormattingToolbar(
+    onFormat: (prefix: String, suffix: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        FormatButton("B", FontWeight.Bold) { onFormat("**", "**") }
+        FormatButton("I", fontStyle = FontStyle.Italic) { onFormat("*", "*") }
+        FormatButton("S", textDecoration = TextDecoration.LineThrough) { onFormat("~~", "~~") }
+        FormatButton("<>") { onFormat("`", "`") }
+        FormatButton("H1") { onFormat("# ", "") }
+        FormatButton("--") { onFormat("- ", "") }
+        FormatButton("[]") { onFormat("[ ] ", "") }
+    }
+}
+
+@Composable
+private fun FormatButton(
+    label: String,
+    fontWeight: FontWeight = FontWeight.Normal,
+    fontStyle: FontStyle = FontStyle.Normal,
+    textDecoration: TextDecoration = TextDecoration.None,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = Modifier.size(36.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = label,
+                style =
+                    MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = fontWeight,
+                        fontStyle = fontStyle,
+                        textDecoration = textDecoration,
+                    ),
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MarkdownDescriptionField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val baseColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val markdownTransformation =
+        remember(baseColor) {
+            MarkdownVisualTransformation(baseColor)
+        }
+
+    // Use TextFieldValue for cursor control
+    var textFieldValue by remember(value) {
+        mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length)))
+    }
+
+    // Sync external value changes
+    LaunchedEffect(value) {
+        if (textFieldValue.text != value) {
+            textFieldValue = TextFieldValue(text = value, selection = TextRange(value.length))
+        }
+    }
+
+    BasicTextField(
+        value = textFieldValue,
+        onValueChange = { newTfv ->
+            val result = handleMarkdownAutoFormat(textFieldValue.text, newTfv.text, newTfv.selection)
+            textFieldValue = result
+            if (result.text != textFieldValue.text || result.text != value) {
+                onValueChange(result.text)
+            }
+        },
+        textStyle =
+            MaterialTheme.typography.bodyLarge.copy(
+                color = baseColor,
+            ),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        modifier = modifier.fillMaxWidth(),
+        visualTransformation = markdownTransformation,
+        decorationBox = { innerTextField ->
+            Column {
+                if (value.isEmpty()) {
+                    Text(
+                        text = "Add description... (supports markdown)",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    )
+                }
+                innerTextField()
+                Spacer(modifier = Modifier.height(8.dp))
+                MarkdownFormattingToolbar(
+                    onFormat = { prefix, suffix ->
+                        val sel = textFieldValue.selection
+                        val text = textFieldValue.text
+                        if (sel.start != sel.end) {
+                            // Wrap selected text
+                            val before = text.substring(0, sel.start)
+                            val selected = text.substring(sel.start, sel.end)
+                            val after = text.substring(sel.end)
+                            val newText = before + prefix + selected + suffix + after
+                            val newCursor = sel.end + prefix.length + suffix.length
+                            textFieldValue =
+                                TextFieldValue(
+                                    text = newText,
+                                    selection = TextRange(newCursor),
+                                )
+                            onValueChange(newText)
+                        } else {
+                            // Insert at cursor for line-level markers (like - , [ ] )
+                            val before = text.substring(0, sel.start)
+                            val after = text.substring(sel.start)
+                            val newText = before + prefix + suffix + after
+                            val newCursor = sel.start + prefix.length
+                            textFieldValue =
+                                TextFieldValue(
+                                    text = newText,
+                                    selection = TextRange(newCursor),
+                                )
+                            onValueChange(newText)
+                        }
+                    },
+                )
+            }
+        },
+    )
+}
+
+private fun handleMarkdownAutoFormat(
+    oldText: String,
+    newText: String,
+    currentSelection: TextRange,
+): TextFieldValue {
+    // Only trigger on newline insertion (user pressed Enter)
+    if (newText.length <= oldText.length) {
+        return TextFieldValue(text = newText, selection = currentSelection)
+    }
+    val insertedCount = newText.length - oldText.length
+    if (insertedCount != 1) {
+        return TextFieldValue(text = newText, selection = currentSelection)
+    }
+
+    // Find where the newline was inserted
+    val diffIndex =
+        newText.indices.firstOrNull { i ->
+            i >= oldText.length || newText[i] != oldText[i]
+        } ?: return TextFieldValue(text = newText, selection = currentSelection)
+
+    if (newText[diffIndex] != '\n') {
+        return TextFieldValue(text = newText, selection = currentSelection)
+    }
+
+    // Get the line BEFORE the newline
+    val beforeNewline = newText.substring(0, diffIndex)
+    val prevLineStart = beforeNewline.lastIndexOf('\n').let { if (it == -1) 0 else it + 1 }
+    val prevLine = beforeNewline.substring(prevLineStart)
+    val trimmedPrev = prevLine.trimStart()
+
+    // Unordered list: "- text" -> auto-add "- " on next line
+    if (trimmedPrev.startsWith("- ") && trimmedPrev.length > 2) {
+        val after = newText.substring(diffIndex + 1)
+        val result = beforeNewline + "\n- " + after
+        return TextFieldValue(text = result, selection = TextRange(diffIndex + 3))
+    }
+
+    // Empty unordered list marker: just "- " with no text -> remove it
+    if (trimmedPrev == "-" || trimmedPrev == "- ") {
+        val beforePrevLine = newText.substring(0, prevLineStart)
+        val after = newText.substring(diffIndex + 1)
+        val result = beforePrevLine + after
+        return TextFieldValue(text = result, selection = TextRange(beforePrevLine.length))
+    }
+
+    // Numbered list: "1. text" -> auto-add "2. " on next line
+    val numberedMatch = Regex("^(\\d+)\\.\\s(.+)$").find(trimmedPrev)
+    if (numberedMatch != null) {
+        val nextNumber = (numberedMatch.groupValues[1].toIntOrNull() ?: 0) + 1
+        val prefix = "$nextNumber. "
+        val after = newText.substring(diffIndex + 1)
+        val result = beforeNewline + "\n" + prefix + after
+        return TextFieldValue(
+            text = result,
+            selection = TextRange(diffIndex + 1 + prefix.length),
+        )
+    }
+
+    // Empty numbered list marker: "1. " with no text -> remove it
+    val emptyNumberedMatch = Regex("^(\\d+)\\.\\s?$").find(trimmedPrev)
+    if (emptyNumberedMatch != null) {
+        val beforePrevLine = newText.substring(0, prevLineStart)
+        val after = newText.substring(diffIndex + 1)
+        val result = beforePrevLine + after
+        return TextFieldValue(text = result, selection = TextRange(beforePrevLine.length))
+    }
+
+    // Checkbox: "[ ] text" -> auto-add "[ ] " on next line
+    if (trimmedPrev.startsWith("[ ] ") && trimmedPrev.length > 4) {
+        val after = newText.substring(diffIndex + 1)
+        val result = beforeNewline + "\n[ ] " + after
+        return TextFieldValue(text = result, selection = TextRange(diffIndex + 5))
+    }
+
+    // Checked checkbox: "[x] text" -> auto-add "[ ] " on next line
+    if ((trimmedPrev.startsWith("[x] ") || trimmedPrev.startsWith("[X] ")) && trimmedPrev.length > 4) {
+        val after = newText.substring(diffIndex + 1)
+        val result = beforeNewline + "\n[ ] " + after
+        return TextFieldValue(text = result, selection = TextRange(diffIndex + 5))
+    }
+
+    // Empty checkbox: "[ ] " -> remove
+    if (trimmedPrev == "[ ]" || trimmedPrev == "[ ] ") {
+        val beforePrevLine = newText.substring(0, prevLineStart)
+        val after = newText.substring(diffIndex + 1)
+        val result = beforePrevLine + after
+        return TextFieldValue(text = result, selection = TextRange(beforePrevLine.length))
+    }
+
+    return TextFieldValue(text = newText, selection = currentSelection)
 }
 
 @Composable
@@ -455,32 +700,50 @@ private fun PriorityChip(
     priority: TaskPriority,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val priorityColor = priorityColor(priority)
-    
+
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(100),
-        color = if (isSelected) priorityColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-        border = BorderStroke(1.dp, if (isSelected) priorityColor.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
-        modifier = modifier
+        color =
+            if (isSelected) {
+                priorityColor.copy(
+                    alpha = 0.15f,
+                )
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)
+            },
+        border =
+            BorderStroke(
+                1.dp,
+                if (isSelected) {
+                    priorityColor.copy(
+                        alpha = 0.5f,
+                    )
+                } else {
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                },
+            ),
+        modifier = modifier,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(priorityColor)
+                modifier =
+                    Modifier
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(priorityColor),
             )
             Text(
                 text = priority.name.lowercase().replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.labelLarge,
-                color = if (isSelected) priorityColor else MaterialTheme.colorScheme.onSurface
+                color = if (isSelected) priorityColor else MaterialTheme.colorScheme.onSurface,
             )
         }
     }
@@ -490,9 +753,9 @@ private fun PriorityChip(
 private fun priorityColor(priority: TaskPriority): Color {
     return when (priority) {
         TaskPriority.NONE -> MaterialTheme.colorScheme.onSurfaceVariant
-        TaskPriority.LOW -> Color(0xFF4CAF50)
-        TaskPriority.MEDIUM -> Color(0xFFFF9800)
-        TaskPriority.HIGH -> Color(0xFFF44336)
+        TaskPriority.LOW -> Color(0xFF1E88E5)
+        TaskPriority.MEDIUM -> Color(0xFFFFB300)
+        TaskPriority.HIGH -> Color(0xFFE53935)
     }
 }
 
@@ -501,7 +764,7 @@ private fun priorityColor(priority: TaskPriority): Color {
 private fun DatePickerField(
     date: LocalDate?,
     onDateSelected: (LocalDate?) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
@@ -510,40 +773,52 @@ private fun DatePickerField(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
-        modifier = modifier
+        modifier = modifier,
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = Icons.Outlined.CalendarToday,
                 contentDescription = null,
-                tint = if (date != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                tint =
+                    if (date != null) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
             Text(
                 text = date?.format(DateTimeFormatter.ofPattern("MMM d, yyyy")) ?: "Date",
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (date != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                color =
+                    if (date != null) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
         }
     }
 
     if (showDialog) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = date?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
-        )
-        
+        val datePickerState =
+            rememberDatePickerState(
+                initialSelectedDateMillis = date?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
+            )
+
         DatePickerDialog(
             onDismissRequest = { showDialog = false },
             confirmButton = {
                 TextButton(onClick = {
                     val selectedMillis = datePickerState.selectedDateMillis
                     if (selectedMillis != null) {
-                        val selectedDate = Instant.ofEpochMilli(selectedMillis)
-                            .atZone(ZoneId.of("UTC"))
-                            .toLocalDate()
+                        val selectedDate =
+                            Instant.ofEpochMilli(selectedMillis)
+                                .atZone(ZoneId.of("UTC"))
+                                .toLocalDate()
                         onDateSelected(selectedDate)
                     } else {
                         onDateSelected(null)
@@ -557,7 +832,7 @@ private fun DatePickerField(
                 TextButton(onClick = { showDialog = false }) {
                     Text("Cancel")
                 }
-            }
+            },
         ) {
             DatePicker(state = datePickerState)
         }
@@ -569,7 +844,7 @@ private fun DatePickerField(
 private fun TimePickerField(
     time: LocalTime?,
     onTimeSelected: (LocalTime?) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
@@ -578,32 +853,43 @@ private fun TimePickerField(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
-        modifier = modifier
+        modifier = modifier,
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = Icons.Outlined.Schedule,
                 contentDescription = null,
-                tint = if (time != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                tint =
+                    if (time != null) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
             Text(
                 text = time?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "Time",
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (time != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                color =
+                    if (time != null) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
         }
     }
 
     if (showDialog) {
-        val timePickerState = rememberTimePickerState(
-            initialHour = time?.hour ?: 9,
-            initialMinute = time?.minute ?: 0,
-            is24Hour = false
-        )
+        val timePickerState =
+            rememberTimePickerState(
+                initialHour = time?.hour ?: 9,
+                initialMinute = time?.minute ?: 0,
+                is24Hour = false,
+            )
         var showKeyboardInput by remember { mutableStateOf(false) }
 
         Dialog(onDismissRequest = { showDialog = false }) {
@@ -628,7 +914,12 @@ private fun TimePickerField(
                         )
                         IconButton(onClick = { showKeyboardInput = !showKeyboardInput }) {
                             Icon(
-                                imageVector = if (showKeyboardInput) Icons.Outlined.Schedule else Icons.Outlined.Keyboard,
+                                imageVector =
+                                    if (showKeyboardInput) {
+                                        Icons.Outlined.Schedule
+                                    } else {
+                                        Icons.Outlined.Keyboard
+                                    },
                                 contentDescription = "Toggle input mode",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -637,37 +928,39 @@ private fun TimePickerField(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    val timePickerColors = TimePickerDefaults.colors(
-                        clockDialColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        selectorColor = MaterialTheme.colorScheme.primary,
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        periodSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        periodSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
+                    val timePickerColors =
+                        TimePickerDefaults.colors(
+                            clockDialColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            selectorColor = MaterialTheme.colorScheme.primary,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            periodSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            periodSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            timeSelectorSelectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            timeSelectorSelectedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
 
                     if (showKeyboardInput) {
                         TimeInput(
                             state = timePickerState,
-                            colors = timePickerColors
+                            colors = timePickerColors,
                         )
                     } else {
                         TimePicker(
                             state = timePickerState,
-                            colors = timePickerColors
+                            colors = timePickerColors,
                         )
                     }
 
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 20.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(top = 20.dp),
                         horizontalArrangement = Arrangement.End,
                     ) {
-                        TextButton(onClick = { 
+                        TextButton(onClick = {
                             onTimeSelected(null)
-                            showDialog = false 
+                            showDialog = false
                         }) {
                             Text("Clear")
                         }
@@ -711,54 +1004,58 @@ private fun SubtaskRow(
     }
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(
             checked = false,
             onCheckedChange = null,
-            colors = CheckboxDefaults.colors(
-                uncheckedColor = MaterialTheme.colorScheme.outlineVariant
-            ),
-            modifier = Modifier.size(24.dp)
+            colors =
+                CheckboxDefaults.colors(
+                    uncheckedColor = MaterialTheme.colorScheme.outlineVariant,
+                ),
+            modifier = Modifier.size(24.dp),
         )
 
         BasicTextField(
             value = text,
             onValueChange = onTextChange,
-            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                color = MaterialTheme.colorScheme.onSurface
-            ),
+            textStyle =
+                MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             keyboardActions = KeyboardActions(onNext = { onSubmit() }),
-            modifier = Modifier
-                .weight(1f)
-                .focusRequester(focusRequester)
-                .onKeyEvent { event ->
-                    if (
-                        event.type == KeyEventType.KeyUp &&
-                        (event.key == Key.Enter || event.key == Key.NumPadEnter)
-                    ) {
-                        onSubmit()
-                        true
-                    } else {
-                        false
-                    }
-                },
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester)
+                    .onKeyEvent { event ->
+                        if (
+                            event.type == KeyEventType.KeyUp &&
+                            (event.key == Key.Enter || event.key == Key.NumPadEnter)
+                        ) {
+                            onSubmit()
+                            true
+                        } else {
+                            false
+                        }
+                    },
             decorationBox = { innerTextField ->
                 if (text.isEmpty()) {
                     Text(
                         text = "New subtask",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     )
                 }
                 innerTextField()
-            }
+            },
         )
 
         SubtaskPrioritySelector(
@@ -799,14 +1096,16 @@ private fun SubtaskPrioritySelector(
                 onClick = { onPrioritySelected(priority) },
                 shape = CircleShape,
                 color = dotColor.copy(alpha = if (isSelected) 1f else 0.35f),
-                border = BorderStroke(
-                    width = if (isSelected) 2.dp else 1.dp,
-                    color = if (isSelected) {
-                        dotColor
-                    } else {
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
-                    }
-                ),
+                border =
+                    BorderStroke(
+                        width = if (isSelected) 2.dp else 1.dp,
+                        color =
+                            if (isSelected) {
+                                dotColor
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                            },
+                    ),
                 modifier = Modifier.size(if (isSelected) 16.dp else 14.dp),
             ) {}
         }

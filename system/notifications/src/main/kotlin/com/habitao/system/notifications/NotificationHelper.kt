@@ -18,6 +18,7 @@ import com.habitao.system.notifications.NotificationConstants.CHANNEL_ID
 import com.habitao.system.notifications.NotificationConstants.CHANNEL_NAME
 import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_ID
 import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_TITLE
+import kotlin.math.abs
 
 class NotificationHelper(
     private val context: Context,
@@ -99,5 +100,72 @@ class NotificationHelper(
                 .build()
 
         NotificationManagerCompat.from(context).notify(habitId.hashCode(), notification)
+    }
+
+    fun createTaskNotificationChannel() {
+        val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val audioAttributes =
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+        val channel =
+            NotificationChannel(
+                NotificationConstants.TASK_CHANNEL_ID,
+                NotificationConstants.TASK_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = "Task reminder notifications"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 500)
+                setSound(defaultSoundUri, audioAttributes)
+            }
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    fun showTaskReminder(
+        taskId: String,
+        taskTitle: String,
+    ) {
+        val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val contentIntent =
+            context.packageManager.getLaunchIntentForPackage(context.packageName)?.let { intent ->
+                PendingIntent.getActivity(
+                    context,
+                    abs(taskId.hashCode()) + 10000,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+            }
+
+        val completeIntent =
+            Intent(context, TaskCompletionReceiver::class.java).apply {
+                action = NotificationConstants.ACTION_TASK_MARK_COMPLETE
+                putExtra(NotificationConstants.EXTRA_TASK_ID, taskId)
+                putExtra(NotificationConstants.EXTRA_TASK_TITLE, taskTitle)
+            }
+
+        val completePendingIntent =
+            PendingIntent.getBroadcast(
+                context,
+                abs(taskId.hashCode()) + 10001,
+                completeIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+
+        val notification =
+            NotificationCompat.Builder(context, NotificationConstants.TASK_CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("Task Reminder")
+                .setContentText("Time to: $taskTitle")
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSound(defaultSoundUri)
+                .setVibrate(longArrayOf(0, 500))
+                .addAction(android.R.drawable.ic_menu_agenda, "Mark Complete", completePendingIntent)
+                .build()
+
+        NotificationManagerCompat.from(context).notify(abs(taskId.hashCode()) + 10000, notification)
     }
 }

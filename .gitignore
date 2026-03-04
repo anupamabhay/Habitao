@@ -183,3 +183,6 @@ firebase-adminsdk*.json
 *.tmp
 *.temp
 *.orig
+
+# Windows reserved file name artifact (git add -A on Windows)
+nul

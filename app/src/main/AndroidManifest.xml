@@ -36,6 +36,14 @@
             android:exported="false" />
 
         <receiver
+            android:name="com.habitao.system.notifications.TaskReminderReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name="com.habitao.system.notifications.TaskCompletionReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name="com.habitao.system.notifications.BootReceiver"
             android:exported="true">
             <intent-filter>

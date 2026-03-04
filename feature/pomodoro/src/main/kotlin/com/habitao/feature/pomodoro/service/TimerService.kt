@@ -1,13 +1,14 @@
 package com.habitao.feature.pomodoro.service
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.pm.PackageManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.RingtoneManager
@@ -15,23 +16,23 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.Manifest
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import com.habitao.core.datastore.AppSettingsManager
 import com.habitao.domain.model.PomodoroSession
 import com.habitao.domain.model.PomodoroType
 import com.habitao.domain.repository.PomodoroRepository
-
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.UUID
-import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class TimerService : LifecycleService() {
@@ -41,8 +42,12 @@ class TimerService : LifecycleService() {
     @Inject
     lateinit var pomodoroRepository: PomodoroRepository
 
+    @Inject
+    lateinit var appSettingsManager: AppSettingsManager
+
     private var timerJob: Job? = null
     private lateinit var sharedPreferences: SharedPreferences
+
     @Inject
     lateinit var pomodoroPreferences: PomodoroPreferences
     private var completionMediaPlayer: MediaPlayer? = null
@@ -64,28 +69,31 @@ class TimerService : LifecycleService() {
 
     private fun initPendingIntents() {
         val pauseIntent = Intent(this, TimerService::class.java).apply { action = ACTION_PAUSE }
-        pausePendingIntent = PendingIntent.getService(
-            this,
-            REQUEST_CODE_PAUSE,
-            pauseIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
+        pausePendingIntent =
+            PendingIntent.getService(
+                this,
+                REQUEST_CODE_PAUSE,
+                pauseIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
 
         val resumeIntent = Intent(this, TimerService::class.java).apply { action = ACTION_RESUME }
-        resumePendingIntent = PendingIntent.getService(
-            this,
-            REQUEST_CODE_RESUME,
-            resumeIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
+        resumePendingIntent =
+            PendingIntent.getService(
+                this,
+                REQUEST_CODE_RESUME,
+                resumeIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
 
         val stopIntent = Intent(this, TimerService::class.java).apply { action = ACTION_STOP }
-        stopPendingIntent = PendingIntent.getService(
-            this,
-            REQUEST_CODE_STOP,
-            stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
+        stopPendingIntent =
+            PendingIntent.getService(
+                this,
+                REQUEST_CODE_STOP,
+                stopIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
     }
 
     override fun onStartCommand(
@@ -99,6 +107,10 @@ class TimerService : LifecycleService() {
             ACTION_RESUME -> handleResume()
             ACTION_STOP -> handleStop()
             ACTION_SKIP -> handleSkip()
+            ACTION_ADJUST_TIME -> {
+                val delta = intent.getLongExtra(EXTRA_DELTA_SECONDS, 0L)
+                if (delta != 0L) handleAdjustTime(delta)
+            }
         }
         return START_STICKY
     }
@@ -114,15 +126,16 @@ class TimerService : LifecycleService() {
         if (timerStateHolder.timerState.value == TimerState.RUNNING) {
             return
         }
-        val remaining = if (timerStateHolder.remainingSeconds.value > 0L) {
-            timerStateHolder.remainingSeconds.value
-        } else {
-            when (timerStateHolder.currentSessionType.value) {
-                PomodoroType.WORK -> pomodoroPreferences.workDurationMinutes.toLong() * 60
-                PomodoroType.SHORT_BREAK -> pomodoroPreferences.shortBreakDurationMinutes.toLong() * 60
-                PomodoroType.LONG_BREAK -> pomodoroPreferences.longBreakDurationMinutes.toLong() * 60
+        val remaining =
+            if (timerStateHolder.remainingSeconds.value > 0L) {
+                timerStateHolder.remainingSeconds.value
+            } else {
+                when (timerStateHolder.currentSessionType.value) {
+                    PomodoroType.WORK -> pomodoroPreferences.workDurationMinutes.toLong() * 60
+                    PomodoroType.SHORT_BREAK -> pomodoroPreferences.shortBreakDurationMinutes.toLong() * 60
+                    PomodoroType.LONG_BREAK -> pomodoroPreferences.longBreakDurationMinutes.toLong() * 60
+                }
             }
-        }
         timerStateHolder.updateTotalSeconds(remaining)
         timerStateHolder.updateRemainingSeconds(remaining)
         timerStateHolder.updateTimerState(TimerState.RUNNING)
@@ -188,6 +201,26 @@ class TimerService : LifecycleService() {
         stopTimerService()
     }
 
+    private fun handleAdjustTime(deltaSeconds: Long) {
+        val currentState = timerStateHolder.timerState.value
+        if (currentState != TimerState.RUNNING && currentState != TimerState.PAUSED) return
+
+        val currentRemaining = timerStateHolder.remainingSeconds.value
+        val currentTotal = timerStateHolder.totalSeconds.value
+        val newRemaining = (currentRemaining + deltaSeconds).coerceAtLeast(1L)
+        val newTotal = (currentTotal + deltaSeconds).coerceAtLeast(newRemaining)
+
+        timerStateHolder.updateRemainingSeconds(newRemaining)
+        timerStateHolder.updateTotalSeconds(newTotal)
+
+        if (currentState == TimerState.RUNNING) {
+            // Restart the timer coroutine with the adjusted time
+            startTimer(newRemaining)
+        } else {
+            updateNotification(newRemaining)
+        }
+    }
+
     private fun startTimer(initialRemainingSeconds: Long) {
         val endTimestamp = System.currentTimeMillis() + initialRemainingSeconds * 1000
         sharedPreferences.edit().putLong(PREF_END_TIMESTAMP, endTimestamp).apply()
@@ -232,10 +265,11 @@ class TimerService : LifecycleService() {
         }
 
         val nextSessionType = timerStateHolder.currentSessionType.value
-        val isAutoStart = when (nextSessionType) {
-            PomodoroType.WORK -> pomodoroPreferences.autoStartNextPomo
-            PomodoroType.SHORT_BREAK, PomodoroType.LONG_BREAK -> pomodoroPreferences.autoStartBreak
-        }
+        val isAutoStart =
+            when (nextSessionType) {
+                PomodoroType.WORK -> pomodoroPreferences.autoStartNextPomo
+                PomodoroType.SHORT_BREAK, PomodoroType.LONG_BREAK -> pomodoroPreferences.autoStartBreak
+            }
 
         if (isAutoStart) {
             handleStart()
@@ -280,34 +314,37 @@ class TimerService : LifecycleService() {
         stopCompletionSound()
         try {
             val isWorkSession = sessionType == PomodoroType.WORK
-            val uriString = if (isWorkSession) {
-                pomodoroPreferences.pomoEndingSoundUri
-            } else {
-                pomodoroPreferences.breakEndingSoundUri
-            }
+            val uriString =
+                if (isWorkSession) {
+                    pomodoroPreferences.pomoEndingSoundUri
+                } else {
+                    pomodoroPreferences.breakEndingSoundUri
+                }
 
             if (uriString == "SILENT") return
 
-            val uri = if (uriString.isNotEmpty()) {
-                android.net.Uri.parse(uriString)
-            } else {
-                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            } ?: return
+            val uri =
+                if (uriString.isNotEmpty()) {
+                    android.net.Uri.parse(uriString)
+                } else {
+                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                } ?: return
 
-            val mediaPlayer = MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build(),
-                )
-                setDataSource(applicationContext, uri)
-                isLooping = false
-                setOnCompletionListener { stopCompletionSound() }
-                prepare()
-                start()
-            }
+            val mediaPlayer =
+                MediaPlayer().apply {
+                    setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build(),
+                    )
+                    setDataSource(applicationContext, uri)
+                    isLooping = false
+                    setOnCompletionListener { stopCompletionSound() }
+                    prepare()
+                    start()
+                }
             completionMediaPlayer = mediaPlayer
             soundHandler.postDelayed({ stopCompletionSound() }, 10_000L)
         } catch (_: Throwable) {
@@ -322,7 +359,8 @@ class TimerService : LifecycleService() {
             try {
                 if (mp.isPlaying) mp.stop()
                 mp.release()
-            } catch (_: Throwable) {}
+            } catch (_: Throwable) {
+            }
         }
         completionMediaPlayer = null
     }
@@ -437,35 +475,41 @@ class TimerService : LifecycleService() {
     }
 
     private fun showCompletionNotification() {
-        val contentIntent =
-            packageManager.getLaunchIntentForPackage(packageName)?.let { intent ->
-                PendingIntent.getActivity(
-                    this,
-                    REQUEST_CODE_COMPLETE,
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
-            }
+        lifecycleScope.launch {
+            // Check if pomodoro notifications are enabled in settings
+            val settings = appSettingsManager.settings.first()
+            if (!settings.pomodoroNotificationsEnabled) return@launch
 
-        val notification =
-            NotificationCompat.Builder(this, COMPLETE_CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-                .setContentTitle("Pomodoro Complete")
-                .setContentText("Session finished")
-                .setStyle(
-                    NotificationCompat.BigTextStyle().bigText("Session finished")
-                )
-                .setContentIntent(contentIntent)
-                .setAutoCancel(true)
-                .setCategory(NotificationCompat.CATEGORY_ALARM)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .apply {
-                    if (pomodoroPreferences.vibrateEnabled) {
-                        setVibrate(longArrayOf(0L, pomodoroPreferences.vibrateDurationSeconds * 1000L))
-                    }
+            val contentIntent =
+                packageManager.getLaunchIntentForPackage(packageName)?.let { intent ->
+                    PendingIntent.getActivity(
+                        this@TimerService,
+                        REQUEST_CODE_COMPLETE,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    )
                 }
-                .build()
-        notificationManager.notify(NOTIFICATION_COMPLETE_ID, notification)
+
+            val notification =
+                NotificationCompat.Builder(this@TimerService, COMPLETE_CHANNEL_ID)
+                    .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                    .setContentTitle("Pomodoro Complete")
+                    .setContentText("Session finished")
+                    .setStyle(
+                        NotificationCompat.BigTextStyle().bigText("Session finished"),
+                    )
+                    .setContentIntent(contentIntent)
+                    .setAutoCancel(true)
+                    .setCategory(NotificationCompat.CATEGORY_ALARM)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .apply {
+                        if (pomodoroPreferences.vibrateEnabled) {
+                            setVibrate(longArrayOf(0L, pomodoroPreferences.vibrateDurationSeconds * 1000L))
+                        }
+                    }
+                    .build()
+            notificationManager.notify(NOTIFICATION_COMPLETE_ID, notification)
+        }
     }
 
     private fun createNotificationChannel() {
@@ -509,6 +553,8 @@ class TimerService : LifecycleService() {
         const val ACTION_RESUME = "com.habitao.feature.pomodoro.action.RESUME"
         const val ACTION_STOP = "com.habitao.feature.pomodoro.action.STOP"
         const val ACTION_SKIP = "com.habitao.feature.pomodoro.action.SKIP"
+        const val ACTION_ADJUST_TIME = "com.habitao.feature.pomodoro.action.ADJUST_TIME"
+        const val EXTRA_DELTA_SECONDS = "extra_delta_seconds"
 
         const val DEFAULT_WORK_SECONDS = 1500L
         const val DEFAULT_SHORT_BREAK_SECONDS = 300L

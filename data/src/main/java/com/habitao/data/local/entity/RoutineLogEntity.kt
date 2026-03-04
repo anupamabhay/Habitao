@@ -15,13 +15,13 @@ import java.util.UUID
             entity = RoutineEntity::class,
             parentColumns = ["id"],
             childColumns = ["routineId"],
-            onDelete = ForeignKey.CASCADE
-        )
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
     indices = [
         Index(value = ["routineId", "date"], unique = true),
-        Index(value = ["date"])
-    ]
+        Index(value = ["date"]),
+    ],
 )
 data class RoutineLogEntity(
     @PrimaryKey
@@ -36,5 +36,5 @@ data class RoutineLogEntity(
     val updatedAt: Long = System.currentTimeMillis(),
     val completedAt: Long? = null,
     val syncStatus: SyncStatus = SyncStatus.LOCAL,
-    val deletedAt: Long? = null
+    val deletedAt: Long? = null,
 )

@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,13 +37,12 @@ import androidx.compose.material.icons.filled.Loop
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RemoveCircle
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.ViewCarousel
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,6 +51,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -63,10 +63,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.habitao.feature.pomodoro.ui.components.PomodoroSettingsSheet
 
 data class SettingsTabOption(
     val id: String,
@@ -75,7 +76,7 @@ data class SettingsTabOption(
 
 enum class SettingsView {
     Main,
-    TabBar
+    TabBar,
 }
 
 @Composable
@@ -85,11 +86,15 @@ fun SettingsScreen(
     allTabs: List<SettingsTabOption>,
     defaultLaunchTabId: String,
     maxVisibleTabs: Int,
+    showTabLabels: Boolean,
     themeMode: String,
     onBottomTabsChanged: (List<String>) -> Unit,
     onDefaultLaunchTabChanged: (String) -> Unit,
     onMaxVisibleTabsChanged: (Int) -> Unit,
+    onShowTabLabelsChanged: (Boolean) -> Unit,
     onThemeModeChanged: (String) -> Unit,
+    onNavigateToAbout: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -103,10 +108,12 @@ fun SettingsScreen(
                     onNavigateToTabBar = { currentView = SettingsView.TabBar },
                     themeMode = themeMode,
                     onThemeModeChanged = onThemeModeChanged,
+                    onNavigateToAbout = onNavigateToAbout,
+                    onNavigateToNotifications = onNavigateToNotifications,
                     defaultLaunchTabId = defaultLaunchTabId,
                     allTabs = allTabs,
                     onDefaultLaunchTabChanged = onDefaultLaunchTabChanged,
-                    modifier = modifier
+                    modifier = modifier,
                 )
             }
             SettingsView.TabBar -> {
@@ -114,10 +121,12 @@ fun SettingsScreen(
                     selectedBottomTabIds = selectedBottomTabIds,
                     allTabs = allTabs,
                     maxVisibleTabs = maxVisibleTabs,
+                    showTabLabels = showTabLabels,
                     onBottomTabsChanged = onBottomTabsChanged,
                     onMaxVisibleTabsChanged = onMaxVisibleTabsChanged,
+                    onShowTabLabelsChanged = onShowTabLabelsChanged,
                     onNavigateBack = { currentView = SettingsView.Main },
-                    modifier = modifier
+                    modifier = modifier,
                 )
             }
         }
@@ -131,13 +140,16 @@ fun MainSettingsView(
     onNavigateToTabBar: () -> Unit,
     themeMode: String,
     onThemeModeChanged: (String) -> Unit,
+    onNavigateToAbout: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     defaultLaunchTabId: String,
     allTabs: List<SettingsTabOption>,
     onDefaultLaunchTabChanged: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var showThemeModeDialog by remember { mutableStateOf(false) }
     var showDefaultLaunchTabDialog by remember { mutableStateOf(false) }
+    var showPomodoroSettings by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -151,17 +163,19 @@ fun MainSettingsView(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     ) { paddingValues ->
         LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
         ) {
             item {
                 SettingsSection(title = "General") {
@@ -169,64 +183,49 @@ fun MainSettingsView(
                         icon = Icons.Default.Notifications,
                         title = "Notifications",
                         subtitle = "Manage reminders, streak alerts, and quiet hours.",
-                        onClick = { /* TODO */ },
-                        showDivider = true
+                        onClick = onNavigateToNotifications,
+                        showDivider = true,
                     )
                     SettingsListItem(
                         icon = Icons.Default.ColorLens,
                         title = "Theme",
                         subtitle = themeModeDisplayName(themeMode),
                         onClick = { showThemeModeDialog = true },
-                        showDivider = true
+                        showDivider = true,
                     )
                     SettingsListItem(
                         icon = Icons.Default.Folder,
                         title = "Data Sync",
                         subtitle = "Sync habits, routines, and tasks across devices.",
                         onClick = { /* TODO */ },
-                        showDivider = true
+                        showDivider = true,
                     )
                     SettingsListItem(
                         icon = Icons.Default.Timer,
                         title = "Focus & Pomodoro",
                         subtitle = "Configure session length, breaks, and timer defaults.",
-                        onClick = { /* TODO */ },
-                        showDivider = true
+                        onClick = { showPomodoroSettings = true },
+                        showDivider = true,
                     )
                     SettingsListItem(
                         icon = Icons.Default.ViewCarousel,
                         title = "Tab Bar",
                         subtitle = "Choose and reorder tabs shown in navigation.",
                         onClick = onNavigateToTabBar,
-                        showDivider = true
+                        showDivider = true,
                     )
                     SettingsListItem(
                         icon = Icons.Default.CalendarToday,
                         title = "Default Launch Tab",
                         subtitle = allTabs.find { it.id == defaultLaunchTabId }?.label ?: "Habits",
                         onClick = { showDefaultLaunchTabDialog = true },
-                        showDivider = false
+                        showDivider = false,
                     )
                 }
             }
-            
+
             item {
-                SettingsSection(title = "About") {
-                    SettingsListItem(
-                        icon = Icons.Default.Info,
-                        title = "About Habitao",
-                        subtitle = "Habitao is a habit, routine, and task tracker with Pomodoro focus to help you stay consistent and productive.",
-                        onClick = { /* TODO */ },
-                        showDivider = true
-                    )
-                    SettingsListItem(
-                        icon = Icons.Default.Settings,
-                        title = "Authors",
-                        subtitle = "Anupam Abhay and AI Agent",
-                        onClick = { /* TODO */ },
-                        showDivider = false
-                    )
-                }
+                AboutSection(onNavigateToAbout = onNavigateToAbout)
             }
         }
 
@@ -252,6 +251,22 @@ fun MainSettingsView(
                 onDismiss = { showDefaultLaunchTabDialog = false },
             )
         }
+
+        if (showPomodoroSettings) {
+            PomodoroSettingsSheet(onDismiss = { showPomodoroSettings = false })
+        }
+    }
+}
+
+@Composable
+private fun AboutSection(onNavigateToAbout: () -> Unit) {
+    SettingsSection(title = "About") {
+        SettingsListItem(
+            icon = Icons.Default.Info,
+            title = "About Habitao",
+            onClick = onNavigateToAbout,
+            showDivider = false,
+        )
     }
 }
 
@@ -356,23 +371,25 @@ private fun themeModeDisplayName(themeMode: String): String {
 @Composable
 fun SettingsSection(
     title: String,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
         )
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
-            )
+            colors =
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                ),
         ) {
             Column {
                 content()
@@ -387,7 +404,7 @@ fun SettingsListItem(
     title: String,
     subtitle: String? = null,
     onClick: () -> Unit,
-    showDivider: Boolean = true
+    showDivider: Boolean = true,
 ) {
     Column {
         ListItem(
@@ -397,25 +414,26 @@ fun SettingsListItem(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             },
             trailingContent = {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "Navigate",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             },
             modifier = Modifier.clickable(onClick = onClick),
-            colors = ListItemDefaults.colors(
-                containerColor = Color.Transparent
-            )
+            colors =
+                ListItemDefaults.colors(
+                    containerColor = Color.Transparent,
+                ),
         )
         if (showDivider) {
             HorizontalDivider(
                 modifier = Modifier.padding(start = 56.dp, end = 16.dp),
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
             )
         }
     }
@@ -427,17 +445,20 @@ fun TabBarSettingsView(
     selectedBottomTabIds: List<String>,
     allTabs: List<SettingsTabOption>,
     maxVisibleTabs: Int,
+    showTabLabels: Boolean,
     onBottomTabsChanged: (List<String>) -> Unit,
     onMaxVisibleTabsChanged: (Int) -> Unit,
+    onShowTabLabelsChanged: (Boolean) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val orderedTabs = remember(selectedBottomTabIds, allTabs) {
-        val idToTab = allTabs.associateBy { it.id }
-        val ordered = selectedBottomTabIds.mapNotNull { idToTab[it] }
-        val remaining = allTabs.filter { it.id !in selectedBottomTabIds }
-        (ordered + remaining).distinctBy { it.id }
-    }
+    val orderedTabs =
+        remember(selectedBottomTabIds, allTabs) {
+            val idToTab = allTabs.associateBy { it.id }
+            val ordered = selectedBottomTabIds.mapNotNull { idToTab[it] }
+            val remaining = allTabs.filter { it.id !in selectedBottomTabIds }
+            (ordered + remaining).distinctBy { it.id }
+        }
 
     val enabledTabs = orderedTabs.take(maxVisibleTabs)
     val disabledTabs = orderedTabs.drop(maxVisibleTabs)
@@ -454,27 +475,61 @@ fun TabBarSettingsView(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     ) { paddingValues ->
         LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
+                Text(
+                    text = "Tab Settings",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 4.dp),
+                )
+            }
+
+            item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        ),
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Show Tab Labels") },
+                        supportingContent = { Text("Display text under navigation icons") },
+                        trailingContent = {
+                            Switch(
+                                checked = showTabLabels,
+                                onCheckedChange = onShowTabLabelsChanged,
+                            )
+                        },
                     )
+                }
+            }
+
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        ),
                 ) {
                     Column {
                         enabledTabs.forEachIndexed { index, tab ->
@@ -502,12 +557,12 @@ fun TabBarSettingsView(
                                     newList[index] = newList[index + 1]
                                     newList[index + 1] = temp
                                     onBottomTabsChanged(newList.map { it.id })
-                                }
+                                },
                             )
                             if (index < enabledTabs.size - 1) {
                                 HorizontalDivider(
                                     modifier = Modifier.padding(start = 56.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                                 )
                             }
                         }
@@ -521,7 +576,7 @@ fun TabBarSettingsView(
                         text = "Disabled",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 4.dp)
+                        modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 4.dp),
                     )
                 }
 
@@ -529,9 +584,10 @@ fun TabBarSettingsView(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer
-                        )
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            ),
                     ) {
                         Column {
                             disabledTabs.forEachIndexed { index, tab ->
@@ -548,12 +604,12 @@ fun TabBarSettingsView(
                                         onBottomTabsChanged(newList.map { it.id })
                                     },
                                     onMoveUp = {},
-                                    onMoveDown = {}
+                                    onMoveDown = {},
                                 )
                                 if (index < disabledTabs.size - 1) {
                                     HorizontalDivider(
                                         modifier = Modifier.padding(start = 56.dp),
-                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                                     )
                                 }
                             }
@@ -567,44 +623,46 @@ fun TabBarSettingsView(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    )
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        ),
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = "Max number of tabs",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         IconButton(
                             onClick = { onMaxVisibleTabsChanged(maxVisibleTabs - 1) },
-                            enabled = maxVisibleTabs > 3
+                            enabled = maxVisibleTabs > 3,
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Remove,
-                                contentDescription = "Decrease max tabs"
+                                contentDescription = "Decrease max tabs",
                             )
                         }
                         Text(
                             text = "$maxVisibleTabs",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(horizontal = 8.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp),
                         )
                         IconButton(
                             onClick = { onMaxVisibleTabsChanged(maxVisibleTabs + 1) },
-                            enabled = maxVisibleTabs < 5
+                            enabled = maxVisibleTabs < 5,
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Add,
-                                contentDescription = "Increase max tabs"
+                                contentDescription = "Increase max tabs",
                             )
                         }
                     }
@@ -613,7 +671,7 @@ fun TabBarSettingsView(
                     text = "Over-limited tabs will be shown in More.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+                    modifier = Modifier.padding(start = 16.dp, top = 8.dp),
                 )
             }
         }
@@ -631,35 +689,37 @@ private fun TabItemRow(
     onMoveDown: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(
             onClick = onToggle,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(24.dp),
         ) {
             Icon(
                 imageVector = if (isEnabled) Icons.Default.RemoveCircle else Icons.Default.AddCircle,
                 contentDescription = if (isEnabled) "Disable" else "Enable",
-                tint = if (isEnabled) Color(0xFFE57373) else Color(0xFF81C784)
+                tint = if (isEnabled) Color(0xFFE57373) else Color(0xFF81C784),
             )
         }
 
         Spacer(modifier = Modifier.width(16.dp))
 
         Box(
-            modifier = Modifier
-                .size(32.dp)
-                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), CircleShape),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(32.dp)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), CircleShape),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = getIconForTab(tab.id),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(18.dp),
             )
         }
 
@@ -675,30 +735,46 @@ private fun TabItemRow(
                 text = getSubtitleForTab(tab.id),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
+                maxLines = 1,
             )
         }
 
         if (isEnabled) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = Modifier.padding(start = 8.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowUp,
                     contentDescription = "Move Up",
-                    tint = if (canMoveUp) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable(enabled = canMoveUp, onClick = onMoveUp)
+                    tint =
+                        if (canMoveUp) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = 0.2f,
+                            )
+                        },
+                    modifier =
+                        Modifier
+                            .size(24.dp)
+                            .clickable(enabled = canMoveUp, onClick = onMoveUp),
                 )
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = "Move Down",
-                    tint = if (canMoveDown) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable(enabled = canMoveDown, onClick = onMoveDown)
+                    tint =
+                        if (canMoveDown) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = 0.2f,
+                            )
+                        },
+                    modifier =
+                        Modifier
+                            .size(24.dp)
+                            .clickable(enabled = canMoveDown, onClick = onMoveDown),
                 )
             }
         }
@@ -706,7 +782,7 @@ private fun TabItemRow(
 }
 
 private fun getIconForTab(id: String): ImageVector {
-    return when(id) {
+    return when (id) {
         "tasks" -> Icons.Default.CheckCircle
         "habits" -> Icons.Default.Loop
         "routines" -> Icons.Default.GridView
@@ -717,7 +793,7 @@ private fun getIconForTab(id: String): ImageVector {
 }
 
 private fun getSubtitleForTab(id: String): String {
-    return when(id) {
+    return when (id) {
         "tasks" -> "Manage your task with lists and filters."
         "habits" -> "Develop a habit and keep track of it."
         "routines" -> "Build daily routines step by step."
