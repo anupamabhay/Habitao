@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -94,6 +95,8 @@ import com.habitao.feature.habits.viewmodel.CreateHabitState
 import com.habitao.feature.habits.viewmodel.CreateHabitViewModel
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -600,12 +603,13 @@ private fun DaySelector(
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
+        FlowRow(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             DayOfWeek.entries.forEach { day ->
                 val isSelected = selectedDays.contains(day)
@@ -614,14 +618,15 @@ private fun DaySelector(
                     onClick = { onDayToggled(day) },
                     label = {
                         Text(
-                            text = day.shortName.take(1),
+                            text =
+                                java.time.DayOfWeek.valueOf(day.name)
+                                    .getDisplayName(TextStyle.SHORT, Locale.getDefault()),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                             maxLines = 1,
                             textAlign = TextAlign.Center,
                         )
                     },
-                    modifier = Modifier.weight(1f),
                     colors =
                         FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primary,

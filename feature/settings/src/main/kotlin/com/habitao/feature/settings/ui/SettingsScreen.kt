@@ -96,6 +96,8 @@ fun SettingsScreen(
     onNavigateToAbout: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateBack: () -> Unit,
+    onExportBackup: () -> Unit = {},
+    onImportBackup: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var currentView by remember { mutableStateOf(SettingsView.Main) }
@@ -113,6 +115,8 @@ fun SettingsScreen(
                     defaultLaunchTabId = defaultLaunchTabId,
                     allTabs = allTabs,
                     onDefaultLaunchTabChanged = onDefaultLaunchTabChanged,
+                    onExportBackup = onExportBackup,
+                    onImportBackup = onImportBackup,
                     modifier = modifier,
                 )
             }
@@ -145,6 +149,8 @@ fun MainSettingsView(
     defaultLaunchTabId: String,
     allTabs: List<SettingsTabOption>,
     onDefaultLaunchTabChanged: (String) -> Unit,
+    onExportBackup: () -> Unit = {},
+    onImportBackup: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var showThemeModeDialog by remember { mutableStateOf(false) }
@@ -195,9 +201,16 @@ fun MainSettingsView(
                     )
                     SettingsListItem(
                         icon = Icons.Default.Folder,
-                        title = "Data Sync",
-                        subtitle = "Sync habits, routines, and tasks across devices.",
-                        onClick = { /* TODO */ },
+                        title = "Export Backup",
+                        subtitle = "Save all data to a file for safekeeping.",
+                        onClick = onExportBackup,
+                        showDivider = true,
+                    )
+                    SettingsListItem(
+                        icon = Icons.Default.Loop,
+                        title = "Import Backup",
+                        subtitle = "Restore data from a backup file.",
+                        onClick = onImportBackup,
                         showDivider = true,
                     )
                     SettingsListItem(

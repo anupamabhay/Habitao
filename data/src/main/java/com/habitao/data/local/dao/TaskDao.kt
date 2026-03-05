@@ -71,4 +71,10 @@ interface TaskDao {
 
     @Query("SELECT COUNT(*) FROM tasks WHERE parentTaskId IS NULL")
     suspend fun getTotalTopLevelTaskCount(): Int
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllTasks(tasks: List<TaskEntity>)
+
+    @Query("DELETE FROM tasks")
+    suspend fun deleteAllTasks()
 }

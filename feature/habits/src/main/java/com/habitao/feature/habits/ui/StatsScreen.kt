@@ -240,7 +240,7 @@ private fun StatsContent(
                                     .fillMaxSize()
                                     .padding(horizontal = Dimensions.cardPadding, vertical = 24.dp),
                             horizontalAlignment = Alignment.Start,
-                            verticalArrangement = Arrangement.SpaceBetween,
+                            verticalArrangement = Arrangement.Top,
                         ) {
                             Column {
                                 Text(
@@ -255,6 +255,7 @@ private fun StatsContent(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
+                            Spacer(modifier = Modifier.weight(1f))
                             Box(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentAlignment = Alignment.Center,
@@ -273,6 +274,7 @@ private fun StatsContent(
                                     fontWeight = FontWeight.Bold,
                                 )
                             }
+                            Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
                         }
                     }
 
@@ -294,7 +296,7 @@ private fun StatsContent(
                                     .fillMaxSize()
                                     .padding(horizontal = Dimensions.cardPadding, vertical = 24.dp),
                             horizontalAlignment = Alignment.Start,
-                            verticalArrangement = Arrangement.SpaceBetween,
+                            verticalArrangement = Arrangement.Top,
                         ) {
                             Column {
                                 Text(
@@ -310,6 +312,7 @@ private fun StatsContent(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
+                            Spacer(modifier = Modifier.weight(1f))
                             Box(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentAlignment = Alignment.Center,
@@ -334,6 +337,7 @@ private fun StatsContent(
                                     fontWeight = FontWeight.Bold,
                                 )
                             }
+                            Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
                         }
                     }
                 }

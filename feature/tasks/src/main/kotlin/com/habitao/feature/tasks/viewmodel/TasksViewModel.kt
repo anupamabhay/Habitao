@@ -1,5 +1,6 @@
 package com.habitao.feature.tasks.viewmodel
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.Task
@@ -30,6 +31,7 @@ enum class TaskSortOrder {
     ALPHABETICAL,
 }
 
+@Immutable
 data class TasksState(
     val overdueTasks: List<Task> = emptyList(),
     val todayTasks: List<Task> = emptyList(),

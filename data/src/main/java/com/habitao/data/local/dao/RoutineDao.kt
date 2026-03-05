@@ -31,6 +31,33 @@ interface RoutineDao {
     @Query("SELECT * FROM routines WHERE isArchived = 0 ORDER BY sortOrder ASC")
     fun observeAllRoutines(): Flow<List<RoutineEntity>>
 
+    @Query("SELECT * FROM routines ORDER BY sortOrder ASC")
+    suspend fun getAllRoutines(): List<RoutineEntity>
+
+    @Query("SELECT * FROM routine_steps ORDER BY routineId, stepOrder ASC")
+    suspend fun getAllRoutineSteps(): List<RoutineStepEntity>
+
+    @Query("SELECT * FROM routine_logs ORDER BY date DESC")
+    suspend fun getAllRoutineLogs(): List<RoutineLogEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllRoutines(routines: List<RoutineEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllRoutineSteps(steps: List<RoutineStepEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllRoutineLogs(logs: List<RoutineLogEntity>)
+
+    @Query("DELETE FROM routines")
+    suspend fun deleteAllRoutines()
+
+    @Query("DELETE FROM routine_steps")
+    suspend fun deleteAllRoutineSteps()
+
+    @Query("DELETE FROM routine_logs")
+    suspend fun deleteAllRoutineLogs()
+
     @Query("SELECT * FROM routines WHERE isArchived = 0 AND nextScheduledDate <= :dateMillis ORDER BY sortOrder ASC")
     suspend fun getRoutinesForDate(dateMillis: Long): List<RoutineEntity>
 

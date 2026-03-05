@@ -1,9 +1,12 @@
 package com.habitao.app
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +31,7 @@ import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
@@ -44,6 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,6 +66,7 @@ import androidx.navigation.toRoute
 import com.habitao.core.datastore.AppSettings
 import com.habitao.core.datastore.AppSettingsManager
 import com.habitao.core.ui.theme.HabitaoTheme
+import com.habitao.data.backup.BackupManager
 import com.habitao.feature.habits.ui.CreateHabitScreen
 import com.habitao.feature.habits.ui.HabitsScreen
 import com.habitao.feature.habits.ui.StatsScreen
@@ -79,6 +85,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import javax.inject.Inject
 
 // -- Type-safe route definitions --
 
@@ -180,23 +187,94 @@ private enum class Tab(
 class MainActivity : ComponentActivity() {
     private val appSettingsManager by lazy { AppSettingsManager(applicationContext) }
 
+    @Inject
+    lateinit var backupManager: BackupManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Request highest available refresh rate
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            window.attributes =
+                window.attributes.also { params ->
+                    params.preferredDisplayModeId = display?.supportedModes
+                        ?.maxByOrNull { it.refreshRate }?.modeId ?: 0
+                }
+        }
         setContent {
-            HabitaoApp(appSettingsManager = appSettingsManager)
+            HabitaoApp(
+                appSettingsManager = appSettingsManager,
+                backupManager = backupManager,
+            )
         }
     }
 }
 
 @Composable
-private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
+private fun HabitaoApp(
+    appSettingsManager: AppSettingsManager,
+    backupManager: BackupManager,
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val coroutineScope = rememberCoroutineScope()
     var showMoreSheet by rememberSaveable { mutableStateOf(false) }
+
+    // Backup export launcher
+    val exportLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.CreateDocument(BackupManager.MIME_TYPE),
+        ) { uri ->
+            if (uri != null) {
+                coroutineScope.launch {
+                    backupManager.exportToUri(uri).fold(
+                        onSuccess = { count ->
+                            Toast.makeText(
+                                navController.context,
+                                "Exported $count records successfully",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        },
+                        onFailure = { error ->
+                            Toast.makeText(
+                                navController.context,
+                                "Export failed: ${error.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        },
+                    )
+                }
+            }
+        }
+
+    // Backup import launcher
+    val importLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocument(),
+        ) { uri ->
+            if (uri != null) {
+                coroutineScope.launch {
+                    backupManager.importFromUri(uri).fold(
+                        onSuccess = { count ->
+                            Toast.makeText(
+                                navController.context,
+                                "Restored $count records successfully",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        },
+                        onFailure = { error ->
+                            Toast.makeText(
+                                navController.context,
+                                "Import failed: ${error.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        },
+                    )
+                }
+            }
+        }
 
     val appSettings by
         remember(appSettingsManager) {
@@ -363,6 +441,12 @@ private fun HabitaoApp(appSettingsManager: AppSettingsManager) {
                         maxVisibleTabs = settings.maxVisibleTabs,
                         showTabLabels = settings.showTabLabels,
                         themeMode = settings.themeMode,
+                        onExportBackup = {
+                            exportLauncher.launch(BackupManager.DEFAULT_FILENAME)
+                        },
+                        onImportBackup = {
+                            importLauncher.launch(arrayOf(BackupManager.MIME_TYPE))
+                        },
                         onBottomTabsChanged = { tabIds ->
                             val normalizedTabIds = resolveSelectedTabs(tabIds, settings.maxVisibleTabs).map(Tab::id)
                             coroutineScope.launch {
@@ -563,6 +647,10 @@ private fun MoreMenuSheet(
                         contentDescription = hiddenTab.label,
                     )
                 },
+                colors =
+                    ListItemDefaults.colors(
+                        containerColor = Color.Transparent,
+                    ),
                 modifier =
                     Modifier
                         .clickable { onHiddenTabSelected(hiddenTab) }
@@ -581,6 +669,10 @@ private fun MoreMenuSheet(
                     contentDescription = "Settings",
                 )
             },
+            colors =
+                ListItemDefaults.colors(
+                    containerColor = Color.Transparent,
+                ),
             modifier =
                 Modifier
                     .clickable(onClick = onSettingsSelected)

@@ -40,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -420,48 +421,72 @@ private fun TaskItemWithSubtasks(
     allSubTasks: Map<String, List<Task>> = emptyMap(),
     depth: Int = 0,
 ) {
-    Column {
-        TaskRow(
-            task = task,
-            onToggleComplete = { onToggleComplete(task.id, it) },
-            onClick = { onTaskClick(task.id) },
-            isSubtask = depth > 0,
-            subtaskCount = subtasks.size,
-            showSubtaskChevron = subtasks.isNotEmpty(),
-            onToggleExpanded = if (subtasks.isNotEmpty()) onToggleExpanded else null,
-            isExpanded = isExpanded,
-            nestingDepth = depth,
-        )
+    val content: @Composable () -> Unit = {
+        Column {
+            TaskRow(
+                task = task,
+                onToggleComplete = { onToggleComplete(task.id, it) },
+                onClick = { onTaskClick(task.id) },
+                isSubtask = depth > 0,
+                subtaskCount = subtasks.size,
+                showSubtaskChevron = subtasks.isNotEmpty(),
+                onToggleExpanded = if (subtasks.isNotEmpty()) onToggleExpanded else null,
+                isExpanded = isExpanded,
+                nestingDepth = depth,
+            )
 
-        if (subtasks.isNotEmpty() && isExpanded) {
-            subtasks.forEach { subtask ->
-                val nestedSubtasks = allSubTasks[subtask.id] ?: emptyList()
-                if (nestedSubtasks.isNotEmpty()) {
-                    TaskItemWithSubtasks(
-                        task = subtask,
-                        subtasks = nestedSubtasks,
-                        onToggleComplete = onToggleComplete,
-                        onTaskClick = onTaskClick,
-                        isExpanded = true,
-                        onToggleExpanded = {},
-                        allSubTasks = allSubTasks,
-                        depth = depth + 1,
-                    )
-                } else {
-                    TaskRow(
-                        task = subtask,
-                        onToggleComplete = { onToggleComplete(subtask.id, it) },
-                        onClick = { onTaskClick(subtask.id) },
-                        isSubtask = true,
-                        subtaskCount = 0,
-                        showSubtaskChevron = false,
-                        onToggleExpanded = null,
-                        isExpanded = true,
-                        nestingDepth = depth + 1,
-                    )
+            if (subtasks.isNotEmpty() && isExpanded) {
+                val nextDepth = depth + 1
+                subtasks.forEach { subtask ->
+                    val nestedSubtasks = allSubTasks[subtask.id] ?: emptyList()
+                    // Cap rendering at MAX_SUBTASK_DEPTH to prevent infinite nesting
+                    if (nestedSubtasks.isNotEmpty() &&
+                        nextDepth < com.habitao.feature.tasks.viewmodel.MAX_SUBTASK_DEPTH
+                    ) {
+                        TaskItemWithSubtasks(
+                            task = subtask,
+                            subtasks = nestedSubtasks,
+                            onToggleComplete = onToggleComplete,
+                            onTaskClick = onTaskClick,
+                            isExpanded = true,
+                            onToggleExpanded = {},
+                            allSubTasks = allSubTasks,
+                            depth = nextDepth,
+                        )
+                    } else {
+                        TaskRow(
+                            task = subtask,
+                            onToggleComplete = { onToggleComplete(subtask.id, it) },
+                            onClick = { onTaskClick(subtask.id) },
+                            isSubtask = true,
+                            subtaskCount = nestedSubtasks.size,
+                            showSubtaskChevron = false,
+                            onToggleExpanded = null,
+                            isExpanded = true,
+                            nestingDepth = nextDepth,
+                        )
+                    }
                 }
             }
         }
+    }
+
+    if (depth == 0 && subtasks.isNotEmpty()) {
+        Surface(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = Dimensions.elementSpacingSmall,
+                        vertical = Dimensions.elementSpacingSmall,
+                    ),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            shape = RoundedCornerShape(12.dp),
+        ) {
+            content()
+        }
+    } else {
+        content()
     }
 }
 
@@ -503,7 +528,7 @@ private fun TaskRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Priority color bar — consistent height using fillMaxHeight
-        if (hasPriority && !isSubtask) {
+        if (!isSubtask) {
             Box(
                 modifier =
                     Modifier
@@ -511,7 +536,7 @@ private fun TaskRow(
                         .fillMaxHeight()
                         .padding(vertical = 4.dp)
                         .clip(RoundedCornerShape(1.5.dp))
-                        .background(priorityColor),
+                        .background(if (hasPriority) priorityColor else Color.Transparent),
             )
             Spacer(modifier = Modifier.width(Dimensions.elementSpacingSmall))
         }

@@ -75,6 +75,12 @@ interface HabitDao {
         habitId: String,
         isArchived: Boolean,
     )
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllHabits(habits: List<HabitEntity>)
+
+    @Query("DELETE FROM habits")
+    suspend fun deleteAllHabits()
 }
 
 // DAO for habit log operations
@@ -185,4 +191,13 @@ interface HabitLogDao {
         startDate: Long,
         endDate: Long,
     ): Int
+
+    @Query("SELECT * FROM habit_logs ORDER BY date DESC")
+    suspend fun getAllLogs(): List<HabitLogEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllLogs(logs: List<HabitLogEntity>)
+
+    @Query("DELETE FROM habit_logs")
+    suspend fun deleteAllLogs()
 }

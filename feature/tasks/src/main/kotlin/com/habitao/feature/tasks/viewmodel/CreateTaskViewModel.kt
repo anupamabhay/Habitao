@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.Task
 import com.habitao.domain.model.TaskPriority
 import com.habitao.domain.repository.TaskRepository
+import com.habitao.system.notifications.TaskReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +27,9 @@ data class SubtaskItem(
     val existingTaskId: String? = null,
 )
 
+/** Maximum allowed subtask nesting depth (0 = top-level, 1 = subtask, 2 = sub-subtask). */
+const val MAX_SUBTASK_DEPTH = 2
+
 data class CreateTaskState(
     val title: String = "",
     val description: String = "",
@@ -40,6 +44,10 @@ data class CreateTaskState(
     val isEditMode: Boolean = false,
     val isSaving: Boolean = false,
     val parentTaskId: String? = null,
+    /** Current nesting depth of this task (0 = top-level). */
+    val nestingDepth: Int = 0,
+    /** Whether this task is at max depth and cannot have subtasks. */
+    val canAddSubtasks: Boolean = true,
 )
 
 sealed class CreateTaskIntent {
@@ -79,6 +87,7 @@ class CreateTaskViewModel
     @Inject
     constructor(
         private val taskRepository: TaskRepository,
+        private val reminderScheduler: TaskReminderScheduler,
     ) : ViewModel() {
         private val _state = MutableStateFlow(CreateTaskState())
         val state: StateFlow<CreateTaskState> = _state.asStateFlow()
@@ -113,17 +122,24 @@ class CreateTaskViewModel
                     _state.update { it.copy(reminderMinutesBefore = intent.minutes) }
                 }
                 is CreateTaskIntent.AddSubtask -> {
-                    _state.update {
-                        it.copy(
-                            subtasks =
-                                it.subtasks +
-                                    SubtaskItem(
-                                        id = UUID.randomUUID().toString(),
-                                        text = "",
-                                        priority = TaskPriority.NONE,
-                                        existingTaskId = null,
-                                    ),
-                        )
+                    val current = _state.value
+                    if (!current.canAddSubtasks) {
+                        _state.update {
+                            it.copy(error = "Maximum nesting depth reached")
+                        }
+                    } else {
+                        _state.update {
+                            it.copy(
+                                subtasks =
+                                    it.subtasks +
+                                        SubtaskItem(
+                                            id = UUID.randomUUID().toString(),
+                                            text = "",
+                                            priority = TaskPriority.NONE,
+                                            existingTaskId = null,
+                                        ),
+                            )
+                        }
                     }
                 }
                 is CreateTaskIntent.RemoveSubtask -> {
@@ -177,7 +193,9 @@ class CreateTaskViewModel
                 taskRepository.getTaskById(taskId).fold(
                     onSuccess = { task ->
                         loadedTask = task
-                        val subtaskItems = loadSubtasks(taskId)
+                        val depth = calculateNestingDepth(task)
+                        val subtaskItems =
+                            if (depth < MAX_SUBTASK_DEPTH) loadSubtasks(taskId) else emptyList()
                         _state.update {
                             it.copy(
                                 title = task.title,
@@ -189,6 +207,8 @@ class CreateTaskViewModel
                                 reminderMinutesBefore = task.reminderMinutesBefore,
                                 parentTaskId = task.parentTaskId,
                                 subtasks = subtaskItems,
+                                nestingDepth = depth,
+                                canAddSubtasks = depth < MAX_SUBTASK_DEPTH,
                                 isLoading = false,
                             )
                         }
@@ -203,6 +223,21 @@ class CreateTaskViewModel
                     },
                 )
             }
+        }
+
+        /**
+         * Walk up the parent chain to determine how deeply nested this task is.
+         * Returns 0 for top-level tasks, 1 for subtasks, 2 for sub-subtasks, etc.
+         */
+        private suspend fun calculateNestingDepth(task: Task): Int {
+            var depth = 0
+            var currentParentId = task.parentTaskId
+            while (currentParentId != null && depth < MAX_SUBTASK_DEPTH + 1) {
+                depth++
+                val parent = taskRepository.getTaskById(currentParentId).getOrNull()
+                currentParentId = parent?.parentTaskId
+            }
+            return depth
         }
 
         private suspend fun loadSubtasks(parentId: String): List<SubtaskItem> {
@@ -265,6 +300,20 @@ class CreateTaskViewModel
                     onSuccess = {
                         try {
                             saveSubtasks(taskId, currentState)
+
+                            // Schedule or cancel task reminder
+                            val dueDate = task.dueDate
+                            if (task.reminderEnabled && dueDate != null) {
+                                reminderScheduler.scheduleReminder(
+                                    taskId = taskId,
+                                    taskTitle = task.title,
+                                    dueDate = dueDate,
+                                    dueTime = task.dueTime,
+                                )
+                            } else {
+                                reminderScheduler.cancelReminder(taskId)
+                            }
+
                             _state.update { it.copy(isSaving = false) }
                             _savedEvent.emit(Unit)
                         } catch (e: Exception) {

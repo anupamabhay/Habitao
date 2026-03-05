@@ -43,4 +43,13 @@ interface PomodoroSessionDao {
         startOfDay: Long,
         endOfDay: Long,
     ): Int
+
+    @Query("SELECT * FROM pomodoro_sessions ORDER BY startedAt DESC")
+    suspend fun getAllSessions(): List<PomodoroSessionEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllSessions(sessions: List<PomodoroSessionEntity>)
+
+    @Query("DELETE FROM pomodoro_sessions")
+    suspend fun deleteAllSessions()
 }
