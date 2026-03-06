@@ -41,6 +41,9 @@ interface HabitDao {
     @Query("SELECT * FROM habits WHERE isArchived = 0 ORDER BY sortOrder ASC, createdAt DESC")
     suspend fun getAllHabits(): List<HabitEntity>
 
+    @Query("SELECT * FROM habits ORDER BY sortOrder ASC, createdAt DESC")
+    suspend fun getAllHabitsIncludingArchived(): List<HabitEntity>
+
     @Query("SELECT * FROM habits WHERE isArchived = 1 ORDER BY createdAt DESC")
     fun observeArchivedHabits(): Flow<List<HabitEntity>>
 

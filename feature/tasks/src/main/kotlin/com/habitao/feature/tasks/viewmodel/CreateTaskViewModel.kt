@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.Task
 import com.habitao.domain.model.TaskPriority
 import com.habitao.domain.repository.TaskRepository
+import com.habitao.feature.tasks.MAX_SUBTASK_DEPTH
 import com.habitao.system.notifications.TaskReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,9 +27,6 @@ data class SubtaskItem(
     val priority: TaskPriority = TaskPriority.NONE,
     val existingTaskId: String? = null,
 )
-
-/** Maximum allowed subtask nesting depth (0 = top-level, 1 = subtask, 2 = sub-subtask). */
-const val MAX_SUBTASK_DEPTH = 2
 
 data class CreateTaskState(
     val title: String = "",
@@ -309,6 +307,7 @@ class CreateTaskViewModel
                                     taskTitle = task.title,
                                     dueDate = dueDate,
                                     dueTime = task.dueTime,
+                                    minutesBefore = currentState.reminderMinutesBefore,
                                 )
                             } else {
                                 reminderScheduler.cancelReminder(taskId)

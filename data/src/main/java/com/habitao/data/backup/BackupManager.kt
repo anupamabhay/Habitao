@@ -50,7 +50,7 @@ class BackupManager
          */
         suspend fun exportToUri(uri: Uri): Result<Int> =
             runCatching {
-                val habits = habitDao.getAllHabits()
+                val habits = habitDao.getAllHabitsIncludingArchived()
                 val habitLogs = habitLogDao.getAllLogs()
                 val tasks = taskDao.getAllTasks()
                 val routines = routineDao.getAllRoutines()
@@ -93,7 +93,9 @@ class BackupManager
 
                 val json = JSONObject(jsonString)
                 val version = json.optInt("version", 0)
-                if (version < 1) throw Exception("Invalid backup file format")
+                if (version < 1 || version > BACKUP_VERSION) {
+                    throw Exception("Unsupported backup version: $version (current: $BACKUP_VERSION)")
+                }
 
                 val habits = habitsFromJson(json.optJSONArray("habits"))
                 val habitLogs = habitLogsFromJson(json.optJSONArray("habitLogs"))

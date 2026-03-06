@@ -26,9 +26,12 @@ class TaskReminderScheduler
             taskTitle: String,
             dueDate: LocalDate,
             dueTime: LocalTime?,
+            minutesBefore: Int = 0,
         ) {
             val reminderTime = dueTime ?: LocalTime.of(9, 0)
-            val triggerDateTime = LocalDateTime.of(dueDate, reminderTime)
+            val triggerDateTime =
+                LocalDateTime.of(dueDate, reminderTime)
+                    .minusMinutes(minutesBefore.toLong())
             val triggerMillis = triggerDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
             // Don't schedule if in the past

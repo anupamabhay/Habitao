@@ -190,22 +190,31 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var backupManager: BackupManager
 
+    @Inject
+    lateinit var habitReminderScheduler: com.habitao.system.notifications.HabitReminderScheduler
+
+    @Inject
+    lateinit var taskReminderScheduler: com.habitao.system.notifications.TaskReminderScheduler
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // Request highest available refresh rate
+        // Request highest available refresh rate (only when a valid mode is found)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            window.attributes =
-                window.attributes.also { params ->
-                    params.preferredDisplayModeId = display?.supportedModes
-                        ?.maxByOrNull { it.refreshRate }?.modeId ?: 0
-                }
+            display?.supportedModes?.maxByOrNull { it.refreshRate }?.let { mode ->
+                window.attributes =
+                    window.attributes.also { params ->
+                        params.preferredDisplayModeId = mode.modeId
+                    }
+            }
         }
         setContent {
             HabitaoApp(
                 appSettingsManager = appSettingsManager,
                 backupManager = backupManager,
+                habitReminderScheduler = habitReminderScheduler,
+                taskReminderScheduler = taskReminderScheduler,
             )
         }
     }
@@ -215,6 +224,8 @@ class MainActivity : ComponentActivity() {
 private fun HabitaoApp(
     appSettingsManager: AppSettingsManager,
     backupManager: BackupManager,
+    habitReminderScheduler: com.habitao.system.notifications.HabitReminderScheduler,
+    taskReminderScheduler: com.habitao.system.notifications.TaskReminderScheduler,
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -258,6 +269,9 @@ private fun HabitaoApp(
                 coroutineScope.launch {
                     backupManager.importFromUri(uri).fold(
                         onSuccess = { count ->
+                            // Reschedule reminders for newly imported data
+                            habitReminderScheduler.rescheduleAllReminders()
+                            taskReminderScheduler.rescheduleAllReminders()
                             Toast.makeText(
                                 navController.context,
                                 "Restored $count records successfully",

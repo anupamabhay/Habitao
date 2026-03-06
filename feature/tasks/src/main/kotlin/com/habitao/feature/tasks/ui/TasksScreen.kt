@@ -64,6 +64,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.Task
 import com.habitao.domain.model.TaskPriority
+import com.habitao.feature.tasks.MAX_SUBTASK_DEPTH
 import com.habitao.feature.tasks.viewmodel.TaskSortOrder
 import com.habitao.feature.tasks.viewmodel.TasksIntent
 import com.habitao.feature.tasks.viewmodel.TasksState
@@ -437,9 +438,8 @@ private fun TaskItemWithSubtasks(
                 val nextDepth = depth + 1
                 subtasks.forEach { subtask ->
                     val nestedSubtasks = allSubTasks[subtask.id] ?: emptyList()
-                    // Cap rendering at MAX_SUBTASK_DEPTH to prevent infinite nesting
                     if (nestedSubtasks.isNotEmpty() &&
-                        nextDepth < com.habitao.feature.tasks.viewmodel.MAX_SUBTASK_DEPTH
+                        nextDepth < MAX_SUBTASK_DEPTH
                     ) {
                         TaskItemWithSubtasks(
                             task = subtask,
@@ -452,12 +452,13 @@ private fun TaskItemWithSubtasks(
                             depth = nextDepth,
                         )
                     } else {
+                        // At max depth: hide subtask count since user can't expand further.
                         TaskRow(
                             task = subtask,
                             onToggleComplete = { onToggleComplete(subtask.id, it) },
                             onClick = { onTaskClick(subtask.id) },
                             isSubtask = true,
-                            subtaskCount = nestedSubtasks.size,
+                            subtaskCount = 0,
                             showSubtaskChevron = false,
                             onToggleExpanded = null,
                             isExpanded = true,
@@ -512,10 +513,12 @@ private fun TaskRow(
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
                 .padding(
-                    start = Dimensions.screenPaddingHorizontal + (nestingDepth * 32).dp,
+                    start =
+                        Dimensions.screenPaddingHorizontal +
+                            Dimensions.subtaskIndentPerLevel * nestingDepth,
                     end = Dimensions.screenPaddingHorizontal,
-                    top = 2.dp,
-                    bottom = 2.dp,
+                    top = Dimensions.taskRowVerticalPadding,
+                    bottom = Dimensions.taskRowVerticalPadding,
                 ),
         verticalAlignment = Alignment.CenterVertically,
     ) {

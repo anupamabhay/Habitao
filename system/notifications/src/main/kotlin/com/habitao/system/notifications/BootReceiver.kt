@@ -27,6 +27,8 @@ class BootReceiver : BroadcastReceiver() {
                 try {
                     habitScheduler.rescheduleAllReminders()
                     taskScheduler.rescheduleAllReminders()
+                } catch (e: Exception) {
+                    android.util.Log.e("BootReceiver", "Failed to reschedule reminders", e)
                 } finally {
                     pendingResult.finish()
                 }
