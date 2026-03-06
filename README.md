@@ -29,24 +29,28 @@ A unified productivity app for Android combining habit tracking, a Pomodoro focu
 - Full-screen focus mode with animations
 
 ### Routines
-- Create and manage daily routines (e.g., Morning, Evening)
-- Add ordered steps to each routine
-- Track routine completion history
-- Link routines to specific times of day
+- Create and manage daily routines with ordered steps
+- Flexible scheduling: daily, specific days, every X days
+- Step duration tracking displayed on routine cards
+- Completion history and progress indicators
+- Per-routine reminders
 
 ### Tasks
-- Create and manage one-off or recurring tasks
-- Add subtasks for complex tasks
-- Set priorities (Low, Medium, High) and due dates
-- Track task completion status
+- Create and manage tasks with priorities (Low, Medium, High) and due dates
+- Nested subtasks up to 3 levels deep
+- Inline markdown editing with formatting toolbar
+- Auto-sorted sections: Overdue, Today, Tomorrow, Upcoming
+- Task reminders with alarm scheduling
 
 ### Settings
-- Customize default launch tab (Habits, Routines, Tasks, Pomodoro, Stats)
-- Manage app-wide preferences
+- Theme selection (System, Light, Dark)
+- Backup and restore (JSON export/import of all data)
+- Configurable tab bar with reordering
+- Default launch tab selection
+- Pomodoro timer configuration
 
 ### Planned
 - Home screen widgets
-- Cloud sync and backup
 
 ## Tech Stack
 

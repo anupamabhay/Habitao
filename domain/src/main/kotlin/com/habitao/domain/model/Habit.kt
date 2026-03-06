@@ -156,7 +156,6 @@ enum class TrackingType {
 }
 
 // Legacy enum for backward compatibility
-@Deprecated("Use FrequencyType instead")
 enum class RepeatPattern {
     DAILY,
     WEEKLY,

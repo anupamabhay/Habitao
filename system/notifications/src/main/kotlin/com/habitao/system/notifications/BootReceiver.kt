@@ -12,15 +12,26 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class BootReceiver : BroadcastReceiver() {
     @Inject
-    lateinit var scheduler: HabitReminderScheduler
+    lateinit var habitScheduler: HabitReminderScheduler
+
+    @Inject
+    lateinit var taskScheduler: TaskReminderScheduler
 
     override fun onReceive(
         context: Context,
         intent: Intent,
     ) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+            val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
-                scheduler.rescheduleAllReminders()
+                try {
+                    habitScheduler.rescheduleAllReminders()
+                    taskScheduler.rescheduleAllReminders()
+                } catch (e: Exception) {
+                    android.util.Log.e("BootReceiver", "Failed to reschedule reminders", e)
+                } finally {
+                    pendingResult.finish()
+                }
             }
         }
     }

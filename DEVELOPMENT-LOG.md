@@ -2,7 +2,7 @@
 
 **Purpose:** Track implementation progress, document decisions, record solutions, and maintain context across development sessions.
 
-**Last Updated:** March 4, 2026 - UI/UX Overhaul, Nested Subtasks, Live Markdown, Security Audit
+**Last Updated:** March 6, 2026 - Reminders, Backup/Restore, UI Polish, Repo Cleanup
 
 ---
 
@@ -12,7 +12,7 @@
 
 **Branch:** `feature/improvements`
 
-**Status:** All tasks1 through tasks6 completed. PR #6 open to merge into `dev`.
+**Status:** All tasks1 through tasks8 completed plus UI polish and repo cleanup. PR #6 open to merge into `dev`.
 
 ---
 
@@ -119,6 +119,21 @@
 | Formatting Toolbar | Added inline toolbar (Bold, Italic, Strikethrough, Code, H1, List, Checkbox) | Complete |
 | Repo Audit | Source dirs mixed (java/kotlin) noted as cosmetic; no sensitive files tracked | Complete |
 
+#### tasks8 (All Complete)
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Task Reminders | Injected TaskReminderScheduler into CreateTaskViewModel; BootReceiver reschedules task reminders | Complete |
+| Subtask Depth Limit | MAX_SUBTASK_DEPTH=2, depth check on parent chain, UI rendering capped | Complete |
+| Backup & Restore | BackupManager with JSON export/import for all 7 entity types, SAF integration | Complete |
+| Stats Card Spacing | Removed weight(1f) from ring box, explicit 24dp text-ring gap | Complete |
+| Task Alignment | Always-render priority bar (transparent for NONE) to fix checkbox axis | Complete |
+| Task Group Backgrounds | Surface wrapper with horizontal margin for parent+subtask groups | Complete |
+| Day Chip Sizing | BoxWithConstraints for uniform fixed-width chips, 3-letter abbreviations | Complete |
+| Routine Step Duration | Display estimatedDurationMinutes on routine step rows | Complete |
+| Settings Merge | Combined Export/Import into single Backup & Restore sub-view | Complete |
+| Repo Cleanup | Removed nul file, untracked docs/tasks/ from git, trimmed verbose comments | Complete |
+| Performance | @Immutable annotations, distinctUntilChanged on stats flows, highest refresh rate | Complete |
+
 #### Key Architecture Decisions:
 - MarkdownVisualTransformation uses identity offset mapping to avoid cursor desync.
 - Switched description field to TextFieldValue for cursor position control after auto-formatting.
@@ -129,7 +144,7 @@
 
 ---
 
-## In Progress
+## Completed (continued)
 
 ### Cross-Feature UX and Analytics (feature/routines-and-tasks branch)
 **Status:** Merged into dev.
@@ -158,15 +173,12 @@
 
 ### After This Session
 1. **PR #6 Review and Merge** (Priority: High)
-   - Merge feature/improvements into dev after Copilot review passes
-   - Run full CI pipeline validation
+   - Address Copilot review comments, merge feature/improvements into dev
 
-2. **Test Coverage Improvement** (Priority: Medium)
-   - Unit tests for StatsViewModel aggregation paths
-   - Unit tests for nested subtask tree building in TasksViewModel
-   - Unit tests for markdown auto-formatting logic
+2. **Test Coverage** (Priority: Medium)
+   - Unit tests for StatsViewModel, TasksViewModel subtask tree, markdown auto-format
 
-3. **Widget Implementation** (Priority: Medium)
+3. **Widget** (Priority: Medium)
    - Home screen widget for habit/task quick-check
 
 ---

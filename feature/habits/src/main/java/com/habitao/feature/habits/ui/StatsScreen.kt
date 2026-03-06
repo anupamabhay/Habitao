@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -219,7 +218,7 @@ private fun StatsContent(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .defaultMinSize(minHeight = 220.dp),
+                            .height(180.dp),
                     horizontalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
                 ) {
                     // Tasks Breakdown
@@ -238,23 +237,21 @@ private fun StatsContent(
                             modifier =
                                 Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = Dimensions.cardPadding, vertical = 24.dp),
+                                    .padding(Dimensions.cardPadding),
                             horizontalAlignment = Alignment.Start,
-                            verticalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Column {
-                                Text(
-                                    text = "Tasks",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "${state.completedTasksToday} of ${state.totalTasks} done",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
+                            Text(
+                                text = "Tasks",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "${state.completedTasksToday} of ${state.totalTasks} done",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
                             Box(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentAlignment = Alignment.Center,
@@ -292,24 +289,22 @@ private fun StatsContent(
                             modifier =
                                 Modifier
                                     .fillMaxSize()
-                                    .padding(horizontal = Dimensions.cardPadding, vertical = 24.dp),
+                                    .padding(Dimensions.cardPadding),
                             horizontalAlignment = Alignment.Start,
-                            verticalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Column {
-                                Text(
-                                    text = "Daily Goal",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                val remaining = maxOf(0, state.totalHabits - state.completedToday)
-                                Text(
-                                    text = "$remaining more to hit your goal",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
+                            Text(
+                                text = "Daily Goal",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            val remaining = maxOf(0, state.totalHabits - state.completedToday)
+                            Text(
+                                text = "$remaining more to hit your goal",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
                             Box(
                                 modifier = Modifier.fillMaxWidth(),
                                 contentAlignment = Alignment.Center,
@@ -351,7 +346,7 @@ private fun StatsContent(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = Dimensions.cardPadding, vertical = 24.dp),
+                                .padding(horizontal = Dimensions.cardPadding, vertical = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
                     ) {
                         Row(

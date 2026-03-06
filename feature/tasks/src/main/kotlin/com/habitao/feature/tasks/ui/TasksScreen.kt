@@ -5,11 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -40,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -65,6 +64,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.Task
 import com.habitao.domain.model.TaskPriority
+import com.habitao.feature.tasks.MAX_SUBTASK_DEPTH
 import com.habitao.feature.tasks.viewmodel.TaskSortOrder
 import com.habitao.feature.tasks.viewmodel.TasksIntent
 import com.habitao.feature.tasks.viewmodel.TasksState
@@ -420,59 +420,76 @@ private fun TaskItemWithSubtasks(
     allSubTasks: Map<String, List<Task>> = emptyMap(),
     depth: Int = 0,
 ) {
-    Column {
-        TaskRow(
-            task = task,
-            onToggleComplete = { onToggleComplete(task.id, it) },
-            onClick = { onTaskClick(task.id) },
-            isSubtask = depth > 0,
-            subtaskCount = subtasks.size,
-            showSubtaskChevron = subtasks.isNotEmpty(),
-            onToggleExpanded = if (subtasks.isNotEmpty()) onToggleExpanded else null,
-            isExpanded = isExpanded,
-            nestingDepth = depth,
-        )
+    val content: @Composable () -> Unit = {
+        Column {
+            TaskRow(
+                task = task,
+                onToggleComplete = { onToggleComplete(task.id, it) },
+                onClick = { onTaskClick(task.id) },
+                isSubtask = depth > 0,
+                subtaskCount = subtasks.size,
+                showSubtaskChevron = subtasks.isNotEmpty(),
+                onToggleExpanded = if (subtasks.isNotEmpty()) onToggleExpanded else null,
+                isExpanded = isExpanded,
+                nestingDepth = depth,
+            )
 
-        if (subtasks.isNotEmpty() && isExpanded) {
-            subtasks.forEach { subtask ->
-                val nestedSubtasks = allSubTasks[subtask.id] ?: emptyList()
-                if (nestedSubtasks.isNotEmpty()) {
-                    TaskItemWithSubtasks(
-                        task = subtask,
-                        subtasks = nestedSubtasks,
-                        onToggleComplete = onToggleComplete,
-                        onTaskClick = onTaskClick,
-                        isExpanded = true,
-                        onToggleExpanded = {},
-                        allSubTasks = allSubTasks,
-                        depth = depth + 1,
-                    )
-                } else {
-                    TaskRow(
-                        task = subtask,
-                        onToggleComplete = { onToggleComplete(subtask.id, it) },
-                        onClick = { onTaskClick(subtask.id) },
-                        isSubtask = true,
-                        subtaskCount = 0,
-                        showSubtaskChevron = false,
-                        onToggleExpanded = null,
-                        isExpanded = true,
-                        nestingDepth = depth + 1,
-                    )
+            if (subtasks.isNotEmpty() && isExpanded) {
+                val nextDepth = depth + 1
+                subtasks.forEach { subtask ->
+                    val nestedSubtasks = allSubTasks[subtask.id] ?: emptyList()
+                    if (nestedSubtasks.isNotEmpty() &&
+                        nextDepth < MAX_SUBTASK_DEPTH
+                    ) {
+                        TaskItemWithSubtasks(
+                            task = subtask,
+                            subtasks = nestedSubtasks,
+                            onToggleComplete = onToggleComplete,
+                            onTaskClick = onTaskClick,
+                            isExpanded = true,
+                            onToggleExpanded = {},
+                            allSubTasks = allSubTasks,
+                            depth = nextDepth,
+                        )
+                    } else {
+                        // At max depth: hide subtask count since user can't expand further.
+                        TaskRow(
+                            task = subtask,
+                            onToggleComplete = { onToggleComplete(subtask.id, it) },
+                            onClick = { onTaskClick(subtask.id) },
+                            isSubtask = true,
+                            subtaskCount = 0,
+                            showSubtaskChevron = false,
+                            onToggleExpanded = null,
+                            isExpanded = true,
+                            nestingDepth = nextDepth,
+                        )
+                    }
                 }
             }
         }
     }
+
+    if (depth == 0 && subtasks.isNotEmpty()) {
+        Surface(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = Dimensions.cardSpacing,
+                        vertical = 2.dp,
+                    ),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            shape = RoundedCornerShape(12.dp),
+        ) {
+            content()
+        }
+    } else {
+        content()
+    }
 }
 
-/**
- * TickTick-inspired task row with:
- * - Priority color bar on left (consistent height via IntrinsicSize)
- * - Colored priority checkbox
- * - Title + optional description/subtask icons
- * - Due date on the right
- * - Expand chevron for subtasks
- */
+/** Task row with priority bar, checkbox, title, metadata, and subtask expand chevron. */
 @Composable
 private fun TaskRow(
     task: Task,
@@ -494,58 +511,52 @@ private fun TaskRow(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Min)
                 .clickable(onClick = onClick)
                 .padding(
-                    start = Dimensions.screenPaddingHorizontal + (nestingDepth * 32).dp,
+                    start =
+                        Dimensions.screenPaddingHorizontal +
+                            Dimensions.subtaskIndentPerLevel * nestingDepth,
                     end = Dimensions.screenPaddingHorizontal,
+                    top = Dimensions.taskRowVerticalPadding,
+                    bottom = Dimensions.taskRowVerticalPadding,
                 ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Priority color bar — consistent height using fillMaxHeight
-        if (hasPriority && !isSubtask) {
+        // Priority bar: always rendered (transparent for NONE) to keep checkboxes aligned.
+        if (!isSubtask) {
             Box(
                 modifier =
                     Modifier
                         .width(3.dp)
-                        .fillMaxHeight()
-                        .padding(vertical = 4.dp)
+                        .height(32.dp)
                         .clip(RoundedCornerShape(1.5.dp))
                         .background(priorityColor),
             )
-            Spacer(modifier = Modifier.width(Dimensions.elementSpacingSmall))
+            Spacer(modifier = Modifier.width(5.dp))
         }
 
-        // Checkbox with priority color
+        // Checkbox with priority color — fixed 40dp touch target
         IconButton(
             onClick = { onToggleComplete(!task.isCompleted) },
             modifier = Modifier.size(40.dp),
         ) {
-            if (task.isCompleted) {
-                Icon(
-                    imageVector = Icons.Filled.CheckCircle,
-                    contentDescription = "Completed",
-                    tint =
-                        if (hasPriority) {
-                            priorityColor
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        },
-                    modifier = Modifier.size(22.dp),
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Outlined.RadioButtonUnchecked,
-                    contentDescription = "Incomplete",
-                    tint =
-                        if (hasPriority) {
-                            priorityColor
-                        } else {
-                            MaterialTheme.colorScheme.outline
-                        },
-                    modifier = Modifier.size(22.dp),
-                )
-            }
+            Icon(
+                imageVector =
+                    if (task.isCompleted) {
+                        Icons.Filled.CheckCircle
+                    } else {
+                        Icons.Outlined.RadioButtonUnchecked
+                    },
+                contentDescription =
+                    if (task.isCompleted) "Completed" else "Incomplete",
+                tint =
+                    when {
+                        hasPriority -> priorityColor
+                        task.isCompleted -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.colorScheme.outline
+                    },
+                modifier = Modifier.size(22.dp),
+            )
         }
 
         // Content column

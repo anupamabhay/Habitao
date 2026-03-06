@@ -8,6 +8,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -595,51 +597,102 @@ private fun DaySelector(
     selectedDays: Set<DayOfWeek>,
     onDayToggled: (DayOfWeek) -> Unit,
 ) {
+    val chipHeight = 36.dp
+    val chipGap = 8.dp
+
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
+        BoxWithConstraints(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            DayOfWeek.entries.forEach { day ->
-                val isSelected = selectedDays.contains(day)
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { onDayToggled(day) },
-                    label = {
-                        Text(
-                            text = day.shortName.take(1),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            maxLines = 1,
-                            textAlign = TextAlign.Center,
+            // Fixed chip width: (available width - 4 gaps) / 5 columns.
+            val chipWidth = (maxWidth - chipGap * 4) / 5
+
+            Column(verticalArrangement = Arrangement.spacedBy(chipGap)) {
+                // Row 1: Mon - Fri
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(chipGap),
+                ) {
+                    DayOfWeek.entries.take(5).forEach { day ->
+                        DayChip(
+                            day = day,
+                            isSelected = selectedDays.contains(day),
+                            onToggle = { onDayToggled(day) },
+                            modifier =
+                                Modifier
+                                    .width(chipWidth)
+                                    .height(chipHeight),
                         )
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors =
-                        FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
-                    border =
-                        FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = isSelected,
-                            borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                            selectedBorderColor = MaterialTheme.colorScheme.primary,
-                        ),
-                )
+                    }
+                }
+                // Row 2: Sat - Sun (same chipWidth, left-aligned)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(chipGap),
+                ) {
+                    DayOfWeek.entries.drop(5).forEach { day ->
+                        DayChip(
+                            day = day,
+                            isSelected = selectedDays.contains(day),
+                            onToggle = { onDayToggled(day) },
+                            modifier =
+                                Modifier
+                                    .width(chipWidth)
+                                    .height(chipHeight),
+                        )
+                    }
+                }
             }
         }
     }
+}
+
+@Composable
+private fun DayChip(
+    day: DayOfWeek,
+    isSelected: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    FilterChip(
+        selected = isSelected,
+        onClick = onToggle,
+        label = {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = day.shortName,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        },
+        modifier = modifier,
+        colors =
+            FilterChipDefaults.filterChipColors(
+                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        border =
+            FilterChipDefaults.filterChipBorder(
+                enabled = true,
+                selected = isSelected,
+                borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                selectedBorderColor = MaterialTheme.colorScheme.primary,
+            ),
+    )
 }
 
 @Composable

@@ -1,5 +1,6 @@
 package com.habitao.feature.habits.viewmodel
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.habitao.core.datastore.AppSettingsManager
@@ -17,6 +18,7 @@ import com.habitao.feature.pomodoro.service.PomodoroPreferences
 import com.habitao.feature.pomodoro.service.TimerState
 import com.habitao.feature.pomodoro.service.TimerStateHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +30,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -46,6 +49,7 @@ data class HabitStatItem(
     val frequency: String = "Daily",
 )
 
+@Immutable
 data class ActivityDataPoint(
     val label: String,
     val habitsCompleted: Int,
@@ -53,6 +57,7 @@ data class ActivityDataPoint(
     val tasksCompleted: Int,
 )
 
+@Immutable
 data class StatsState(
     val totalHabits: Int = 0,
     val completedToday: Int = 0,
@@ -146,6 +151,7 @@ class StatsViewModel
             habitRepository.observeAllHabits()
                 .map { result -> result.getOrElse { emptyList() } }
                 .catch { emit(emptyList()) }
+                .distinctUntilChanged()
 
         private val habitLogsFlow =
             fetchDateRangeFlow.flatMapLatest { range ->
@@ -153,6 +159,7 @@ class StatsViewModel
             }
                 .map { result -> result.getOrElse { emptyList() } }
                 .catch { emit(emptyList()) }
+                .distinctUntilChanged()
 
         private val tasksFlow =
             fetchDateRangeFlow.flatMapLatest { range ->
@@ -160,11 +167,13 @@ class StatsViewModel
             }
                 .map { result -> result.getOrElse { emptyList() } }
                 .catch { emit(emptyList()) }
+                .distinctUntilChanged()
 
         private val routinesFlow =
             routineRepository.observeAllRoutines()
                 .map { result -> result.getOrElse { emptyList() } }
                 .catch { emit(emptyList()) }
+                .distinctUntilChanged()
 
         private val routineLogsFlow =
             fetchDateRangeFlow.flatMapLatest { range ->
@@ -172,6 +181,7 @@ class StatsViewModel
             }
                 .map { result -> result.getOrElse { emptyList() } }
                 .catch { emit(emptyList()) }
+                .distinctUntilChanged()
 
         private val pomodoroSessionsFlow =
             fetchDateRangeFlow.flatMapLatest { range ->
@@ -179,6 +189,7 @@ class StatsViewModel
             }
                 .map { result -> result.getOrElse { emptyList() } }
                 .catch { emit(emptyList()) }
+                .distinctUntilChanged()
 
         private val activeWorkSecondsFlow =
             combine(
@@ -518,7 +529,9 @@ class StatsViewModel
         private fun Long.toLocalHour(zoneId: ZoneId): Int = Instant.ofEpochMilli(this).atZone(zoneId).hour
 
         private suspend fun loadStreakSafe(habitId: String): StreakInfo {
-            return habitRepository.calculateStreak(habitId)
-                .getOrElse { StreakInfo(0, 0, 0) }
+            return withContext(Dispatchers.IO) {
+                habitRepository.calculateStreak(habitId)
+                    .getOrElse { StreakInfo(0, 0, 0) }
+            }
         }
     }

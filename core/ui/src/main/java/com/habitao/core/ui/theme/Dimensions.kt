@@ -39,6 +39,10 @@ object Dimensions {
     // Bottom spacer (for FAB clearance)
     val fabClearance = 88.dp
 
+    // Task list
+    val subtaskIndentPerLevel = 32.dp
+    val taskRowVerticalPadding = 2.dp
+
     // About screen
     val logoSize = 120.dp
 }
