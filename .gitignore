@@ -155,6 +155,9 @@ docs/ui designs/
 # Generated documentation assets
 docs/output/
 
+# Internal task/context files
+docs/tasks/
+
 # Root-level local image exports
 /*.jpg
 /*.jpeg

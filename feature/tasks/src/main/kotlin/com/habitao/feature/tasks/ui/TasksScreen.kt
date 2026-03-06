@@ -5,11 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -477,8 +475,8 @@ private fun TaskItemWithSubtasks(
                 Modifier
                     .fillMaxWidth()
                     .padding(
-                        horizontal = Dimensions.elementSpacingSmall,
-                        vertical = Dimensions.elementSpacingSmall,
+                        horizontal = Dimensions.cardSpacing,
+                        vertical = 2.dp,
                     ),
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
             shape = RoundedCornerShape(12.dp),
@@ -490,14 +488,7 @@ private fun TaskItemWithSubtasks(
     }
 }
 
-/**
- * TickTick-inspired task row with:
- * - Priority color bar on left (consistent height via IntrinsicSize)
- * - Colored priority checkbox
- * - Title + optional description/subtask icons
- * - Due date on the right
- * - Expand chevron for subtasks
- */
+/** Task row with priority bar, checkbox, title, metadata, and subtask expand chevron. */
 @Composable
 private fun TaskRow(
     task: Task,
@@ -519,58 +510,50 @@ private fun TaskRow(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Min)
                 .clickable(onClick = onClick)
                 .padding(
                     start = Dimensions.screenPaddingHorizontal + (nestingDepth * 32).dp,
                     end = Dimensions.screenPaddingHorizontal,
+                    top = 2.dp,
+                    bottom = 2.dp,
                 ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Priority color bar — consistent height using fillMaxHeight
+        // Priority bar: always rendered (transparent for NONE) to keep checkboxes aligned.
         if (!isSubtask) {
             Box(
                 modifier =
                     Modifier
                         .width(3.dp)
-                        .fillMaxHeight()
-                        .padding(vertical = 4.dp)
+                        .height(32.dp)
                         .clip(RoundedCornerShape(1.5.dp))
-                        .background(if (hasPriority) priorityColor else Color.Transparent),
+                        .background(priorityColor),
             )
-            Spacer(modifier = Modifier.width(Dimensions.elementSpacingSmall))
+            Spacer(modifier = Modifier.width(5.dp))
         }
 
-        // Checkbox with priority color
+        // Checkbox with priority color — fixed 40dp touch target
         IconButton(
             onClick = { onToggleComplete(!task.isCompleted) },
             modifier = Modifier.size(40.dp),
         ) {
-            if (task.isCompleted) {
-                Icon(
-                    imageVector = Icons.Filled.CheckCircle,
-                    contentDescription = "Completed",
-                    tint =
-                        if (hasPriority) {
-                            priorityColor
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        },
-                    modifier = Modifier.size(22.dp),
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Outlined.RadioButtonUnchecked,
-                    contentDescription = "Incomplete",
-                    tint =
-                        if (hasPriority) {
-                            priorityColor
-                        } else {
-                            MaterialTheme.colorScheme.outline
-                        },
-                    modifier = Modifier.size(22.dp),
-                )
-            }
+            Icon(
+                imageVector =
+                    if (task.isCompleted) {
+                        Icons.Filled.CheckCircle
+                    } else {
+                        Icons.Outlined.RadioButtonUnchecked
+                    },
+                contentDescription =
+                    if (task.isCompleted) "Completed" else "Incomplete",
+                tint =
+                    when {
+                        hasPriority -> priorityColor
+                        task.isCompleted -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.colorScheme.outline
+                    },
+                modifier = Modifier.size(22.dp),
+            )
         }
 
         // Content column

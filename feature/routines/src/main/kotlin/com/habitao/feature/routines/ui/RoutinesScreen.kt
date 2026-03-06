@@ -476,6 +476,27 @@ private fun RoutineStepRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
+
+        // Step duration (if set). Local val needed for cross-module smart cast.
+        val durationMinutes = step.estimatedDurationMinutes
+        if (durationMinutes != null && durationMinutes > 0) {
+            Text(
+                text = formatStepDuration(durationMinutes),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+    }
+}
+
+private fun formatStepDuration(minutes: Int): String {
+    val hours = minutes / 60
+    val remainingMinutes = minutes % 60
+    return when {
+        hours > 0 && remainingMinutes > 0 -> "${hours}h ${remainingMinutes}m"
+        hours > 0 -> "${hours}h"
+        else -> "${minutes}m"
     }
 }
 

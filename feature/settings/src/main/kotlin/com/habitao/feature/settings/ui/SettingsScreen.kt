@@ -77,6 +77,7 @@ data class SettingsTabOption(
 enum class SettingsView {
     Main,
     TabBar,
+    BackupRestore,
 }
 
 @Composable
@@ -108,6 +109,7 @@ fun SettingsScreen(
                 MainSettingsView(
                     onNavigateBack = onNavigateBack,
                     onNavigateToTabBar = { currentView = SettingsView.TabBar },
+                    onNavigateToBackupRestore = { currentView = SettingsView.BackupRestore },
                     themeMode = themeMode,
                     onThemeModeChanged = onThemeModeChanged,
                     onNavigateToAbout = onNavigateToAbout,
@@ -115,8 +117,14 @@ fun SettingsScreen(
                     defaultLaunchTabId = defaultLaunchTabId,
                     allTabs = allTabs,
                     onDefaultLaunchTabChanged = onDefaultLaunchTabChanged,
+                    modifier = modifier,
+                )
+            }
+            SettingsView.BackupRestore -> {
+                BackupRestoreView(
                     onExportBackup = onExportBackup,
                     onImportBackup = onImportBackup,
+                    onNavigateBack = { currentView = SettingsView.Main },
                     modifier = modifier,
                 )
             }
@@ -142,6 +150,7 @@ fun SettingsScreen(
 fun MainSettingsView(
     onNavigateBack: () -> Unit,
     onNavigateToTabBar: () -> Unit,
+    onNavigateToBackupRestore: () -> Unit,
     themeMode: String,
     onThemeModeChanged: (String) -> Unit,
     onNavigateToAbout: () -> Unit,
@@ -149,8 +158,6 @@ fun MainSettingsView(
     defaultLaunchTabId: String,
     allTabs: List<SettingsTabOption>,
     onDefaultLaunchTabChanged: (String) -> Unit,
-    onExportBackup: () -> Unit = {},
-    onImportBackup: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var showThemeModeDialog by remember { mutableStateOf(false) }
@@ -201,16 +208,9 @@ fun MainSettingsView(
                     )
                     SettingsListItem(
                         icon = Icons.Default.Folder,
-                        title = "Export Backup",
-                        subtitle = "Save all data to a file for safekeeping.",
-                        onClick = onExportBackup,
-                        showDivider = true,
-                    )
-                    SettingsListItem(
-                        icon = Icons.Default.Loop,
-                        title = "Import Backup",
-                        subtitle = "Restore data from a backup file.",
-                        onClick = onImportBackup,
+                        title = "Backup & Restore",
+                        subtitle = "Export or import your data.",
+                        onClick = onNavigateToBackupRestore,
                         showDivider = true,
                     )
                     SettingsListItem(
@@ -267,6 +267,60 @@ fun MainSettingsView(
 
         if (showPomodoroSettings) {
             PomodoroSettingsSheet(onDismiss = { showPomodoroSettings = false })
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BackupRestoreView(
+    onExportBackup: () -> Unit,
+    onImportBackup: () -> Unit,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Backup & Restore") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                        )
+                    }
+                },
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { paddingValues ->
+        Column(
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+        ) {
+            SettingsSection(title = "Data") {
+                SettingsListItem(
+                    icon = Icons.Default.Folder,
+                    title = "Export Backup",
+                    subtitle = "Save all data to a JSON file.",
+                    onClick = onExportBackup,
+                    showDivider = true,
+                )
+                SettingsListItem(
+                    icon = Icons.Default.Loop,
+                    title = "Import Backup",
+                    subtitle = "Restore data from a backup file.",
+                    onClick = onImportBackup,
+                    showDivider = false,
+                )
+            }
         }
     }
 }
