@@ -480,7 +480,7 @@ private fun MarkdownFormattingToolbar(
             modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         FormatIconButton(Icons.Outlined.FormatBold, "Bold") { onFormat("**", "**") }
@@ -510,7 +510,7 @@ private fun FormatIconButton(
                 imageVector = icon,
                 contentDescription = contentDescription,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(Dimensions.iconSizeSmall),
             )
         }
     }
@@ -530,7 +530,14 @@ private fun MarkdownDescriptionField(
 
     // No key on remember — preserves cursor position across recompositions triggered by
     // the parent emitting a new state after each keystroke.
-    var textFieldValue by remember { mutableStateOf(TextFieldValue(text = value)) }
+    var textFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = value,
+                selection = TextRange(value.length),
+            ),
+        )
+    }
 
     // Sync only when an external source changes the text (e.g., field reset from the ViewModel).
     // During normal typing the internal text already matches `value`, so this is a no-op.

@@ -228,7 +228,7 @@ class StatsViewModel
                 coroutineScope {
                     habits
                         .map { habit ->
-                            async {
+                            async(Dispatchers.Default) {
                                 val streak = loadStreakSafe(habit.id)
                                 val frequency =
                                     when (habit.frequencyType) {
