@@ -2,6 +2,7 @@ package com.habitao.feature.tasks.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +21,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -98,6 +101,8 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -178,6 +183,8 @@ fun CreateTaskScreen(
         mutableStateOf(TextFieldValue(text = "", selection = TextRange(0)))
     }
     val undoRedoManager = remember { UndoRedoManager() }
+    val toolbarScope = rememberCoroutineScope()
+    var focusLossJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
     // Sync ViewModel → local TextFieldValue (on load/reset only)
     LaunchedEffect(state.description) {
@@ -295,7 +302,18 @@ fun CreateTaskScreen(
                 descriptionTfv = newTfv
                 viewModel.processIntent(CreateTaskIntent.SetDescription(newTfv.text))
             },
-            onDescriptionFocusChange = { descriptionFocused = it },
+            onDescriptionFocusChange = { focused ->
+                if (focused) {
+                    focusLossJob?.cancel()
+                    descriptionFocused = true
+                } else {
+                    focusLossJob =
+                        toolbarScope.launch {
+                            delay(250)
+                            descriptionFocused = false
+                        }
+                }
+            },
             modifier = Modifier.padding(paddingValues),
         )
     }
@@ -311,7 +329,6 @@ private fun CreateTaskForm(
     modifier: Modifier = Modifier,
 ) {
     val inputShape = RoundedCornerShape(16.dp)
-    val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
     var subtaskIdToFocus by remember { mutableStateOf<String?>(null) }
@@ -365,12 +382,6 @@ private fun CreateTaskForm(
                 textFieldValue = descriptionTfv,
                 onTextFieldValueChange = onDescriptionTfvChange,
                 onFocusChange = onDescriptionFocusChange,
-                onAutoScroll = {
-                    scope.launch {
-                        delay(100)
-                        scrollState.animateScrollTo(scrollState.maxValue)
-                    }
-                },
             )
         }
 
@@ -605,6 +616,44 @@ private fun MarkdownToolbar(
         }
     }
 
+    // Indent current line: if list marker present, nest it; otherwise insert spaces
+    val indentCurrentLine: () -> Unit = {
+        val text = textFieldValue.text
+        val cursor = textFieldValue.selection.start
+        undoRedoManager.checkpoint(textFieldValue, force = true)
+
+        val lineStart =
+            text.lastIndexOf('\n', (cursor - 1).coerceAtLeast(0)).let {
+                if (it == -1) 0 else it + 1
+            }
+        val lineEnd = text.indexOf('\n', cursor).let { if (it == -1) text.length else it }
+        val line = text.substring(lineStart, lineEnd)
+        val trimmedLine = line.trimStart()
+
+        // Check if line has a list marker that should be indented as a whole
+        val isListLine =
+            trimmedLine.startsWith("- ") ||
+                trimmedLine.startsWith("[ ] ") ||
+                trimmedLine.startsWith("[x] ") ||
+                trimmedLine.startsWith("[X] ") ||
+                trimmedLine.matches(Regex("^\\d+\\.\\s.*"))
+
+        if (isListLine) {
+            // Indent the entire line (marker + content) by prepending 2 spaces
+            val newLine = "  $line"
+            val newText = text.substring(0, lineStart) + newLine + text.substring(lineEnd)
+            onTextFieldValueChange(
+                TextFieldValue(
+                    text = newText,
+                    selection = TextRange((cursor + 2).coerceAtMost(newText.length)),
+                ),
+            )
+        } else {
+            // Plain text: insert 4 spaces at cursor
+            applyFormat("    ", "")
+        }
+    }
+
     // Toggle checkbox on current line
     val toggleCheckbox: () -> Unit = {
         val text = textFieldValue.text
@@ -676,9 +725,7 @@ private fun MarkdownToolbar(
                 ToolbarIcon(Icons.Outlined.Code, "Code") { applyFormat("`", "`") }
                 ToolbarIcon(Icons.Outlined.FormatListBulleted, "List") { applyFormat("- ", "") }
                 ToolbarIcon(Icons.Outlined.CheckBoxOutlineBlank, "Checkbox", onClick = toggleCheckbox)
-                ToolbarIcon(Icons.Outlined.FormatIndentIncrease, "Indent") {
-                    applyFormat("    ", "")
-                }
+                ToolbarIcon(Icons.Outlined.FormatIndentIncrease, "Indent", onClick = indentCurrentLine)
             }
 
             Spacer(modifier = Modifier.width(Dimensions.elementSpacing))
@@ -729,12 +776,12 @@ private fun ToolbarIcon(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun MarkdownDescriptionField(
     textFieldValue: TextFieldValue,
     onTextFieldValueChange: (TextFieldValue) -> Unit,
     onFocusChange: (Boolean) -> Unit,
-    onAutoScroll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val baseColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -750,11 +797,30 @@ private fun MarkdownDescriptionField(
             MarkdownVisualTransformation(baseColor, cursorPos, cachedRegions)
         }
 
-    // Auto-scroll only when newlines are added (not on deletion or initial load)
+    // Cursor-aware auto-scroll: bring the cursor line into view when newlines are added
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     val lineCount = remember(textFieldValue.text) { textFieldValue.text.count { it == '\n' } }
     var prevLineCount by remember { mutableIntStateOf(lineCount) }
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(lineCount) {
-        if (lineCount > prevLineCount) onAutoScroll()
+        if (lineCount > prevLineCount) {
+            // Scroll to cursor position, not to the bottom of the form
+            val layout = textLayoutResult
+            if (layout != null && layout.layoutInput.text.isNotEmpty()) {
+                val transformedOffset =
+                    markdownTransformation
+                        .filter(AnnotatedString(textFieldValue.text))
+                        .offsetMapping
+                        .originalToTransformed(cursorPos)
+                        .coerceIn(0, layout.layoutInput.text.length)
+                val cursorRect = layout.getCursorRect(transformedOffset)
+                bringIntoViewRequester.bringIntoView(cursorRect)
+            } else {
+                bringIntoViewRequester.bringIntoView()
+            }
+        }
         prevLineCount = lineCount
     }
 
@@ -765,6 +831,7 @@ private fun MarkdownDescriptionField(
             val result = handleMarkdownAutoFormat(oldText, newTfv.text, newTfv.selection)
             onTextFieldValueChange(result)
         },
+        onTextLayout = { textLayoutResult = it },
         textStyle =
             MaterialTheme.typography.bodyLarge.copy(
                 color = baseColor,
@@ -773,7 +840,13 @@ private fun MarkdownDescriptionField(
         modifier =
             modifier
                 .fillMaxWidth()
-                .onFocusChanged { onFocusChange(it.isFocused) },
+                .bringIntoViewRequester(bringIntoViewRequester)
+                .onFocusChanged { focusState ->
+                    onFocusChange(focusState.isFocused)
+                    if (focusState.isFocused) {
+                        scope.launch { bringIntoViewRequester.bringIntoView() }
+                    }
+                },
         visualTransformation = markdownTransformation,
         decorationBox = { innerTextField ->
             Column {
