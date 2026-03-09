@@ -29,9 +29,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.CalendarToday
+import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.FormatBold
+import androidx.compose.material.icons.outlined.FormatItalic
+import androidx.compose.material.icons.outlined.FormatListBulleted
+import androidx.compose.material.icons.outlined.FormatStrikethrough
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Title
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -74,6 +81,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -81,11 +89,9 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -474,24 +480,23 @@ private fun MarkdownFormattingToolbar(
             modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        FormatButton("B", FontWeight.Bold) { onFormat("**", "**") }
-        FormatButton("I", fontStyle = FontStyle.Italic) { onFormat("*", "*") }
-        FormatButton("S", textDecoration = TextDecoration.LineThrough) { onFormat("~~", "~~") }
-        FormatButton("<>") { onFormat("`", "`") }
-        FormatButton("H1") { onFormat("# ", "") }
-        FormatButton("--") { onFormat("- ", "") }
-        FormatButton("[]") { onFormat("[ ] ", "") }
+        FormatIconButton(Icons.Outlined.FormatBold, "Bold") { onFormat("**", "**") }
+        FormatIconButton(Icons.Outlined.FormatItalic, "Italic") { onFormat("*", "*") }
+        FormatIconButton(Icons.Outlined.FormatStrikethrough, "Strikethrough") { onFormat("~~", "~~") }
+        FormatIconButton(Icons.Outlined.Code, "Inline code") { onFormat("`", "`") }
+        FormatIconButton(Icons.Outlined.Title, "Heading") { onFormat("# ", "") }
+        FormatIconButton(Icons.Outlined.FormatListBulleted, "Bullet list") { onFormat("- ", "") }
+        FormatIconButton(Icons.Outlined.CheckBoxOutlineBlank, "Checkbox") { onFormat("[ ] ", "") }
     }
 }
 
 @Composable
-private fun FormatButton(
-    label: String,
-    fontWeight: FontWeight = FontWeight.Normal,
-    fontStyle: FontStyle = FontStyle.Normal,
-    textDecoration: TextDecoration = TextDecoration.None,
+private fun FormatIconButton(
+    icon: ImageVector,
+    contentDescription: String,
     onClick: () -> Unit,
 ) {
     Surface(
@@ -501,15 +506,11 @@ private fun FormatButton(
         modifier = Modifier.size(36.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = label,
-                style =
-                    MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = fontWeight,
-                        fontStyle = fontStyle,
-                        textDecoration = textDecoration,
-                    ),
-                color = MaterialTheme.colorScheme.onSurface,
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(Dimensions.iconSizeSmall),
             )
         }
     }
@@ -527,24 +528,33 @@ private fun MarkdownDescriptionField(
             MarkdownVisualTransformation(baseColor)
         }
 
-    // Use TextFieldValue for cursor control
-    var textFieldValue by remember(value) {
-        mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length)))
+    // No key on remember — preserves cursor position across recompositions triggered by
+    // the parent emitting a new state after each keystroke.
+    var textFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = value,
+                selection = TextRange(value.length),
+            ),
+        )
     }
 
-    // Sync external value changes
+    // Sync only when an external source changes the text (e.g., field reset from the ViewModel).
+    // During normal typing the internal text already matches `value`, so this is a no-op.
     LaunchedEffect(value) {
         if (textFieldValue.text != value) {
-            textFieldValue = TextFieldValue(text = value, selection = TextRange(value.length))
+            val safeCursor = textFieldValue.selection.start.coerceAtMost(value.length)
+            textFieldValue = TextFieldValue(text = value, selection = TextRange(safeCursor))
         }
     }
 
     BasicTextField(
         value = textFieldValue,
         onValueChange = { newTfv ->
-            val result = handleMarkdownAutoFormat(textFieldValue.text, newTfv.text, newTfv.selection)
+            val oldText = textFieldValue.text
+            val result = handleMarkdownAutoFormat(oldText, newTfv.text, newTfv.selection)
             textFieldValue = result
-            if (result.text != textFieldValue.text || result.text != value) {
+            if (result.text != value) {
                 onValueChange(result.text)
             }
         },
