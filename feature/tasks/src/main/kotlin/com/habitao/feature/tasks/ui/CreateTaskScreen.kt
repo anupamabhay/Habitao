@@ -77,6 +77,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -106,6 +107,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.habitao.core.ui.components.MarkdownVisualTransformation
+import com.habitao.core.ui.components.findInlineRegions
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.TaskPriority
 import com.habitao.feature.tasks.viewmodel.CreateTaskIntent
@@ -616,20 +618,24 @@ private fun MarkdownToolbar(
         val lineEnd = text.indexOf('\n', cursor).let { if (it == -1) text.length else it }
         val line = text.substring(lineStart, lineEnd)
 
+        val trimmedLine = line.trimStart()
+        val lineIndent = line.length - trimmedLine.length
+        val linePrefix = line.substring(0, lineIndent)
+
+        // 3-state cycle: none -> [ ] -> [x] -> none (remove)
         val (newLine, cursorDelta) =
             when {
-                line.trimStart().startsWith("[x] ") || line.trimStart().startsWith("[X] ") -> {
-                    val indent = line.length - line.trimStart().length
-                    val prefix = line.substring(0, indent)
-                    prefix + "[ ] " + line.trimStart().substring(4) to 0
+                trimmedLine.startsWith("[x] ") || trimmedLine.startsWith("[X] ") -> {
+                    // Checked -> remove checkbox entirely
+                    linePrefix + trimmedLine.substring(4) to -4
                 }
-                line.trimStart().startsWith("[ ] ") -> {
-                    val indent = line.length - line.trimStart().length
-                    val prefix = line.substring(0, indent)
-                    prefix + "[x] " + line.trimStart().substring(4) to 0
+                trimmedLine.startsWith("[ ] ") -> {
+                    // Unchecked -> check
+                    linePrefix + "[x] " + trimmedLine.substring(4) to 0
                 }
                 else -> {
-                    "[ ] $line" to 4
+                    // No checkbox -> add unchecked
+                    linePrefix + "[ ] " + trimmedLine to 4
                 }
             }
 
@@ -733,15 +739,23 @@ private fun MarkdownDescriptionField(
 ) {
     val baseColor = MaterialTheme.colorScheme.onSurfaceVariant
     val cursorPos = textFieldValue.selection.start
+
+    // Cache region parsing on text content -- avoids re-parsing on cursor-only changes
+    val cachedRegions =
+        remember(textFieldValue.text, baseColor) {
+            findInlineRegions(textFieldValue.text, baseColor)
+        }
     val markdownTransformation =
-        remember(baseColor, cursorPos) {
-            MarkdownVisualTransformation(baseColor, cursorPos)
+        remember(baseColor, cursorPos, cachedRegions) {
+            MarkdownVisualTransformation(baseColor, cursorPos, cachedRegions)
         }
 
-    // Auto-scroll when text grows (newlines)
+    // Auto-scroll only when newlines are added (not on deletion or initial load)
     val lineCount = remember(textFieldValue.text) { textFieldValue.text.count { it == '\n' } }
+    var prevLineCount by remember { mutableIntStateOf(lineCount) }
     LaunchedEffect(lineCount) {
-        if (lineCount > 0) onAutoScroll()
+        if (lineCount > prevLineCount) onAutoScroll()
+        prevLineCount = lineCount
     }
 
     BasicTextField(
@@ -819,10 +833,13 @@ private fun handleMarkdownAutoFormat(
 
     // Unordered list continuation: "- text" -> "- " on next line
     if (trimmedPrev.startsWith("- ") && trimmedPrev.length > 2) {
-        // Also handle "- [ ] text" (checkbox within list)
+        // Checkbox within list: "- [ ] text" or "- [x] text"
         return if (trimmedPrev.startsWith("- [ ] ") && trimmedPrev.length > 6) {
             continueLine("- [ ] ")
-        } else if (trimmedPrev.startsWith("- [x] ") || trimmedPrev.startsWith("- [X] ")) {
+        } else if (
+            (trimmedPrev.startsWith("- [x] ") || trimmedPrev.startsWith("- [X] ")) &&
+            trimmedPrev.length > 6
+        ) {
             continueLine("- [ ] ")
         } else {
             continueLine("- ")
@@ -831,7 +848,9 @@ private fun handleMarkdownAutoFormat(
 
     // Empty unordered list marker -> remove
     if (trimmedPrev == "-" || trimmedPrev == "- " ||
-        trimmedPrev == "- [ ]" || trimmedPrev == "- [ ] "
+        trimmedPrev == "- [ ]" || trimmedPrev == "- [ ] " ||
+        trimmedPrev == "- [x]" || trimmedPrev == "- [x] " ||
+        trimmedPrev == "- [X]" || trimmedPrev == "- [X] "
     ) {
         return removeMarkerLine()
     }

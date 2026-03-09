@@ -203,22 +203,117 @@ private fun AnnotatedString.Builder.appendFormattedLine(
     }
 }
 
+/** Inline marker region found during parsing. Positions are absolute in the raw text. */
+data class InlineRegion(
+    val openStart: Int,
+    val openLen: Int,
+    val closeStart: Int,
+    val closeLen: Int,
+    val style: SpanStyle,
+) {
+    val regionEnd: Int get() = closeStart + closeLen
+
+    fun cursorInside(cursor: Int): Boolean = cursor in openStart..regionEnd
+}
+
 /**
- * Cursor-aware VisualTransformation that hides inline markdown markers
- * when the cursor is not inside the formatted region. When the cursor
- * IS inside a region, markers are shown dimmed (TickTick-style).
- *
- * Line-level markers (headers, lists, checkboxes) remain visible but dimmed.
- * Inline markers (**bold**, *italic*, ~~strike~~, `code`) are hidden/shown
- * based on cursor proximity.
- *
- * Uses a custom OffsetMapping that correctly maps cursor positions
- * between the raw text and the (potentially shorter) transformed text.
- * Falls back to identity mapping on any error.
+ * Pre-compute inline markdown regions for a given text.
+ * Cache the result keyed on text content to avoid re-parsing on cursor-only changes.
+ */
+fun findInlineRegions(
+    raw: String,
+    baseColor: Color,
+): List<InlineRegion> {
+    val regions = mutableListOf<InlineRegion>()
+    var i = 0
+    while (i < raw.length) {
+        if (raw[i] == '\n') {
+            i++
+            continue
+        }
+        when {
+            raw.startsWith("**", i) -> {
+                val end = raw.indexOf("**", i + 2)
+                if (end != -1 && !raw.substring(i + 2, end).contains('\n')) {
+                    regions.add(
+                        InlineRegion(i, 2, end, 2, SpanStyle(fontWeight = FontWeight.Bold)),
+                    )
+                    i = end + 2
+                } else {
+                    i++
+                }
+            }
+            raw.startsWith("~~", i) -> {
+                val end = raw.indexOf("~~", i + 2)
+                if (end != -1 && !raw.substring(i + 2, end).contains('\n')) {
+                    regions.add(
+                        InlineRegion(
+                            i,
+                            2,
+                            end,
+                            2,
+                            SpanStyle(textDecoration = TextDecoration.LineThrough),
+                        ),
+                    )
+                    i = end + 2
+                } else {
+                    i++
+                }
+            }
+            raw[i] == '`' -> {
+                val end = raw.indexOf('`', i + 1)
+                if (end != -1 && !raw.substring(i + 1, end).contains('\n')) {
+                    regions.add(
+                        InlineRegion(
+                            i,
+                            1,
+                            end,
+                            1,
+                            SpanStyle(
+                                fontFamily = FontFamily.Monospace,
+                                color = baseColor.copy(alpha = 0.8f),
+                                background = baseColor.copy(alpha = 0.06f),
+                            ),
+                        ),
+                    )
+                    i = end + 1
+                } else {
+                    i++
+                }
+            }
+            raw[i] == '*' && i + 1 < raw.length && raw[i + 1] != '*' -> {
+                val end = raw.indexOf('*', i + 1)
+                if (end != -1 && end > i + 1 && !raw.substring(i + 1, end).contains('\n')) {
+                    regions.add(
+                        InlineRegion(
+                            i,
+                            1,
+                            end,
+                            1,
+                            SpanStyle(fontStyle = FontStyle.Italic),
+                        ),
+                    )
+                    i = end + 1
+                } else {
+                    i++
+                }
+            }
+            else -> i++
+        }
+    }
+    return regions
+}
+
+/**
+ * Cursor-aware VisualTransformation that hides inline markdown markers when
+ * the cursor is outside the region and shows them dimmed when inside.
+ * Uses a custom OffsetMapping for correct cursor positioning.
+ * Pass [precomputedRegions] to avoid re-parsing on cursor-only changes.
  */
 class MarkdownVisualTransformation(
     private val baseColor: Color,
     private val cursorPosition: Int = -1,
+    private val precomputedRegions: List<InlineRegion>? = null,
 ) : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         val raw = text.text
@@ -230,30 +325,14 @@ class MarkdownVisualTransformation(
         }
     }
 
-    /**
-     * Inline marker region found during parsing.
-     * Positions are absolute in the raw text.
-     */
-    private data class InlineRegion(
-        val openStart: Int,
-        val openLen: Int,
-        val closeStart: Int,
-        val closeLen: Int,
-        val style: SpanStyle,
-    ) {
-        val regionEnd: Int get() = closeStart + closeLen
-
-        fun cursorInside(cursor: Int): Boolean = cursor in openStart..regionEnd
-    }
-
     private fun buildTransformed(raw: String): TransformedText {
         val o2t = IntArray(raw.length + 1)
         val builder = AnnotatedString.Builder()
         var tPos = 0
         var rPos = 0
 
-        // First pass: find all inline regions in the full text
-        val regions = findAllInlineRegions(raw)
+        // Use precomputed regions if available, otherwise parse (fallback)
+        val regions = precomputedRegions ?: findInlineRegions(raw, baseColor)
 
         val lines = raw.split('\n')
         for ((lineIdx, line) in lines.withIndex()) {
@@ -429,92 +508,6 @@ class MarkdownVisualTransformation(
             }
         }
         return tPos
-    }
-
-    /** Find all inline markdown regions in the raw text. */
-    private fun findAllInlineRegions(raw: String): List<InlineRegion> {
-        val regions = mutableListOf<InlineRegion>()
-        var i = 0
-        while (i < raw.length) {
-            if (raw[i] == '\n') {
-                i++
-                continue
-            }
-            when {
-                // Bold: **text**
-                raw.startsWith("**", i) -> {
-                    val end = raw.indexOf("**", i + 2)
-                    if (end != -1 && !raw.substring(i + 2, end).contains('\n')) {
-                        regions.add(
-                            InlineRegion(i, 2, end, 2, SpanStyle(fontWeight = FontWeight.Bold)),
-                        )
-                        i = end + 2
-                    } else {
-                        i++
-                    }
-                }
-                // Strikethrough: ~~text~~
-                raw.startsWith("~~", i) -> {
-                    val end = raw.indexOf("~~", i + 2)
-                    if (end != -1 && !raw.substring(i + 2, end).contains('\n')) {
-                        regions.add(
-                            InlineRegion(
-                                i,
-                                2,
-                                end,
-                                2,
-                                SpanStyle(textDecoration = TextDecoration.LineThrough),
-                            ),
-                        )
-                        i = end + 2
-                    } else {
-                        i++
-                    }
-                }
-                // Inline code: `text`
-                raw[i] == '`' -> {
-                    val end = raw.indexOf('`', i + 1)
-                    if (end != -1 && !raw.substring(i + 1, end).contains('\n')) {
-                        regions.add(
-                            InlineRegion(
-                                i,
-                                1,
-                                end,
-                                1,
-                                SpanStyle(
-                                    fontFamily = FontFamily.Monospace,
-                                    color = baseColor.copy(alpha = 0.8f),
-                                    background = baseColor.copy(alpha = 0.06f),
-                                ),
-                            ),
-                        )
-                        i = end + 1
-                    } else {
-                        i++
-                    }
-                }
-                // Italic: *text* (single, not **)
-                raw[i] == '*' && i + 1 < raw.length && raw[i + 1] != '*' -> {
-                    val end = raw.indexOf('*', i + 1)
-                    if (end != -1 && end > i + 1 && !raw.substring(i + 1, end).contains('\n')) {
-                        regions.add(
-                            InlineRegion(
-                                i,
-                                1,
-                                end,
-                                1,
-                                SpanStyle(fontStyle = FontStyle.Italic),
-                            ),
-                        )
-                        i = end + 1
-                    } else {
-                        i++
-                    }
-                }
-                else -> i++
-            }
-        }
-        return regions
     }
 
     private data class LinePrefixInfo(

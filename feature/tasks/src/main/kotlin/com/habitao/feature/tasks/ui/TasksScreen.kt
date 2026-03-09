@@ -638,7 +638,7 @@ private fun TaskRow(
                             text = formatDueDate(task.dueDate!!, today),
                             style = MaterialTheme.typography.labelSmall,
                             color =
-                                if (isOverdue && !task.isCompleted) {
+                                if (isOverdue) {
                                     MaterialTheme.colorScheme.error
                                 } else {
                                     metaTint
