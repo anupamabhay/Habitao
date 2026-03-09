@@ -503,7 +503,7 @@ private fun FormatIconButton(
         onClick = onClick,
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        modifier = Modifier.size(36.dp),
+        modifier = Modifier.size(Dimensions.actionButtonSecondary),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
