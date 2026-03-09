@@ -10,14 +10,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,13 +34,17 @@ import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.FormatBold
+import androidx.compose.material.icons.outlined.FormatIndentIncrease
 import androidx.compose.material.icons.outlined.FormatItalic
 import androidx.compose.material.icons.outlined.FormatListBulleted
+import androidx.compose.material.icons.outlined.FormatSize
 import androidx.compose.material.icons.outlined.FormatStrikethrough
 import androidx.compose.material.icons.outlined.Keyboard
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Redo
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.Title
+import androidx.compose.material.icons.outlined.Undo
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -73,12 +79,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -88,6 +96,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -102,12 +111,51 @@ import com.habitao.domain.model.TaskPriority
 import com.habitao.feature.tasks.viewmodel.CreateTaskIntent
 import com.habitao.feature.tasks.viewmodel.CreateTaskState
 import com.habitao.feature.tasks.viewmodel.CreateTaskViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+
+/** Tracks text states for undo/redo with debounced checkpointing. */
+private class UndoRedoManager(private val maxHistory: Int = 50) {
+    private val undoStack = mutableListOf<TextFieldValue>()
+    private val redoStack = mutableListOf<TextFieldValue>()
+    private var lastCheckpoint = 0L
+
+    val canUndo: Boolean get() = undoStack.isNotEmpty()
+    val canRedo: Boolean get() = redoStack.isNotEmpty()
+
+    /** Push a checkpoint. Debounces rapid keystrokes (>400ms gap or structural change). */
+    fun checkpoint(
+        state: TextFieldValue,
+        force: Boolean = false,
+    ) {
+        val now = System.currentTimeMillis()
+        val elapsed = now - lastCheckpoint
+        if (!force && elapsed < 400 && undoStack.isNotEmpty()) return
+        if (undoStack.lastOrNull()?.text == state.text) return
+        undoStack.add(state)
+        if (undoStack.size > maxHistory) undoStack.removeAt(0)
+        redoStack.clear()
+        lastCheckpoint = now
+    }
+
+    fun undo(current: TextFieldValue): TextFieldValue? {
+        if (undoStack.isEmpty()) return null
+        redoStack.add(current)
+        return undoStack.removeAt(undoStack.lastIndex)
+    }
+
+    fun redo(current: TextFieldValue): TextFieldValue? {
+        if (redoStack.isEmpty()) return null
+        undoStack.add(current)
+        return redoStack.removeAt(redoStack.lastIndex)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,6 +168,23 @@ fun CreateTaskScreen(
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val focusManager = LocalFocusManager.current
+
+    // Hoisted description state so toolbar (in bottomBar) can interact with it
+    var descriptionFocused by remember { mutableStateOf(false) }
+    var descriptionTfv by remember {
+        mutableStateOf(TextFieldValue(text = "", selection = TextRange(0)))
+    }
+    val undoRedoManager = remember { UndoRedoManager() }
+
+    // Sync ViewModel → local TextFieldValue (on load/reset only)
+    LaunchedEffect(state.description) {
+        if (descriptionTfv.text != state.description) {
+            val safeCursor = descriptionTfv.selection.start.coerceAtMost(state.description.length)
+            descriptionTfv =
+                TextFieldValue(text = state.description, selection = TextRange(safeCursor))
+        }
+    }
 
     LaunchedEffect(taskId) {
         viewModel.processIntent(CreateTaskIntent.ResetForm)
@@ -170,41 +235,65 @@ fun CreateTaskScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0),
         bottomBar = {
-            Button(
-                onClick = { viewModel.processIntent(CreateTaskIntent.SaveTask) },
-                enabled = !state.isSaving,
-                shape = RoundedCornerShape(16.dp),
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                    ),
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .padding(
-                            horizontal = Dimensions.screenPaddingHorizontal,
-                            vertical = Dimensions.elementSpacingLarge,
-                        ),
-                contentPadding = PaddingValues(vertical = 16.dp),
-            ) {
-                Text(
-                    text =
-                        when {
-                            state.isSaving -> "Saving..."
-                            state.isEditMode -> "Save Changes"
-                            else -> "Create Task"
-                        },
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+            if (descriptionFocused) {
+                MarkdownToolbar(
+                    textFieldValue = descriptionTfv,
+                    onTextFieldValueChange = { newTfv ->
+                        descriptionTfv = newTfv
+                        viewModel.processIntent(CreateTaskIntent.SetDescription(newTfv.text))
+                    },
+                    undoRedoManager = undoRedoManager,
+                    onDismiss = { focusManager.clearFocus() },
+                    modifier =
+                        Modifier
+                            .windowInsetsPadding(WindowInsets.ime)
+                            .navigationBarsPadding(),
                 )
+            } else {
+                Button(
+                    onClick = { viewModel.processIntent(CreateTaskIntent.SaveTask) },
+                    enabled = !state.isSaving,
+                    shape = RoundedCornerShape(16.dp),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                        ),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(
+                                horizontal = Dimensions.screenPaddingHorizontal,
+                                vertical = Dimensions.elementSpacingLarge,
+                            ),
+                    contentPadding = PaddingValues(vertical = 16.dp),
+                ) {
+                    Text(
+                        text =
+                            when {
+                                state.isSaving -> "Saving..."
+                                state.isEditMode -> "Save Changes"
+                                else -> "Create Task"
+                            },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
             }
         },
     ) { paddingValues ->
         CreateTaskForm(
             state = state,
             onIntent = viewModel::processIntent,
+            descriptionTfv = descriptionTfv,
+            onDescriptionTfvChange = { newTfv ->
+                undoRedoManager.checkpoint(descriptionTfv)
+                descriptionTfv = newTfv
+                viewModel.processIntent(CreateTaskIntent.SetDescription(newTfv.text))
+            },
+            onDescriptionFocusChange = { descriptionFocused = it },
             modifier = Modifier.padding(paddingValues),
         )
     }
@@ -214,9 +303,14 @@ fun CreateTaskScreen(
 private fun CreateTaskForm(
     state: CreateTaskState,
     onIntent: (CreateTaskIntent) -> Unit,
+    descriptionTfv: TextFieldValue,
+    onDescriptionTfvChange: (TextFieldValue) -> Unit,
+    onDescriptionFocusChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val inputShape = RoundedCornerShape(16.dp)
+    val scope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
 
     var subtaskIdToFocus by remember { mutableStateOf<String?>(null) }
     var previousSubtaskIds by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -235,8 +329,7 @@ private fun CreateTaskForm(
         modifier =
             modifier
                 .fillMaxSize()
-                .imePadding()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = Dimensions.screenPaddingHorizontal),
         verticalArrangement = Arrangement.spacedBy(Dimensions.sectionSpacing),
     ) {
@@ -267,8 +360,15 @@ private fun CreateTaskForm(
             )
 
             MarkdownDescriptionField(
-                value = state.description,
-                onValueChange = { onIntent(CreateTaskIntent.SetDescription(it)) },
+                textFieldValue = descriptionTfv,
+                onTextFieldValueChange = onDescriptionTfvChange,
+                onFocusChange = onDescriptionFocusChange,
+                onAutoScroll = {
+                    scope.launch {
+                        delay(100)
+                        scrollState.animateScrollTo(scrollState.maxValue)
+                    }
+                },
             )
         }
 
@@ -470,82 +570,178 @@ private fun SectionHeader(text: String) {
     )
 }
 
+/** Formatting toolbar that sits above the keyboard in the Scaffold bottomBar. */
 @Composable
-private fun MarkdownFormattingToolbar(
-    onFormat: (prefix: String, suffix: String) -> Unit,
+private fun MarkdownToolbar(
+    textFieldValue: TextFieldValue,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
+    undoRedoManager: UndoRedoManager,
+    onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
-        verticalAlignment = Alignment.CenterVertically,
+    val applyFormat: (String, String) -> Unit = { prefix, suffix ->
+        val sel = textFieldValue.selection
+        val text = textFieldValue.text
+        undoRedoManager.checkpoint(textFieldValue, force = true)
+        if (sel.start != sel.end) {
+            val before = text.substring(0, sel.start)
+            val selected = text.substring(sel.start, sel.end)
+            val after = text.substring(sel.end)
+            val newText = before + prefix + selected + suffix + after
+            val newCursor = sel.end + prefix.length + suffix.length
+            onTextFieldValueChange(
+                TextFieldValue(text = newText, selection = TextRange(newCursor)),
+            )
+        } else {
+            val before = text.substring(0, sel.start)
+            val after = text.substring(sel.start)
+            val newText = before + prefix + suffix + after
+            val newCursor = sel.start + prefix.length
+            onTextFieldValueChange(
+                TextFieldValue(text = newText, selection = TextRange(newCursor)),
+            )
+        }
+    }
+
+    // Toggle checkbox on current line
+    val toggleCheckbox: () -> Unit = {
+        val text = textFieldValue.text
+        val cursor = textFieldValue.selection.start
+        undoRedoManager.checkpoint(textFieldValue, force = true)
+
+        val lineStart =
+            text.lastIndexOf('\n', (cursor - 1).coerceAtLeast(0)).let {
+                if (it == -1) 0 else it + 1
+            }
+        val lineEnd = text.indexOf('\n', cursor).let { if (it == -1) text.length else it }
+        val line = text.substring(lineStart, lineEnd)
+
+        val (newLine, cursorDelta) =
+            when {
+                line.trimStart().startsWith("[x] ") || line.trimStart().startsWith("[X] ") -> {
+                    val indent = line.length - line.trimStart().length
+                    val prefix = line.substring(0, indent)
+                    prefix + "[ ] " + line.trimStart().substring(4) to 0
+                }
+                line.trimStart().startsWith("[ ] ") -> {
+                    val indent = line.length - line.trimStart().length
+                    val prefix = line.substring(0, indent)
+                    prefix + "[x] " + line.trimStart().substring(4) to 0
+                }
+                else -> {
+                    "[ ] $line" to 4
+                }
+            }
+
+        val newText = text.substring(0, lineStart) + newLine + text.substring(lineEnd)
+        onTextFieldValueChange(
+            TextFieldValue(
+                text = newText,
+                selection = TextRange((cursor + cursorDelta).coerceIn(0, newText.length)),
+            ),
+        )
+    }
+
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = modifier.fillMaxWidth(),
     ) {
-        FormatIconButton(Icons.Outlined.FormatBold, "Bold") { onFormat("**", "**") }
-        FormatIconButton(Icons.Outlined.FormatItalic, "Italic") { onFormat("*", "*") }
-        FormatIconButton(Icons.Outlined.FormatStrikethrough, "Strikethrough") { onFormat("~~", "~~") }
-        FormatIconButton(Icons.Outlined.Code, "Inline code") { onFormat("`", "`") }
-        FormatIconButton(Icons.Outlined.Title, "Heading") { onFormat("# ", "") }
-        FormatIconButton(Icons.Outlined.FormatListBulleted, "Bullet list") { onFormat("- ", "") }
-        FormatIconButton(Icons.Outlined.CheckBoxOutlineBlank, "Checkbox") { onFormat("[ ] ", "") }
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(Dimensions.toolbarHeight)
+                    .padding(horizontal = Dimensions.elementSpacing),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Scrollable formatting buttons
+            Row(
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ToolbarIcon(Icons.Outlined.FormatSize, "Heading") { applyFormat("# ", "") }
+                ToolbarIcon(Icons.Outlined.FormatBold, "Bold") { applyFormat("**", "**") }
+                ToolbarIcon(Icons.Outlined.FormatItalic, "Italic") { applyFormat("*", "*") }
+                ToolbarIcon(Icons.Outlined.FormatStrikethrough, "Strike") { applyFormat("~~", "~~") }
+                ToolbarIcon(Icons.Outlined.Code, "Code") { applyFormat("`", "`") }
+                ToolbarIcon(Icons.Outlined.FormatListBulleted, "List") { applyFormat("- ", "") }
+                ToolbarIcon(Icons.Outlined.CheckBoxOutlineBlank, "Checkbox", onClick = toggleCheckbox)
+                ToolbarIcon(Icons.Outlined.FormatIndentIncrease, "Indent") {
+                    applyFormat("    ", "")
+                }
+            }
+
+            Spacer(modifier = Modifier.width(Dimensions.elementSpacing))
+
+            // Fixed undo/redo/dismiss section
+            ToolbarIcon(
+                Icons.Outlined.Undo,
+                "Undo",
+                enabled = undoRedoManager.canUndo,
+            ) {
+                undoRedoManager.undo(textFieldValue)?.let { onTextFieldValueChange(it) }
+            }
+            ToolbarIcon(
+                Icons.Outlined.Redo,
+                "Redo",
+                enabled = undoRedoManager.canRedo,
+            ) {
+                undoRedoManager.redo(textFieldValue)?.let { onTextFieldValueChange(it) }
+            }
+            ToolbarIcon(Icons.Outlined.KeyboardArrowDown, "Dismiss", onClick = onDismiss)
+        }
     }
 }
 
 @Composable
-private fun FormatIconButton(
+private fun ToolbarIcon(
     icon: ImageVector,
     contentDescription: String,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    Surface(
+    IconButton(
         onClick = onClick,
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        enabled = enabled,
         modifier = Modifier.size(Dimensions.actionButtonSecondary),
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = icon,
-                contentDescription = contentDescription,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(Dimensions.iconSizeSmall),
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint =
+                if (enabled) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                },
+            modifier = Modifier.size(Dimensions.iconSizeSmall),
+        )
     }
 }
 
 @Composable
 private fun MarkdownDescriptionField(
-    value: String,
-    onValueChange: (String) -> Unit,
+    textFieldValue: TextFieldValue,
+    onTextFieldValueChange: (TextFieldValue) -> Unit,
+    onFocusChange: (Boolean) -> Unit,
+    onAutoScroll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val baseColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val cursorPos = textFieldValue.selection.start
     val markdownTransformation =
-        remember(baseColor) {
-            MarkdownVisualTransformation(baseColor)
+        remember(baseColor, cursorPos) {
+            MarkdownVisualTransformation(baseColor, cursorPos)
         }
 
-    // No key on remember — preserves cursor position across recompositions triggered by
-    // the parent emitting a new state after each keystroke.
-    var textFieldValue by remember {
-        mutableStateOf(
-            TextFieldValue(
-                text = value,
-                selection = TextRange(value.length),
-            ),
-        )
-    }
-
-    // Sync only when an external source changes the text (e.g., field reset from the ViewModel).
-    // During normal typing the internal text already matches `value`, so this is a no-op.
-    LaunchedEffect(value) {
-        if (textFieldValue.text != value) {
-            val safeCursor = textFieldValue.selection.start.coerceAtMost(value.length)
-            textFieldValue = TextFieldValue(text = value, selection = TextRange(safeCursor))
-        }
+    // Auto-scroll when text grows (newlines)
+    val lineCount = remember(textFieldValue.text) { textFieldValue.text.count { it == '\n' } }
+    LaunchedEffect(lineCount) {
+        if (lineCount > 0) onAutoScroll()
     }
 
     BasicTextField(
@@ -553,21 +749,21 @@ private fun MarkdownDescriptionField(
         onValueChange = { newTfv ->
             val oldText = textFieldValue.text
             val result = handleMarkdownAutoFormat(oldText, newTfv.text, newTfv.selection)
-            textFieldValue = result
-            if (result.text != value) {
-                onValueChange(result.text)
-            }
+            onTextFieldValueChange(result)
         },
         textStyle =
             MaterialTheme.typography.bodyLarge.copy(
                 color = baseColor,
             ),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        modifier = modifier.fillMaxWidth(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .onFocusChanged { onFocusChange(it.isFocused) },
         visualTransformation = markdownTransformation,
         decorationBox = { innerTextField ->
             Column {
-                if (value.isEmpty()) {
+                if (textFieldValue.text.isEmpty()) {
                     Text(
                         text = "Add description... (supports markdown)",
                         style = MaterialTheme.typography.bodyLarge,
@@ -575,39 +771,6 @@ private fun MarkdownDescriptionField(
                     )
                 }
                 innerTextField()
-                Spacer(modifier = Modifier.height(8.dp))
-                MarkdownFormattingToolbar(
-                    onFormat = { prefix, suffix ->
-                        val sel = textFieldValue.selection
-                        val text = textFieldValue.text
-                        if (sel.start != sel.end) {
-                            // Wrap selected text
-                            val before = text.substring(0, sel.start)
-                            val selected = text.substring(sel.start, sel.end)
-                            val after = text.substring(sel.end)
-                            val newText = before + prefix + selected + suffix + after
-                            val newCursor = sel.end + prefix.length + suffix.length
-                            textFieldValue =
-                                TextFieldValue(
-                                    text = newText,
-                                    selection = TextRange(newCursor),
-                                )
-                            onValueChange(newText)
-                        } else {
-                            // Insert at cursor for line-level markers (like - , [ ] )
-                            val before = text.substring(0, sel.start)
-                            val after = text.substring(sel.start)
-                            val newText = before + prefix + suffix + after
-                            val newCursor = sel.start + prefix.length
-                            textFieldValue =
-                                TextFieldValue(
-                                    text = newText,
-                                    selection = TextRange(newCursor),
-                                )
-                            onValueChange(newText)
-                        }
-                    },
-                )
             }
         },
     )
@@ -618,88 +781,90 @@ private fun handleMarkdownAutoFormat(
     newText: String,
     currentSelection: TextRange,
 ): TextFieldValue {
-    // Only trigger on newline insertion (user pressed Enter)
-    if (newText.length <= oldText.length) {
-        return TextFieldValue(text = newText, selection = currentSelection)
-    }
-    val insertedCount = newText.length - oldText.length
-    if (insertedCount != 1) {
+    // Only trigger on single-character insertion
+    if (newText.length != oldText.length + 1) {
         return TextFieldValue(text = newText, selection = currentSelection)
     }
 
-    // Find where the newline was inserted
-    val diffIndex =
-        newText.indices.firstOrNull { i ->
-            i >= oldText.length || newText[i] != oldText[i]
-        } ?: return TextFieldValue(text = newText, selection = currentSelection)
+    // Use cursor position to find the newline — more reliable than char-by-char diff
+    // which can fail with IME predictive text.
+    val cursor = currentSelection.start
+    val newlineIdx = (cursor - 1).coerceAtLeast(0)
 
-    if (newText[diffIndex] != '\n') {
+    if (newlineIdx >= newText.length || newText[newlineIdx] != '\n') {
         return TextFieldValue(text = newText, selection = currentSelection)
     }
 
     // Get the line BEFORE the newline
-    val beforeNewline = newText.substring(0, diffIndex)
+    val beforeNewline = newText.substring(0, newlineIdx)
     val prevLineStart = beforeNewline.lastIndexOf('\n').let { if (it == -1) 0 else it + 1 }
     val prevLine = beforeNewline.substring(prevLineStart)
     val trimmedPrev = prevLine.trimStart()
+    val indent = prevLine.substring(0, prevLine.length - trimmedPrev.length)
+    val after = newText.substring(newlineIdx + 1)
 
-    // Unordered list: "- text" -> auto-add "- " on next line
-    if (trimmedPrev.startsWith("- ") && trimmedPrev.length > 2) {
-        val after = newText.substring(diffIndex + 1)
-        val result = beforeNewline + "\n- " + after
-        return TextFieldValue(text = result, selection = TextRange(diffIndex + 3))
-    }
-
-    // Empty unordered list marker: just "- " with no text -> remove it
-    if (trimmedPrev == "-" || trimmedPrev == "- ") {
+    // Helper to remove empty marker and the line
+    fun removeMarkerLine(): TextFieldValue {
         val beforePrevLine = newText.substring(0, prevLineStart)
-        val after = newText.substring(diffIndex + 1)
         val result = beforePrevLine + after
         return TextFieldValue(text = result, selection = TextRange(beforePrevLine.length))
     }
 
-    // Numbered list: "1. text" -> auto-add "2. " on next line
+    // Helper to continue list on next line
+    fun continueLine(marker: String): TextFieldValue {
+        val result = beforeNewline + "\n" + indent + marker + after
+        val newCursor = newlineIdx + 1 + indent.length + marker.length
+        return TextFieldValue(text = result, selection = TextRange(newCursor))
+    }
+
+    // Unordered list continuation: "- text" -> "- " on next line
+    if (trimmedPrev.startsWith("- ") && trimmedPrev.length > 2) {
+        // Also handle "- [ ] text" (checkbox within list)
+        return if (trimmedPrev.startsWith("- [ ] ") && trimmedPrev.length > 6) {
+            continueLine("- [ ] ")
+        } else if (trimmedPrev.startsWith("- [x] ") || trimmedPrev.startsWith("- [X] ")) {
+            continueLine("- [ ] ")
+        } else {
+            continueLine("- ")
+        }
+    }
+
+    // Empty unordered list marker -> remove
+    if (trimmedPrev == "-" || trimmedPrev == "- " ||
+        trimmedPrev == "- [ ]" || trimmedPrev == "- [ ] "
+    ) {
+        return removeMarkerLine()
+    }
+
+    // Numbered list: "1. text" -> "2. " on next line
     val numberedMatch = Regex("^(\\d+)\\.\\s(.+)$").find(trimmedPrev)
     if (numberedMatch != null) {
-        val nextNumber = (numberedMatch.groupValues[1].toIntOrNull() ?: 0) + 1
-        val prefix = "$nextNumber. "
-        val after = newText.substring(diffIndex + 1)
-        val result = beforeNewline + "\n" + prefix + after
-        return TextFieldValue(
-            text = result,
-            selection = TextRange(diffIndex + 1 + prefix.length),
-        )
+        val nextNum = (numberedMatch.groupValues[1].toIntOrNull() ?: 0) + 1
+        return continueLine("$nextNum. ")
     }
 
-    // Empty numbered list marker: "1. " with no text -> remove it
-    val emptyNumberedMatch = Regex("^(\\d+)\\.\\s?$").find(trimmedPrev)
-    if (emptyNumberedMatch != null) {
-        val beforePrevLine = newText.substring(0, prevLineStart)
-        val after = newText.substring(diffIndex + 1)
-        val result = beforePrevLine + after
-        return TextFieldValue(text = result, selection = TextRange(beforePrevLine.length))
+    // Empty numbered list marker -> remove
+    if (Regex("^\\d+\\.\\s?$").matches(trimmedPrev)) {
+        return removeMarkerLine()
     }
 
-    // Checkbox: "[ ] text" -> auto-add "[ ] " on next line
+    // Checkbox: "[ ] text" -> "[ ] " on next line
     if (trimmedPrev.startsWith("[ ] ") && trimmedPrev.length > 4) {
-        val after = newText.substring(diffIndex + 1)
-        val result = beforeNewline + "\n[ ] " + after
-        return TextFieldValue(text = result, selection = TextRange(diffIndex + 5))
+        return continueLine("[ ] ")
     }
 
-    // Checked checkbox: "[x] text" -> auto-add "[ ] " on next line
-    if ((trimmedPrev.startsWith("[x] ") || trimmedPrev.startsWith("[X] ")) && trimmedPrev.length > 4) {
-        val after = newText.substring(diffIndex + 1)
-        val result = beforeNewline + "\n[ ] " + after
-        return TextFieldValue(text = result, selection = TextRange(diffIndex + 5))
+    // Checked checkbox: "[x] text" -> "[ ] " on next line
+    if ((trimmedPrev.startsWith("[x] ") || trimmedPrev.startsWith("[X] ")) &&
+        trimmedPrev.length > 4
+    ) {
+        return continueLine("[ ] ")
     }
 
-    // Empty checkbox: "[ ] " -> remove
-    if (trimmedPrev == "[ ]" || trimmedPrev == "[ ] ") {
-        val beforePrevLine = newText.substring(0, prevLineStart)
-        val after = newText.substring(diffIndex + 1)
-        val result = beforePrevLine + after
-        return TextFieldValue(text = result, selection = TextRange(beforePrevLine.length))
+    // Empty checkbox -> remove
+    if (trimmedPrev == "[ ]" || trimmedPrev == "[ ] " ||
+        trimmedPrev == "[x]" || trimmedPrev == "[x] "
+    ) {
+        return removeMarkerLine()
     }
 
     return TextFieldValue(text = newText, selection = currentSelection)

@@ -42,6 +42,10 @@ object Dimensions {
     // Task list
     val subtaskIndentPerLevel = 32.dp
     val taskRowVerticalPadding = 2.dp
+    const val COMPLETED_TASK_ALPHA = 0.45f
+
+    // Markdown toolbar
+    val toolbarHeight = 44.dp
 
     // About screen
     val logoSize = 120.dp

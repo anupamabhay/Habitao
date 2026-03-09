@@ -470,14 +470,14 @@ private fun TaskItemWithSubtasks(
         }
     }
 
-    if (depth == 0 && subtasks.isNotEmpty()) {
+    if (depth == 0) {
         Surface(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(
                         horizontal = Dimensions.cardSpacing,
-                        vertical = 2.dp,
+                        vertical = Dimensions.taskRowVerticalPadding,
                     ),
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
             shape = RoundedCornerShape(12.dp),
@@ -506,6 +506,7 @@ private fun TaskRow(
     val hasPriority = task.priority != TaskPriority.NONE
     val today = remember { LocalDate.now() }
     val isOverdue = task.dueDate?.isBefore(today) == true && !task.isCompleted
+    val dimAlpha = Dimensions.COMPLETED_TASK_ALPHA
 
     Row(
         modifier =
@@ -530,7 +531,13 @@ private fun TaskRow(
                         .width(3.dp)
                         .height(32.dp)
                         .clip(RoundedCornerShape(1.5.dp))
-                        .background(priorityColor),
+                        .background(
+                            if (task.isCompleted) {
+                                priorityColor.copy(alpha = dimAlpha)
+                            } else {
+                                priorityColor
+                            },
+                        ),
             )
             Spacer(modifier = Modifier.width(5.dp))
         }
@@ -551,8 +558,9 @@ private fun TaskRow(
                     if (task.isCompleted) "Completed" else "Incomplete",
                 tint =
                     when {
+                        task.isCompleted && hasPriority -> priorityColor.copy(alpha = dimAlpha)
+                        task.isCompleted -> MaterialTheme.colorScheme.outline.copy(alpha = dimAlpha)
                         hasPriority -> priorityColor
-                        task.isCompleted -> MaterialTheme.colorScheme.primary
                         else -> MaterialTheme.colorScheme.outline
                     },
                 modifier = Modifier.size(22.dp),
@@ -572,7 +580,7 @@ private fun TaskRow(
                 textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
                 color =
                     if (task.isCompleted) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = dimAlpha)
                     } else {
                         MaterialTheme.colorScheme.onSurface
                     },
@@ -584,6 +592,12 @@ private fun TaskRow(
             val hasDescription = !task.description.isNullOrBlank()
             val hasDueDate = task.dueDate != null
             val hasSubtasks = subtaskCount > 0
+            val metaTint =
+                if (task.isCompleted) {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = dimAlpha)
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
 
             if (hasDescription || hasDueDate || hasSubtasks) {
                 Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
@@ -596,7 +610,7 @@ private fun TaskRow(
                             imageVector = Icons.Outlined.Description,
                             contentDescription = "Has description",
                             modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = metaTint,
                         )
                     }
 
@@ -609,12 +623,12 @@ private fun TaskRow(
                                 imageVector = Icons.Outlined.SubdirectoryArrowRight,
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = metaTint,
                             )
                             Text(
                                 text = "$subtaskCount",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = metaTint,
                             )
                         }
                     }
@@ -624,10 +638,10 @@ private fun TaskRow(
                             text = formatDueDate(task.dueDate!!, today),
                             style = MaterialTheme.typography.labelSmall,
                             color =
-                                if (isOverdue) {
+                                if (isOverdue && !task.isCompleted) {
                                     MaterialTheme.colorScheme.error
                                 } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                    metaTint
                                 },
                         )
                     }
