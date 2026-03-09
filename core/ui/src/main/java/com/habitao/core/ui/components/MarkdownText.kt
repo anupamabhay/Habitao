@@ -315,12 +315,20 @@ class MarkdownVisualTransformation(
     private val cursorPosition: Int = -1,
     private val precomputedRegions: List<InlineRegion>? = null,
 ) : VisualTransformation {
+    /** Last offset mapping produced by [filter], for external cursor rect lookups. */
+    var lastOffsetMapping: OffsetMapping = OffsetMapping.Identity
+        private set
+
     override fun filter(text: AnnotatedString): TransformedText {
         val raw = text.text
-        if (raw.isEmpty()) return TransformedText(text, OffsetMapping.Identity)
+        if (raw.isEmpty()) {
+            lastOffsetMapping = OffsetMapping.Identity
+            return TransformedText(text, OffsetMapping.Identity)
+        }
         return try {
-            buildTransformed(raw)
+            buildTransformed(raw).also { lastOffsetMapping = it.offsetMapping }
         } catch (_: Exception) {
+            lastOffsetMapping = OffsetMapping.Identity
             TransformedText(text, OffsetMapping.Identity)
         }
     }

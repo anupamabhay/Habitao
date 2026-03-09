@@ -200,14 +200,19 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // Request highest available refresh rate (only when a valid mode is found)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            display?.supportedModes?.maxByOrNull { it.refreshRate }?.let { mode ->
-                window.attributes =
-                    window.attributes.also { params ->
-                        params.preferredDisplayModeId = mode.modeId
-                    }
+        // Request highest available refresh rate for all supported API levels
+        @Suppress("DEPRECATION")
+        val modes =
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                display?.supportedModes?.toList()
+            } else {
+                windowManager.defaultDisplay.supportedModes?.toList()
             }
+        modes?.maxByOrNull { it.refreshRate }?.let { mode ->
+            window.attributes =
+                window.attributes.also { params ->
+                    params.preferredDisplayModeId = mode.modeId
+                }
         }
         setContent {
             HabitaoApp(

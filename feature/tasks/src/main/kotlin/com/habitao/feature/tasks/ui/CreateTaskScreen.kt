@@ -37,6 +37,7 @@ import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.FormatBold
+import androidx.compose.material.icons.outlined.FormatIndentDecrease
 import androidx.compose.material.icons.outlined.FormatIndentIncrease
 import androidx.compose.material.icons.outlined.FormatItalic
 import androidx.compose.material.icons.outlined.FormatListBulleted
@@ -80,7 +81,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -91,6 +91,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -101,7 +102,6 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
@@ -244,7 +244,6 @@ fun CreateTaskScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = WindowInsets(0),
         bottomBar = {
             if (descriptionFocused) {
                 MarkdownToolbar(
@@ -272,6 +271,7 @@ fun CreateTaskScreen(
                     modifier =
                         Modifier
                             .fillMaxWidth()
+                            .windowInsetsPadding(WindowInsets.ime)
                             .navigationBarsPadding()
                             .padding(
                                 horizontal = Dimensions.screenPaddingHorizontal,
@@ -654,6 +654,39 @@ private fun MarkdownToolbar(
         }
     }
 
+    // Outdent current line: remove up to 2 leading spaces
+    val outdentCurrentLine: () -> Unit = {
+        val text = textFieldValue.text
+        val cursor = textFieldValue.selection.start
+        undoRedoManager.checkpoint(textFieldValue, force = true)
+
+        val lineStart =
+            text.lastIndexOf('\n', (cursor - 1).coerceAtLeast(0)).let {
+                if (it == -1) 0 else it + 1
+            }
+        val lineEnd = text.indexOf('\n', cursor).let { if (it == -1) text.length else it }
+        val line = text.substring(lineStart, lineEnd)
+
+        // Remove up to 2 leading spaces
+        val spacesToRemove =
+            when {
+                line.startsWith("  ") -> 2
+                line.startsWith(" ") -> 1
+                else -> 0
+            }
+
+        if (spacesToRemove > 0) {
+            val newLine = line.substring(spacesToRemove)
+            val newText = text.substring(0, lineStart) + newLine + text.substring(lineEnd)
+            onTextFieldValueChange(
+                TextFieldValue(
+                    text = newText,
+                    selection = TextRange((cursor - spacesToRemove).coerceAtLeast(lineStart)),
+                ),
+            )
+        }
+    }
+
     // Toggle checkbox on current line
     val toggleCheckbox: () -> Unit = {
         val text = textFieldValue.text
@@ -726,6 +759,7 @@ private fun MarkdownToolbar(
                 ToolbarIcon(Icons.Outlined.FormatListBulleted, "List") { applyFormat("- ", "") }
                 ToolbarIcon(Icons.Outlined.CheckBoxOutlineBlank, "Checkbox", onClick = toggleCheckbox)
                 ToolbarIcon(Icons.Outlined.FormatIndentIncrease, "Indent", onClick = indentCurrentLine)
+                ToolbarIcon(Icons.Outlined.FormatIndentDecrease, "Outdent", onClick = outdentCurrentLine)
             }
 
             Spacer(modifier = Modifier.width(Dimensions.elementSpacing))
@@ -797,31 +831,32 @@ private fun MarkdownDescriptionField(
             MarkdownVisualTransformation(baseColor, cursorPos, cachedRegions)
         }
 
-    // Cursor-aware auto-scroll: bring the cursor line into view when newlines are added
+    // Cursor-aware auto-scroll: bring cursor into view on any text change
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-    val lineCount = remember(textFieldValue.text) { textFieldValue.text.count { it == '\n' } }
-    var prevLineCount by remember { mutableIntStateOf(lineCount) }
+    var prevText by remember { mutableStateOf(textFieldValue.text) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(lineCount) {
-        if (lineCount > prevLineCount) {
-            // Scroll to cursor position, not to the bottom of the form
+    // Trigger auto-scroll on any text change (not just newlines)
+    LaunchedEffect(textFieldValue.text) {
+        if (textFieldValue.text != prevText) {
+            prevText = textFieldValue.text
             val layout = textLayoutResult
             if (layout != null && layout.layoutInput.text.isNotEmpty()) {
+                // Reuse cached offset mapping instead of re-filtering
                 val transformedOffset =
-                    markdownTransformation
-                        .filter(AnnotatedString(textFieldValue.text))
-                        .offsetMapping
+                    markdownTransformation.lastOffsetMapping
                         .originalToTransformed(cursorPos)
                         .coerceIn(0, layout.layoutInput.text.length)
                 val cursorRect = layout.getCursorRect(transformedOffset)
-                bringIntoViewRequester.bringIntoView(cursorRect)
+                // Add gap below cursor so it doesn't sit flush against toolbar
+                val paddedRect =
+                    Rect(cursorRect.left, cursorRect.top, cursorRect.right, cursorRect.bottom + 120f)
+                bringIntoViewRequester.bringIntoView(paddedRect)
             } else {
                 bringIntoViewRequester.bringIntoView()
             }
         }
-        prevLineCount = lineCount
     }
 
     BasicTextField(
