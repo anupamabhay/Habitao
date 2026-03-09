@@ -19,6 +19,9 @@ import com.habitao.feature.pomodoro.service.TimerState
 import com.habitao.feature.pomodoro.service.TimerStateHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +42,7 @@ import java.time.temporal.ChronoUnit
 import java.util.Locale
 import javax.inject.Inject
 
+@Immutable
 data class HabitStatItem(
     val habitId: String,
     val title: String,
@@ -213,43 +217,54 @@ class StatsViewModel
             combine(habitsFlow, habitLogsFlow) { habits, logs ->
                 habits to logs
             }.mapLatest { (habits, logs) ->
-                val completedTodayIds =
-                    logs
-                        .filter { it.date == today && it.isCompleted }
-                        .map { it.habitId }
-                        .toSet()
+                withContext(Dispatchers.Default) {
+                    val completedTodayIds =
+                        logs
+                            .filter { it.date == today && it.isCompleted }
+                            .map { it.habitId }
+                            .toSet()
 
-                habits
-                    .map { habit ->
-                        val streak = loadStreakSafe(habit.id)
-                        val frequency =
-                            when (habit.frequencyType) {
-                                FrequencyType.DAILY -> "Daily"
-                                FrequencyType.SPECIFIC_DAYS -> {
-                                    if (habit.scheduledDays.size == 7) {
-                                        "Daily"
-                                    } else {
-                                        habit.scheduledDays
-                                            .sorted()
-                                            .joinToString(", ") { it.shortName }
-                                            .ifBlank { "Weekly" }
-                                    }
+                    // Load streaks concurrently — DB calls dispatch to IO internally.
+                    coroutineScope {
+                        habits
+                            .map { habit ->
+                                async {
+                                    val streak = loadStreakSafe(habit.id)
+                                    val frequency =
+                                        when (habit.frequencyType) {
+                                            FrequencyType.DAILY -> "Daily"
+                                            FrequencyType.SPECIFIC_DAYS -> {
+                                                if (habit.scheduledDays.size == 7) {
+                                                    "Daily"
+                                                } else {
+                                                    habit.scheduledDays
+                                                        .sorted()
+                                                        .joinToString(", ") { it.shortName }
+                                                        .ifBlank { "Weekly" }
+                                                }
+                                            }
+                                            FrequencyType.TIMES_PER_WEEK ->
+                                                "${habit.frequencyValue}x/week"
+                                            FrequencyType.EVERY_X_DAYS ->
+                                                "Every ${habit.frequencyValue} days"
+                                        }
+                                    HabitStatItem(
+                                        habitId = habit.id,
+                                        title = habit.title,
+                                        currentStreak = streak.currentStreak,
+                                        longestStreak = streak.longestStreak,
+                                        totalCompletions = streak.totalCompletions,
+                                        isCompletedToday =
+                                            completedTodayIds.contains(habit.id),
+                                        frequency = frequency,
+                                    )
                                 }
-                                FrequencyType.TIMES_PER_WEEK -> "${habit.frequencyValue}x/week"
-                                FrequencyType.EVERY_X_DAYS -> "Every ${habit.frequencyValue} days"
                             }
-                        HabitStatItem(
-                            habitId = habit.id,
-                            title = habit.title,
-                            currentStreak = streak.currentStreak,
-                            longestStreak = streak.longestStreak,
-                            totalCompletions = streak.totalCompletions,
-                            isCompletedToday = completedTodayIds.contains(habit.id),
-                            frequency = frequency,
-                        )
+                            .awaitAll()
+                            .filter { it.currentStreak >= 2 }
+                            .sortedByDescending { it.currentStreak }
                     }
-                    .filter { it.currentStreak >= 2 }
-                    .sortedByDescending { it.currentStreak }
+                }
             }
 
         private val taskStatsFlow =
