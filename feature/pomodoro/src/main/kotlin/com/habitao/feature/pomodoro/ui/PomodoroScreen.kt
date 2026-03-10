@@ -32,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -448,12 +449,29 @@ private fun TimeAdjustDialog(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
                 ) {
-                    TextButton(onClick = { onAdjust(-5 * 60L) }) { Text("-5 min") }
-                    TextButton(onClick = { onAdjust(-1 * 60L) }) { Text("-1 min") }
-                    TextButton(onClick = { onAdjust(1 * 60L) }) { Text("+1 min") }
-                    TextButton(onClick = { onAdjust(5 * 60L) }) { Text("+5 min") }
+                    OutlinedButton(
+                        onClick = { onAdjust(-5 * 60L) },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("-5 min") }
+                    OutlinedButton(
+                        onClick = { onAdjust(-1 * 60L) },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("-1 min") }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
+                ) {
+                    OutlinedButton(
+                        onClick = { onAdjust(1 * 60L) },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("+1 min") }
+                    OutlinedButton(
+                        onClick = { onAdjust(5 * 60L) },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("+5 min") }
                 }
             }
         },

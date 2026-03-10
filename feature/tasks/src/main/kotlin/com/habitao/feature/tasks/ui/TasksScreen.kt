@@ -175,6 +175,7 @@ private fun TasksContent(
             )
         }
     val expandedTaskIds = remember { mutableStateMapOf<String, Boolean>() }
+    val today = remember { LocalDate.now() }
 
     val hasActiveTasks =
         state.overdueTasks.isNotEmpty() ||
@@ -233,6 +234,7 @@ private fun TasksContent(
                         subTasks = state.subTasks,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
+                        today = today,
                     )
 
                     section(
@@ -244,6 +246,7 @@ private fun TasksContent(
                         subTasks = state.subTasks,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
+                        today = today,
                     )
 
                     section(
@@ -255,6 +258,7 @@ private fun TasksContent(
                         subTasks = state.subTasks,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
+                        today = today,
                     )
 
                     section(
@@ -266,6 +270,7 @@ private fun TasksContent(
                         subTasks = state.subTasks,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
+                        today = today,
                     )
 
                     if (hasCompletedTasks) {
@@ -285,7 +290,11 @@ private fun TasksContent(
                         }
 
                         if (sectionExpanded["Completed"] == true) {
-                            items(state.completedTasks, key = { it.id }) { task ->
+                            items(
+                                state.completedTasks,
+                                key = { it.id },
+                                contentType = { "task_item" },
+                            ) { task ->
                                 TaskItemWithSubtasks(
                                     task = task,
                                     subtasks = state.completedSubTasks[task.id] ?: emptyList(),
@@ -296,10 +305,15 @@ private fun TasksContent(
                                         expandedTaskIds[task.id] = !(expandedTaskIds[task.id] ?: true)
                                     },
                                     allSubTasks = state.completedSubTasks,
+                                    today = today,
                                 )
                             }
 
-                            items(state.orphanCompletedSubTasks, key = { it.id }) { task ->
+                            items(
+                                state.orphanCompletedSubTasks,
+                                key = { it.id },
+                                contentType = { "task_item" },
+                            ) { task ->
                                 TaskRow(
                                     task = task,
                                     onToggleComplete = { onToggleComplete(task.id, it) },
@@ -309,6 +323,7 @@ private fun TasksContent(
                                     showSubtaskChevron = false,
                                     onToggleExpanded = null,
                                     isExpanded = true,
+                                    today = today,
                                 )
                             }
                         }
@@ -328,6 +343,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
     subTasks: Map<String, List<Task>>,
     onToggleComplete: (String, Boolean) -> Unit,
     onTaskClick: (String) -> Unit,
+    today: LocalDate,
 ) {
     if (tasks.isEmpty()) return
 
@@ -344,7 +360,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
     }
 
     if (sectionExpanded[title] != false) {
-        items(tasks, key = { it.id }) { task ->
+        items(tasks, key = { it.id }, contentType = { "task_item" }) { task ->
             TaskItemWithSubtasks(
                 task = task,
                 subtasks = subTasks[task.id] ?: emptyList(),
@@ -355,6 +371,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
                     expandedTaskIds[task.id] = !(expandedTaskIds[task.id] ?: true)
                 },
                 allSubTasks = subTasks,
+                today = today,
             )
         }
     }
@@ -419,6 +436,7 @@ private fun TaskItemWithSubtasks(
     onToggleExpanded: () -> Unit,
     allSubTasks: Map<String, List<Task>> = emptyMap(),
     depth: Int = 0,
+    today: LocalDate = LocalDate.now(),
 ) {
     val content: @Composable () -> Unit = {
         Column {
@@ -432,6 +450,7 @@ private fun TaskItemWithSubtasks(
                 onToggleExpanded = if (subtasks.isNotEmpty()) onToggleExpanded else null,
                 isExpanded = isExpanded,
                 nestingDepth = depth,
+                today = today,
             )
 
             if (subtasks.isNotEmpty() && isExpanded) {
@@ -450,9 +469,9 @@ private fun TaskItemWithSubtasks(
                             onToggleExpanded = {},
                             allSubTasks = allSubTasks,
                             depth = nextDepth,
+                            today = today,
                         )
                     } else {
-                        // At max depth: hide subtask count since user can't expand further.
                         TaskRow(
                             task = subtask,
                             onToggleComplete = { onToggleComplete(subtask.id, it) },
@@ -463,6 +482,7 @@ private fun TaskItemWithSubtasks(
                             onToggleExpanded = null,
                             isExpanded = true,
                             nestingDepth = nextDepth,
+                            today = today,
                         )
                     }
                 }
@@ -470,14 +490,14 @@ private fun TaskItemWithSubtasks(
         }
     }
 
-    if (depth == 0 && subtasks.isNotEmpty()) {
+    if (depth == 0) {
         Surface(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(
                         horizontal = Dimensions.cardSpacing,
-                        vertical = 2.dp,
+                        vertical = Dimensions.taskRowVerticalPadding,
                     ),
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
             shape = RoundedCornerShape(12.dp),
@@ -501,11 +521,12 @@ private fun TaskRow(
     onToggleExpanded: (() -> Unit)?,
     isExpanded: Boolean,
     nestingDepth: Int = 0,
+    today: LocalDate = LocalDate.now(),
 ) {
     val priorityColor = getPriorityColor(task.priority)
     val hasPriority = task.priority != TaskPriority.NONE
-    val today = remember { LocalDate.now() }
     val isOverdue = task.dueDate?.isBefore(today) == true && !task.isCompleted
+    val dimAlpha = Dimensions.COMPLETED_TASK_ALPHA
 
     Row(
         modifier =
@@ -530,7 +551,13 @@ private fun TaskRow(
                         .width(3.dp)
                         .height(32.dp)
                         .clip(RoundedCornerShape(1.5.dp))
-                        .background(priorityColor),
+                        .background(
+                            if (task.isCompleted) {
+                                priorityColor.copy(alpha = dimAlpha)
+                            } else {
+                                priorityColor
+                            },
+                        ),
             )
             Spacer(modifier = Modifier.width(5.dp))
         }
@@ -551,8 +578,9 @@ private fun TaskRow(
                     if (task.isCompleted) "Completed" else "Incomplete",
                 tint =
                     when {
+                        task.isCompleted && hasPriority -> priorityColor.copy(alpha = dimAlpha)
+                        task.isCompleted -> MaterialTheme.colorScheme.outline.copy(alpha = dimAlpha)
                         hasPriority -> priorityColor
-                        task.isCompleted -> MaterialTheme.colorScheme.primary
                         else -> MaterialTheme.colorScheme.outline
                     },
                 modifier = Modifier.size(22.dp),
@@ -572,7 +600,7 @@ private fun TaskRow(
                 textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
                 color =
                     if (task.isCompleted) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = dimAlpha)
                     } else {
                         MaterialTheme.colorScheme.onSurface
                     },
@@ -584,6 +612,12 @@ private fun TaskRow(
             val hasDescription = !task.description.isNullOrBlank()
             val hasDueDate = task.dueDate != null
             val hasSubtasks = subtaskCount > 0
+            val metaTint =
+                if (task.isCompleted) {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = dimAlpha)
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
 
             if (hasDescription || hasDueDate || hasSubtasks) {
                 Spacer(modifier = Modifier.height(Dimensions.elementSpacingSmall))
@@ -596,7 +630,7 @@ private fun TaskRow(
                             imageVector = Icons.Outlined.Description,
                             contentDescription = "Has description",
                             modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = metaTint,
                         )
                     }
 
@@ -609,12 +643,12 @@ private fun TaskRow(
                                 imageVector = Icons.Outlined.SubdirectoryArrowRight,
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = metaTint,
                             )
                             Text(
                                 text = "$subtaskCount",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = metaTint,
                             )
                         }
                     }
@@ -627,7 +661,7 @@ private fun TaskRow(
                                 if (isOverdue) {
                                     MaterialTheme.colorScheme.error
                                 } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                    metaTint
                                 },
                         )
                     }
@@ -665,7 +699,6 @@ private fun formatDueDate(
     }
 }
 
-@Composable
 private fun getPriorityColor(priority: TaskPriority): Color {
     return when (priority) {
         TaskPriority.HIGH -> Color(0xFFE53935)

@@ -27,6 +27,7 @@ import com.habitao.domain.repository.PomodoroRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -169,11 +170,14 @@ class TimerService : LifecycleService() {
         val remaining = timerStateHolder.remainingSeconds.value
         val total = timerStateHolder.totalSeconds.value
         val elapsed = (total - remaining).coerceAtLeast(0L)
-        saveSession(
-            wasInterrupted = true,
-            actualDurationSeconds = elapsed,
-            completedAt = null,
-        )
+        // Only persist sessions where the user focused for at least 5 minutes
+        if (elapsed >= MIN_SESSION_SAVE_SECONDS) {
+            saveSession(
+                wasInterrupted = true,
+                actualDurationSeconds = elapsed,
+                completedAt = null,
+            )
+        }
         clearTimerPrefs()
         timerStateHolder.resetTimerState()
         stopTimerService()
@@ -185,10 +189,12 @@ class TimerService : LifecycleService() {
         val remaining = timerStateHolder.remainingSeconds.value
         val total = timerStateHolder.totalSeconds.value
         val elapsed = (total - remaining).coerceAtLeast(0L)
-        if (elapsed > 0) {
+        // Skip logs the full intended session duration. Only persist if the
+        // user was actually focused for at least 5 minutes.
+        if (elapsed >= MIN_SESSION_SAVE_SECONDS) {
             saveSession(
                 wasInterrupted = true,
-                actualDurationSeconds = elapsed,
+                actualDurationSeconds = total,
                 completedAt = null,
             )
         }
@@ -392,7 +398,7 @@ class TimerService : LifecycleService() {
                 actualDurationSeconds = actualDurationSeconds.toInt(),
                 createdAt = System.currentTimeMillis(),
             )
-        lifecycleScope.launch {
+        lifecycleScope.launch(NonCancellable + Dispatchers.IO) {
             pomodoroRepository.saveSession(session)
         }
     }
@@ -555,6 +561,9 @@ class TimerService : LifecycleService() {
         const val ACTION_SKIP = "com.habitao.feature.pomodoro.action.SKIP"
         const val ACTION_ADJUST_TIME = "com.habitao.feature.pomodoro.action.ADJUST_TIME"
         const val EXTRA_DELTA_SECONDS = "extra_delta_seconds"
+
+        /** Minimum elapsed seconds before a stopped/skipped session is persisted. */
+        const val MIN_SESSION_SAVE_SECONDS = 300L
 
         const val DEFAULT_WORK_SECONDS = 1500L
         const val DEFAULT_SHORT_BREAK_SECONDS = 300L

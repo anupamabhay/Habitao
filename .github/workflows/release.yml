@@ -33,6 +33,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       
+      - name: Verify debug keystore
+        run: |
+          test -f app/debug.keystore || { echo "ERROR: debug.keystore missing"; exit 1; }
+          keytool -list -keystore app/debug.keystore -storepass android -alias androiddebugkey 2>/dev/null && echo "Keystore verified"
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug
       

@@ -2,7 +2,7 @@
 
 **Purpose:** Track implementation progress, document decisions, record solutions, and maintain context across development sessions.
 
-**Last Updated:** March 6, 2026 - Reminders, Backup/Restore, UI Polish, Repo Cleanup
+**Last Updated:** March 10, 2026 - Editor Overhaul, Stats Compaction, Pomodoro Polish, APK Signing Fix
 
 ---
 
@@ -12,7 +12,7 @@
 
 **Branch:** `feature/improvements`
 
-**Status:** All tasks1 through tasks8 completed plus UI polish and repo cleanup. PR #6 open to merge into `dev`.
+**Status:** Editor overhaul complete, CTO directives round 3 implemented. PR #12 (`feature/improvements` -> `dev`) active.
 
 ---
 
@@ -134,6 +134,43 @@
 | Repo Cleanup | Removed nul file, untracked docs/tasks/ from git, trimmed verbose comments | Complete |
 | Performance | @Immutable annotations, distinctUntilChanged on stats flows, highest refresh rate | Complete |
 
+#### Editor Overhaul & CTO Directives (PR #12)
+**Session: Mar 9-10, 2026**
+
+##### Editor Overhaul (10 tasks)
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Cursor-Aware Markdown | MarkdownVisualTransformation highlights syntax around cursor position | Complete |
+| Toolbar Relocation | Markdown toolbar anchored above keyboard, scrollable formatting row | Complete |
+| Undo/Redo | UndoRedoManager with debounced checkpointing (400ms, max 50 states) | Complete |
+| List Continuation | Auto-continue bullets, numbered lists, checkboxes on Enter | Complete |
+| BringIntoViewRequester | Replaced blind scroll-to-bottom with cursor-rect-based scroll | Complete |
+| Checkbox Toggle | 3-state toolbar cycle: none -> [ ] -> [x] -> remove | Complete |
+| Task Card Uniformity | Consistent card background, padding, typography across task list | Complete |
+| Completed Task Dimming | `COMPLETED_TASK_ALPHA = 0.45f` applied to completed task rows | Complete |
+| Indent/Outdent | Context-aware list indent (2-space nesting) and outdent toolbar buttons | Complete |
+| Region Caching | Inline regions cached on text content, avoids re-parsing on cursor moves | Complete |
+
+##### CTO Directives Round 1-2
+| Fix | Description | Status |
+|-----|-------------|--------|
+| Debounced Toolbar Focus | 250ms debounce on focus loss to prevent flicker during scroll gestures | Complete |
+| Auto-scroll Gap | 120f pixel margin below cursor rect in bringIntoView | Complete |
+| Auto-scroll on Any Input | Changed trigger from lineCount to textFieldValue.text changes | Complete |
+
+##### CTO Directives Round 3
+| Fix | Description | Status |
+|-----|-------------|--------|
+| Bouncing Screen Fix | Moved imePadding() from individual elements to outer Column container | Complete |
+| Status Bar Fix | Removed nestedScroll + scrollBehavior from editor Scaffold | Complete |
+| BringIntoView Stability | Removed isImeVisible from LaunchedEffect keys to prevent animation-frame restarts | Complete |
+| Stats Dashboard Compact | Reduced card heights (148->110dp, 126->100dp), horizontal layout for top row | Complete |
+| Pomodoro Time Grid | Replaced TextButton with OutlinedButton + weight(1f) for proper 2x2 alignment | Complete |
+| Tomato AOD Fill | Removed animateFloatAsState batching; cells light individually via raw progress | Complete |
+| APK Signing Fix | Removed applicationIdSuffix, committed debug.keystore, bumped to v0.1.7 | Complete |
+| Session Save Robustness | Added NonCancellable + Dispatchers.IO to saveSession in TimerService | Complete |
+| CI Keystore Verification | Added keystore existence check step in release.yml workflow | Complete |
+
 #### Key Architecture Decisions:
 - MarkdownVisualTransformation uses identity offset mapping to avoid cursor desync.
 - Switched description field to TextFieldValue for cursor position control after auto-formatting.
@@ -141,6 +178,10 @@
 - Auto-formatting uses character diff detection to identify Enter key presses.
 - Cross-feature dependency (settings -> pomodoro) documented as tech debt with TODO.
 - BroadcastReceivers use goAsync() + coroutine pattern instead of runBlocking.
+- `imePadding()` must be applied at the container level, never on individual child elements inside a Column. Applying it per-element causes per-frame layout thrashing as each element independently reacts to keyboard animation.
+- `WindowInsets.ime` reads should not be used as LaunchedEffect keys; they change on every animation frame and cause feedback loops with bringIntoView.
+- `applicationIdSuffix` changes the installed package name; removing it ensures debug and CI builds install as the same app for in-place updates.
+- Tomato AOD animation: `animateFloatAsState` batches multiple cell threshold crossings into one visual frame; using raw progress ensures true one-cell-at-a-time fill.
 
 ---
 
@@ -172,13 +213,17 @@
 ## Next Up (Prioritized)
 
 ### After This Session
-1. **PR #6 Review and Merge** (Priority: High)
-   - Address Copilot review comments, merge feature/improvements into dev
+1. **PR #12 Test and Merge** (Priority: High)
+   - Build alpha APK from `feature/improvements`, verify all fixes on device, merge into `dev`
 
-2. **Test Coverage** (Priority: Medium)
+2. **Pomodoro Data Verification** (Priority: High)
+   - Verify focus session data appears on Stats dashboard after completing a full Pomodoro cycle
+   - If still empty, add runtime logging to confirm saveSession() execution and DAO query results
+
+3. **Test Coverage** (Priority: Medium)
    - Unit tests for StatsViewModel, TasksViewModel subtask tree, markdown auto-format
 
-3. **Widget** (Priority: Medium)
+4. **Widget** (Priority: Medium)
    - Home screen widget for habit/task quick-check
 
 ---
@@ -186,7 +231,7 @@
 ## Issues & Blockers
 
 ### Active Issues
-None - all known bugs have been fixed, awaiting user verification.
+- **Pomodoro Stats Data:** Stats dashboard Pomodoro card may show empty data after completing sessions. Data layer code is architecturally correct; the `NonCancellable + Dispatchers.IO` fix in TimerService.saveSession() should resolve any race condition between session save and service lifecycle cancellation. Awaiting user verification.
 
 ### Resolved Issues
 
@@ -255,12 +300,10 @@ Test Coverage: TBD (next phase)
 ```
 
 ### Recent Commits (feature/improvements branch)
-- `f967af8` - feat: tasks5 - routine selector grid, stats card hierarchy, consistent create buttons, thinner chart bars, live markdown VisualTransformation
-- `189f500` - fix: Stats card padding, chart bar gaps, segmented button wrapping, bottom nav padding
-- `2c7d6d2` - fix: Address Copilot PR review - ANR fixes, alarm rationale, markdown parsing, hashCode safety, stale date
-- `8830e63` - style: Fix ktlint violations - line length, trailing commas, import ordering
-- `beac80b` - feat: implement tasks4.md - fix priority colors, add specific days, improve stats layout, task spacing, markdown support
-- `d8ad133` - fix: address Copilot PR review + implement tasks3.md improvements
+- `ef562c3` - fix: Stabilize editor layout, compact stats cards, fix APK signing and tomato fill logic
+- `fc68b94` - fix: Streak phantom fix, pomodoro stats card, session tracking, pixel tomato AOD, editor stability, task perf
+- `3f8d5f2` - fix: Auto-scroll on all input, outdent button, save button IME fix, status bar fix, perf optimizations
+- `636de73` - fix: Context-aware list indent, debounced toolbar focus, cursor-aware auto-scroll
 
 ---
 
@@ -284,6 +327,19 @@ Test Coverage: TBD (next phase)
 ## Notes & Learnings
 
 ### Session Notes
+
+#### 2026-03-10: CTO Directives Round 3 - Layout Stability, Stats Compaction, APK Signing
+- Fixed critical editor bouncing: moved `imePadding()` from per-element to container-level Column. Root cause was each child independently reacting to IME inset changes on every animation frame.
+- Removed `nestedScroll(scrollBehavior.nestedScrollConnection)` from editor Scaffold to prevent TopAppBar color transitions from flashing the status bar black during text selection.
+- Fixed `bringIntoView` LaunchedEffect feedback loop: removed `isImeVisible` from effect keys. The IME visibility changes on every keyboard animation frame, causing the effect to restart continuously.
+- Compacted Stats dashboard: reduced card heights (148->110dp row 1, 126->100dp row 2), switched Tasks/Daily Goal to horizontal layout with progress ring on right side, combined Pomodoro sessions/rounds into one line.
+- Styled Pomodoro time-adjust dialog: replaced bare `TextButton` with `OutlinedButton` + `weight(1f)` for proper 2x2 grid alignment.
+- Fixed tomato AOD animation: removed `animateFloatAsState(tween(800ms))` wrapper that was batching multiple cell threshold crossings into single visual frames. Now uses raw progress for true sequential single-cell fill.
+- Fixed APK in-place updates: removed `applicationIdSuffix = ".debug"` and `versionNameSuffix = "-DEBUG"` so all builds install as `com.habitao.app`. Committed `app/debug.keystore` to git (was untracked, causing CI to use a different signing key). Fixed `.gitignore` pattern from `!debug.keystore` to `!**/debug.keystore`. Bumped version to 0.1.7 (versionCode 7).
+- Added `NonCancellable + Dispatchers.IO` to `TimerService.saveSession()` to prevent session data loss when service lifecycle is cancelled after timer completion.
+- Added keystore verification step in `release.yml` CI workflow.
+
+**Key Insight:** `imePadding()` is a layout modifier, not a spacing utility. When applied to individual elements inside a Column, it creates competing layout calculations. The correct pattern is one `navigationBarsPadding().imePadding()` at the container level — `navigationBarsPadding()` consumes nav bar insets first, then `imePadding()` adds only the keyboard-minus-nav-bar difference.
 
 #### 2026-03-04: UI/UX Overhaul, Nested Subtasks, Live Markdown (tasks6)
 - Replaced FlowRow day selectors with weighted Row layout so day chips span full container width.
@@ -427,6 +483,8 @@ Test Coverage: TBD (next phase)
 - No unit tests for markdown auto-formatting or nested subtask tree building
 - Hardcoded dp values remain in some older composables (pre-tasks1 code)
 - `SPECIFIC_DATES` enum value is functionally identical to `WEEKLY` for routines (kept for Habits compatibility)
+- Release signing config not yet configured (only debug keystore is set up)
+- Pomodoro Stats data binding needs on-device verification; code is correct but may have timing edge cases
 
 ---
 

@@ -208,7 +208,7 @@ private fun StatsContent(
             )
         }
 
-        // Completion Breakdown
+        // Completion Breakdown — compact 2x2 grid
         item(key = "completion_breakdown") {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -218,7 +218,7 @@ private fun StatsContent(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .height(180.dp),
+                            .height(110.dp),
                     horizontalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
                 ) {
                     // Tasks Breakdown
@@ -233,40 +233,40 @@ private fun StatsContent(
                             ),
                         shape = RoundedCornerShape(16.dp),
                     ) {
-                        Column(
+                        Row(
                             modifier =
                                 Modifier
                                     .fillMaxSize()
-                                    .padding(Dimensions.cardPadding),
-                            horizontalAlignment = Alignment.Start,
+                                    .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(
-                                text = "Tasks",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "${state.completedTasksToday} of ${state.totalTasks} done",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Box(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentAlignment = Alignment.Center,
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
+                                Text(
+                                    text = "Tasks",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Text(
+                                    text = "${state.completedTasksToday}/${state.totalTasks}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Box(contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(
                                     progress = { state.taskCompletionRate },
-                                    modifier = Modifier.size(72.dp),
-                                    strokeWidth = 6.dp,
+                                    modifier = Modifier.size(48.dp),
+                                    strokeWidth = 4.dp,
                                     strokeCap = StrokeCap.Round,
                                     color = MaterialTheme.colorScheme.primary,
                                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
                                 )
                                 Text(
                                     text = "${(state.taskCompletionRate * 100).toInt()}%",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                 )
                             }
@@ -285,30 +285,30 @@ private fun StatsContent(
                             ),
                         shape = RoundedCornerShape(16.dp),
                     ) {
-                        Column(
+                        Row(
                             modifier =
                                 Modifier
                                     .fillMaxSize()
-                                    .padding(Dimensions.cardPadding),
-                            horizontalAlignment = Alignment.Start,
+                                    .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(
-                                text = "Daily Goal",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            val remaining = maxOf(0, state.totalHabits - state.completedToday)
-                            Text(
-                                text = "$remaining more to hit your goal",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Box(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentAlignment = Alignment.Center,
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
+                                Text(
+                                    text = "Daily Goal",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                val remaining = maxOf(0, state.totalHabits - state.completedToday)
+                                Text(
+                                    text = "$remaining left",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Box(contentAlignment = Alignment.Center) {
                                 val progress =
                                     if (state.totalHabits > 0) {
                                         state.completedToday.toFloat() / state.totalHabits
@@ -317,15 +317,15 @@ private fun StatsContent(
                                     }
                                 CircularProgressIndicator(
                                     progress = { progress },
-                                    modifier = Modifier.size(72.dp),
-                                    strokeWidth = 6.dp,
+                                    modifier = Modifier.size(48.dp),
+                                    strokeWidth = 4.dp,
                                     strokeCap = StrokeCap.Round,
                                     color = MaterialTheme.colorScheme.tertiary,
                                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
                                 )
                                 Text(
                                     text = "${state.completedToday}/${state.totalHabits}",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                 )
                             }
@@ -333,39 +333,40 @@ private fun StatsContent(
                     }
                 }
 
-                // Routine Breakdown
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        ),
-                    shape = RoundedCornerShape(16.dp),
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.cardSpacing),
                 ) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = Dimensions.cardPadding, vertical = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
+                    // Routine Breakdown
+                    Card(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            ),
+                        shape = RoundedCornerShape(16.dp),
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(12.dp),
+                            verticalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Row(
-                                horizontalArrangement =
-                                    Arrangement.spacedBy(Dimensions.elementSpacingLarge),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Box(
                                     modifier =
                                         Modifier
-                                            .size(40.dp)
+                                            .size(24.dp)
                                             .background(
                                                 MaterialTheme.colorScheme.secondaryContainer,
-                                                RoundedCornerShape(12.dp),
+                                                RoundedCornerShape(8.dp),
                                             ),
                                     contentAlignment = Alignment.Center,
                                 ) {
@@ -373,43 +374,111 @@ private fun StatsContent(
                                         imageVector = Icons.Outlined.Repeat,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        modifier = Modifier.size(20.dp),
+                                        modifier = Modifier.size(14.dp),
                                     )
                                 }
-                                Column {
-                                    Text(
-                                        text = "Routines",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
-                                    Text(
-                                        text =
-                                            "${state.completedRoutinesToday} of " +
-                                                "${state.totalRoutines} completed $periodSuffix",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                Text(
+                                    text = "Routines",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Bottom,
+                            ) {
+                                Text(
+                                    text = "${(state.routineCompletionRate * 100).toInt()}%",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                )
+                                Text(
+                                    text = "${state.completedRoutinesToday}/${state.totalRoutines}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+
+                            LinearProgressIndicator(
+                                progress = { state.routineCompletionRate },
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(5.dp)
+                                        .clip(RoundedCornerShape(3.dp)),
+                                color = MaterialTheme.colorScheme.secondary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                            )
+                        }
+                    }
+
+                    // Focus Sessions (Pomodoro) Breakdown
+                    Card(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            ),
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(12.dp),
+                            verticalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .size(24.dp)
+                                            .background(
+                                                MaterialTheme.colorScheme.primaryContainer,
+                                                RoundedCornerShape(8.dp),
+                                            ),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Timer,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.size(14.dp),
                                     )
                                 }
+                                Text(
+                                    text = "Pomodoro",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
                             }
 
                             Text(
-                                text = "${(state.routineCompletionRate * 100).toInt()}%",
-                                style = MaterialTheme.typography.headlineSmall,
+                                text = formatFocusTime(state.todaysFocusSeconds),
+                                style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.secondary,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                text =
+                                    "${state.todaysPomodoroSessions} sessions / " +
+                                        "${state.todaysCompletedRounds} rounds",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
-
-                        LinearProgressIndicator(
-                            progress = { state.routineCompletionRate },
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(8.dp)
-                                    .clip(RoundedCornerShape(4.dp)),
-                            color = MaterialTheme.colorScheme.secondary,
-                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                        )
                     }
                 }
             }
@@ -995,6 +1064,36 @@ private fun InsightRow(
                 lineHeight = 20.sp,
             )
         }
+    }
+}
+
+@Composable
+private fun FocusStatChip(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier =
+            modifier
+                .background(
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    RoundedCornerShape(12.dp),
+                )
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

@@ -15,8 +15,8 @@ android {
         applicationId = "com.habitao.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.1.5"
+        versionCode = 7
+        versionName = "0.1.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -25,10 +25,18 @@ android {
         }
     }
 
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         debug {
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = "-DEBUG"
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             isDebuggable = true
         }

@@ -43,7 +43,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -132,10 +131,23 @@ fun FullScreenClockScreen(
                                 TomatoClock(
                                     remainingSeconds = state.remainingSeconds,
                                     totalSeconds = state.totalSeconds,
-                                    modifier = Modifier.size(360.dp),
+                                    modifier = Modifier.size(300.dp),
                                 )
-                                Spacer(modifier = Modifier.height(48.dp))
+                                Spacer(modifier = Modifier.height(32.dp))
                                 DigitalTimeText(state.remainingSeconds)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text =
+                                        remember {
+                                            java.time.LocalDate.now().format(
+                                                java.time.format.DateTimeFormatter.ofPattern(
+                                                    "EEEE, MMMM d",
+                                                ),
+                                            )
+                                        },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.5f),
+                                )
                             }
                         }
                     }
@@ -478,180 +490,119 @@ fun PlantClock(
     }
 }
 
+/**
+ * Pixelated tomato timer — blocky pixel-art style. Squares start dimmed and
+ * light up from top to bottom as the session progresses. When the timer finishes,
+ * the entire tomato is fully lit.
+ *
+ * Cell types: 0 = empty, 1 = tomato body, 2 = stem, 3 = leaf/calyx.
+ */
 @Composable
 fun TomatoClock(
     remainingSeconds: Long,
     totalSeconds: Long,
     modifier: Modifier = Modifier,
 ) {
+    // Direct progress — no animation batching so each cell lights individually
     val progress = if (totalSeconds > 0L) 1f - (remainingSeconds.toFloat() / totalSeconds) else 1f
-    val tomatoRed = Color(0xFFE53935)
-    val tomatoRedDark = Color(0xFFB71C1C)
-    val leafGreen = Color(0xFF43A047)
-    val stemGreen = Color(0xFF2E7D32)
 
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing),
-        label = "tomato_fill",
-    )
+    // Pre-built pixel grid (17 cols x 19 rows)
+    val grid = remember { buildTomatoGrid() }
+    // Ordered body cells for one-cell-at-a-time fill progression.
+    val bodyCellThresholds =
+        remember(grid) {
+            val bodyCells = mutableListOf<Pair<Int, Int>>()
+            for (r in grid.indices) {
+                for (c in grid[r].indices) {
+                    if (grid[r][c] == 1) {
+                        bodyCells.add(r to c)
+                    }
+                }
+            }
+
+            val totalCells = bodyCells.size.coerceAtLeast(1)
+            bodyCells.mapIndexed { index, cell ->
+                val threshold = index.toFloat() / totalCells.toFloat()
+                cell to threshold
+            }.toMap()
+        }
+
+    val tomatoLit = Color(0xFFE53935)
+    val tomatoDim = Color(0xFF3A1010)
+    val stemColor = Color(0xFF2E7D32)
+    val leafColor = Color(0xFF43A047)
 
     Canvas(modifier = modifier) {
-        val width = size.width
-        val height = size.height
-        val cx = width / 2f
-        val cy = height / 2f
+        val cols = grid[0].size
+        val rows = grid.size
+        val gap = 2.dp.toPx()
+        val cellW = (size.width - gap * (cols - 1)) / cols
+        val cellH = (size.height - gap * (rows - 1)) / rows
+        val cell = minOf(cellW, cellH)
+        val totalW = cols * cell + (cols - 1) * gap
+        val totalH = rows * cell + (rows - 1) * gap
+        val offsetX = (size.width - totalW) / 2f
+        val offsetY = (size.height - totalH) / 2f
 
-        // Tomato body dimensions
-        val tomatoWidth = width * 0.7f
-        val tomatoHeight = height * 0.55f
-        val tomatoTop = cy - tomatoHeight * 0.35f
-        val tomatoBottom = tomatoTop + tomatoHeight
+        for (r in grid.indices) {
+            for (c in grid[r].indices) {
+                val cellType = grid[r][c]
+                if (cellType == 0) continue
 
-        // Stem
-        val stemWidth = width * 0.03f
-        val stemHeight = height * 0.08f
-        drawRect(
-            color = stemGreen,
-            topLeft = Offset(cx - stemWidth / 2f, tomatoTop - stemHeight),
-            size = Size(stemWidth, stemHeight + 4.dp.toPx()),
-        )
+                val x = offsetX + c * (cell + gap)
+                val y = offsetY + r * (cell + gap)
 
-        // Leaf (left)
-        drawPath(
-            path =
-                Path().apply {
-                    moveTo(cx - stemWidth / 2f, tomatoTop - stemHeight * 0.4f)
-                    cubicTo(
-                        cx - width * 0.12f,
-                        tomatoTop - stemHeight * 1.4f,
-                        cx - width * 0.2f,
-                        tomatoTop - stemHeight * 0.8f,
-                        cx - width * 0.06f,
-                        tomatoTop - stemHeight * 0.1f,
-                    )
-                },
-            color = leafGreen,
-        )
+                val color =
+                    when (cellType) {
+                        2 -> stemColor
+                        3 -> leafColor
+                        1 -> {
+                            val cellThreshold = bodyCellThresholds[r to c] ?: 1f
+                            if (progress >= cellThreshold) tomatoLit else tomatoDim
+                        }
+                        else -> Color.Transparent
+                    }
 
-        // Leaf (right)
-        drawPath(
-            path =
-                Path().apply {
-                    moveTo(cx + stemWidth / 2f, tomatoTop - stemHeight * 0.4f)
-                    cubicTo(
-                        cx + width * 0.12f,
-                        tomatoTop - stemHeight * 1.4f,
-                        cx + width * 0.2f,
-                        tomatoTop - stemHeight * 0.8f,
-                        cx + width * 0.06f,
-                        tomatoTop - stemHeight * 0.1f,
-                    )
-                },
-            color = leafGreen,
-        )
-
-        // Tomato outline (unfilled, dark)
-        drawPath(
-            path = createTomatoPath(cx, tomatoTop, tomatoWidth, tomatoHeight),
-            color = tomatoRedDark.copy(alpha = 0.3f),
-        )
-
-        // Tomato filled portion (rising from bottom based on progress)
-        val fillHeight = tomatoHeight * animatedProgress
-        val clipTop = tomatoBottom - fillHeight
-
-        drawContext.canvas.save()
-        drawContext.canvas.clipRect(
-            left = 0f,
-            top = clipTop,
-            right = width,
-            bottom = tomatoBottom + 20.dp.toPx(),
-        )
-        drawPath(
-            path = createTomatoPath(cx, tomatoTop, tomatoWidth, tomatoHeight),
-            color = tomatoRed,
-        )
-        drawContext.canvas.restore()
-
-        // Tomato outline stroke
-        drawPath(
-            path = createTomatoPath(cx, tomatoTop, tomatoWidth, tomatoHeight),
-            color = tomatoRedDark.copy(alpha = 0.6f),
-            style = Stroke(width = 2.dp.toPx()),
-        )
-
-        // Percentage text in center
-        val percentText = "${(animatedProgress * 100).toInt()}%"
-        val paint =
-            android.graphics.Paint().apply {
-                textSize = width * 0.08f
-                color = android.graphics.Color.WHITE
-                textAlign = android.graphics.Paint.Align.CENTER
-                isAntiAlias = true
-                typeface =
-                    android.graphics.Typeface.create(
-                        android.graphics.Typeface.DEFAULT,
-                        android.graphics.Typeface.BOLD,
-                    )
+                drawRect(
+                    color = color,
+                    topLeft = Offset(x, y),
+                    size = Size(cell, cell),
+                )
             }
-        drawContext.canvas.nativeCanvas.drawText(
-            percentText,
-            cx,
-            cy + paint.textSize * 0.35f,
-            paint,
-        )
+        }
     }
 }
 
-private fun createTomatoPath(
-    cx: Float,
-    top: Float,
-    width: Float,
-    height: Float,
-): Path {
-    val halfW = width / 2f
-    val bottom = top + height
-    val midY = top + height * 0.5f
+/** Pixel grid for a 17x19 blocky tomato. */
+private fun buildTomatoGrid(): Array<IntArray> {
+    // 0=empty, 1=body, 2=stem, 3=leaf
+    val s = 2 // stem
+    val l = 3 // leaf
+    val b = 1 // body
+    val e = 0 // empty
 
-    return Path().apply {
-        moveTo(cx, top)
-        // Right side
-        cubicTo(
-            cx + halfW * 0.6f,
-            top,
-            cx + halfW,
-            top + height * 0.15f,
-            cx + halfW,
-            midY,
-        )
-        cubicTo(
-            cx + halfW,
-            bottom - height * 0.1f,
-            cx + halfW * 0.6f,
-            bottom,
-            cx,
-            bottom,
-        )
-        // Left side
-        cubicTo(
-            cx - halfW * 0.6f,
-            bottom,
-            cx - halfW,
-            bottom - height * 0.1f,
-            cx - halfW,
-            midY,
-        )
-        cubicTo(
-            cx - halfW,
-            top + height * 0.15f,
-            cx - halfW * 0.6f,
-            top,
-            cx,
-            top,
-        )
-        close()
-    }
+    @Suppress("ktlint:standard:no-multi-spaces")
+    return arrayOf(
+        intArrayOf(e, e, e, e, e, e, e, s, s, e, e, e, e, e, e, e, e),
+        intArrayOf(e, e, e, e, e, e, e, s, s, e, e, e, e, e, e, e, e),
+        intArrayOf(e, e, e, e, l, l, e, s, s, e, l, l, e, e, e, e, e),
+        intArrayOf(e, e, e, l, l, l, l, s, s, l, l, l, l, e, e, e, e),
+        intArrayOf(e, e, e, e, l, l, l, l, l, l, l, l, e, e, e, e, e),
+        intArrayOf(e, e, e, e, e, b, b, b, b, b, b, e, e, e, e, e, e),
+        intArrayOf(e, e, e, e, b, b, b, b, b, b, b, b, e, e, e, e, e),
+        intArrayOf(e, e, e, b, b, b, b, b, b, b, b, b, b, e, e, e, e),
+        intArrayOf(e, e, b, b, b, b, b, b, b, b, b, b, b, b, e, e, e),
+        intArrayOf(e, b, b, b, b, b, b, b, b, b, b, b, b, b, b, e, e),
+        intArrayOf(e, b, b, b, b, b, b, b, b, b, b, b, b, b, b, e, e),
+        intArrayOf(b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, e),
+        intArrayOf(b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, e),
+        intArrayOf(b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, e),
+        intArrayOf(e, b, b, b, b, b, b, b, b, b, b, b, b, b, b, e, e),
+        intArrayOf(e, e, b, b, b, b, b, b, b, b, b, b, b, b, e, e, e),
+        intArrayOf(e, e, e, b, b, b, b, b, b, b, b, b, b, e, e, e, e),
+        intArrayOf(e, e, e, e, b, b, b, b, b, b, b, b, e, e, e, e, e),
+        intArrayOf(e, e, e, e, e, e, b, b, b, b, e, e, e, e, e, e, e),
+    )
 }
 
 @Composable

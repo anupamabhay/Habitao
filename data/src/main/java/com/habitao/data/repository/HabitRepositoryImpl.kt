@@ -278,36 +278,46 @@ class HabitRepositoryImpl
         override suspend fun calculateStreak(habitId: String): Result<StreakInfo> =
             withContext(dispatcher) {
                 try {
-                    // Get last 365 days of logs for streak calculation
+                    val zone = java.time.ZoneId.systemDefault()
+                    val today = LocalDate.now()
+
+                    // Get last 365 days of completed logs for streak calculation
                     val logs = habitLogDao.getCompletedLogsForStreak(habitId, 365)
 
                     if (logs.isEmpty()) {
                         return@withContext Result.success(StreakInfo(0, 0, 0))
                     }
 
-                    // Calculate current streak
+                    // Calculate current streak — most recent log must be today or
+                    // yesterday, otherwise there is no active streak.
                     val sortedLogs = logs.sortedByDescending { it.date }
-                    var currentStreak = 0
-                    var previousDate =
+                    val mostRecentDate =
                         java.time.Instant.ofEpochMilli(sortedLogs.first().date)
-                            .atZone(java.time.ZoneId.systemDefault())
+                            .atZone(zone)
                             .toLocalDate()
 
-                    for (log in sortedLogs) {
-                        val logDate =
-                            java.time.Instant.ofEpochMilli(log.date)
-                                .atZone(java.time.ZoneId.systemDefault())
-                                .toLocalDate()
+                    var currentStreak = 0
+                    if (!mostRecentDate.isBefore(today.minusDays(1))) {
+                        var previousDate = mostRecentDate
+                        for (log in sortedLogs) {
+                            val logDate =
+                                java.time.Instant.ofEpochMilli(log.date)
+                                    .atZone(zone)
+                                    .toLocalDate()
 
-                        if (logDate == previousDate || logDate == previousDate.minusDays(1)) {
-                            currentStreak++
-                            previousDate = logDate
-                        } else {
-                            break
+                            if (logDate == previousDate || logDate == previousDate.minusDays(1)) {
+                                // Deduplicate same-date logs — only count the date once
+                                if (logDate != previousDate || currentStreak == 0) {
+                                    currentStreak++
+                                }
+                                previousDate = logDate
+                            } else {
+                                break
+                            }
                         }
                     }
 
-                    // Calculate longest streak
+                    // Calculate longest streak (all-time)
                     var longestStreak = 0
                     var tempStreak = 0
                     var lastDate: LocalDate? = null
@@ -320,12 +330,13 @@ class HabitRepositoryImpl
                     for (log in allLogs) {
                         val logDate =
                             java.time.Instant.ofEpochMilli(log.date)
-                                .atZone(java.time.ZoneId.systemDefault())
+                                .atZone(zone)
                                 .toLocalDate()
 
                         if (lastDate == null || logDate == lastDate.plusDays(1)) {
                             tempStreak++
-                        } else {
+                        } else if (logDate != lastDate) {
+                            // Reset streak only if this is a genuinely different (non-adjacent) date
                             tempStreak = 1
                         }
 
