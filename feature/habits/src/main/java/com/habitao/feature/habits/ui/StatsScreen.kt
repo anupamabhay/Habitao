@@ -1103,9 +1103,9 @@ private fun formatFocusTime(seconds: Int): String {
     val secs = seconds % 60
 
     return when {
-        hours > 0 -> "${hours}h ${minutes}m"
+        hours > 0 -> "${hours}h ${minutes}m ${secs}s"
         minutes > 0 -> "${minutes}m ${secs}s"
         seconds > 0 -> "${secs}s"
-        else -> "0m"
+        else -> "0s"
     }
 }
