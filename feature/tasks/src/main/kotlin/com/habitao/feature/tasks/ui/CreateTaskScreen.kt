@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -101,6 +102,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
@@ -176,6 +178,7 @@ fun CreateTaskScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val focusManager = LocalFocusManager.current
+    val density = LocalDensity.current
 
     // Hoisted description state so toolbar (in bottomBar) can interact with it
     var descriptionFocused by remember { mutableStateOf(false) }
@@ -183,8 +186,12 @@ fun CreateTaskScreen(
         mutableStateOf(TextFieldValue(text = "", selection = TextRange(0)))
     }
     val undoRedoManager = remember { UndoRedoManager() }
-    val toolbarScope = rememberCoroutineScope()
-    var focusLossJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
+    // IME-based toolbar visibility: tracks keyboard state independently of focus
+    // so the toolbar doesn't vanish during scroll-induced focus loss.
+    val isImeVisible = WindowInsets.ime.getBottom(density) > 0
+    var lastFocusedField by remember { mutableStateOf<String?>(null) }
+    val showToolbar = descriptionFocused || (isImeVisible && lastFocusedField == "description")
 
     // Sync ViewModel → local TextFieldValue (on load/reset only)
     LaunchedEffect(state.description) {
@@ -217,6 +224,7 @@ fun CreateTaskScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = {
@@ -234,6 +242,7 @@ fun CreateTaskScreen(
                         )
                     }
                 },
+                windowInsets = WindowInsets.statusBars,
                 scrollBehavior = scrollBehavior,
                 colors =
                     TopAppBarDefaults.topAppBarColors(
@@ -245,7 +254,7 @@ fun CreateTaskScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            if (descriptionFocused) {
+            if (showToolbar) {
                 MarkdownToolbar(
                     textFieldValue = descriptionTfv,
                     onTextFieldValueChange = { newTfv ->
@@ -303,15 +312,9 @@ fun CreateTaskScreen(
                 viewModel.processIntent(CreateTaskIntent.SetDescription(newTfv.text))
             },
             onDescriptionFocusChange = { focused ->
+                descriptionFocused = focused
                 if (focused) {
-                    focusLossJob?.cancel()
-                    descriptionFocused = true
-                } else {
-                    focusLossJob =
-                        toolbarScope.launch {
-                            delay(250)
-                            descriptionFocused = false
-                        }
+                    lastFocusedField = "description"
                 }
             },
             modifier = Modifier.padding(paddingValues),
@@ -826,30 +829,32 @@ private fun MarkdownDescriptionField(
         remember(textFieldValue.text, baseColor) {
             findInlineRegions(textFieldValue.text, baseColor)
         }
-    val markdownTransformation =
-        remember(baseColor, cursorPos, cachedRegions) {
-            MarkdownVisualTransformation(baseColor, cursorPos, cachedRegions)
-        }
 
-    // Cursor-aware auto-scroll: bring cursor into view on any text change
+    // Single instance: update cursor via mutable property instead of recreating
+    val markdownTransformation =
+        remember(baseColor, cachedRegions) {
+            MarkdownVisualTransformation(baseColor, cachedRegions)
+        }
+    markdownTransformation.cursorPosition = cursorPos
+
+    // Cursor-aware auto-scroll: bring cursor into view on text changes (debounced)
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     var prevText by remember { mutableStateOf(textFieldValue.text) }
     val scope = rememberCoroutineScope()
 
-    // Trigger auto-scroll on any text change (not just newlines)
+    // Debounced auto-scroll — batches rapid keystrokes to reduce layout thrash
     LaunchedEffect(textFieldValue.text) {
         if (textFieldValue.text != prevText) {
             prevText = textFieldValue.text
+            delay(100)
             val layout = textLayoutResult
             if (layout != null && layout.layoutInput.text.isNotEmpty()) {
-                // Reuse cached offset mapping instead of re-filtering
                 val transformedOffset =
                     markdownTransformation.lastOffsetMapping
                         .originalToTransformed(cursorPos)
                         .coerceIn(0, layout.layoutInput.text.length)
                 val cursorRect = layout.getCursorRect(transformedOffset)
-                // Add gap below cursor so it doesn't sit flush against toolbar
                 val paddedRect =
                     Rect(cursorRect.left, cursorRect.top, cursorRect.right, cursorRect.bottom + 120f)
                 bringIntoViewRequester.bringIntoView(paddedRect)

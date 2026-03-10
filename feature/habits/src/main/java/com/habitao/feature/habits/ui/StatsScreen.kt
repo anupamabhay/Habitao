@@ -412,6 +412,101 @@ private fun StatsContent(
                         )
                     }
                 }
+
+                // Focus Sessions (Pomodoro) Breakdown
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Dimensions.cardPadding, vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingLarge),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Row(
+                                horizontalArrangement =
+                                    Arrangement.spacedBy(Dimensions.elementSpacingLarge),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .size(40.dp)
+                                            .background(
+                                                MaterialTheme.colorScheme.primaryContainer,
+                                                RoundedCornerShape(12.dp),
+                                            ),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Timer,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = "Focus Sessions",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        text =
+                                            if (state.todaysPomodoroSessions > 0) {
+                                                "${state.todaysPomodoroSessions} sessions " +
+                                                    "completed $periodSuffix"
+                                            } else {
+                                                "No sessions $periodSuffix"
+                                            },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+
+                            Text(
+                                text = formatFocusTime(state.todaysFocusSeconds),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement =
+                                Arrangement.spacedBy(Dimensions.sectionSpacing),
+                        ) {
+                            FocusStatChip(
+                                label = "Sessions",
+                                value = state.todaysPomodoroSessions.toString(),
+                                modifier = Modifier.weight(1f),
+                            )
+                            FocusStatChip(
+                                label = "Rounds",
+                                value = state.todaysCompletedRounds.toString(),
+                                modifier = Modifier.weight(1f),
+                            )
+                            FocusStatChip(
+                                label = "Focus Time",
+                                value = formatFocusTime(state.todaysFocusSeconds),
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -995,6 +1090,36 @@ private fun InsightRow(
                 lineHeight = 20.sp,
             )
         }
+    }
+}
+
+@Composable
+private fun FocusStatChip(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier =
+            modifier
+                .background(
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    RoundedCornerShape(12.dp),
+                )
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

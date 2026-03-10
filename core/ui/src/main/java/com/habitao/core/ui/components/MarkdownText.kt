@@ -38,7 +38,7 @@ fun MarkdownText(
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
 ) {
-    val annotated = remember(text) { parseMarkdown(text, color) }
+    val annotated = remember(text, color) { parseMarkdown(text, color) }
     Text(
         text = annotated,
         modifier = modifier,
@@ -309,12 +309,18 @@ fun findInlineRegions(
  * the cursor is outside the region and shows them dimmed when inside.
  * Uses a custom OffsetMapping for correct cursor positioning.
  * Pass [precomputedRegions] to avoid re-parsing on cursor-only changes.
+ *
+ * [cursorPosition] is a mutable property so callers can update it without
+ * recreating the transformation instance, which avoids unnecessary
+ * BasicTextField re-layouts on every keystroke.
  */
 class MarkdownVisualTransformation(
     private val baseColor: Color,
-    private val cursorPosition: Int = -1,
     private val precomputedRegions: List<InlineRegion>? = null,
 ) : VisualTransformation {
+    /** Current cursor position. Update without recreating the instance. */
+    var cursorPosition: Int = -1
+
     /** Last offset mapping produced by [filter], for external cursor rect lookups. */
     var lastOffsetMapping: OffsetMapping = OffsetMapping.Identity
         private set

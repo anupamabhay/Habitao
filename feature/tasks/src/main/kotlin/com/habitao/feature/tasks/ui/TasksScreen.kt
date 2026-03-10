@@ -175,6 +175,7 @@ private fun TasksContent(
             )
         }
     val expandedTaskIds = remember { mutableStateMapOf<String, Boolean>() }
+    val today = remember { LocalDate.now() }
 
     val hasActiveTasks =
         state.overdueTasks.isNotEmpty() ||
@@ -233,6 +234,7 @@ private fun TasksContent(
                         subTasks = state.subTasks,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
+                        today = today,
                     )
 
                     section(
@@ -244,6 +246,7 @@ private fun TasksContent(
                         subTasks = state.subTasks,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
+                        today = today,
                     )
 
                     section(
@@ -255,6 +258,7 @@ private fun TasksContent(
                         subTasks = state.subTasks,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
+                        today = today,
                     )
 
                     section(
@@ -266,6 +270,7 @@ private fun TasksContent(
                         subTasks = state.subTasks,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
+                        today = today,
                     )
 
                     if (hasCompletedTasks) {
@@ -285,7 +290,11 @@ private fun TasksContent(
                         }
 
                         if (sectionExpanded["Completed"] == true) {
-                            items(state.completedTasks, key = { it.id }) { task ->
+                            items(
+                                state.completedTasks,
+                                key = { it.id },
+                                contentType = { "task_item" },
+                            ) { task ->
                                 TaskItemWithSubtasks(
                                     task = task,
                                     subtasks = state.completedSubTasks[task.id] ?: emptyList(),
@@ -296,10 +305,15 @@ private fun TasksContent(
                                         expandedTaskIds[task.id] = !(expandedTaskIds[task.id] ?: true)
                                     },
                                     allSubTasks = state.completedSubTasks,
+                                    today = today,
                                 )
                             }
 
-                            items(state.orphanCompletedSubTasks, key = { it.id }) { task ->
+                            items(
+                                state.orphanCompletedSubTasks,
+                                key = { it.id },
+                                contentType = { "task_item" },
+                            ) { task ->
                                 TaskRow(
                                     task = task,
                                     onToggleComplete = { onToggleComplete(task.id, it) },
@@ -309,6 +323,7 @@ private fun TasksContent(
                                     showSubtaskChevron = false,
                                     onToggleExpanded = null,
                                     isExpanded = true,
+                                    today = today,
                                 )
                             }
                         }
@@ -328,6 +343,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
     subTasks: Map<String, List<Task>>,
     onToggleComplete: (String, Boolean) -> Unit,
     onTaskClick: (String) -> Unit,
+    today: LocalDate,
 ) {
     if (tasks.isEmpty()) return
 
@@ -344,7 +360,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
     }
 
     if (sectionExpanded[title] != false) {
-        items(tasks, key = { it.id }) { task ->
+        items(tasks, key = { it.id }, contentType = { "task_item" }) { task ->
             TaskItemWithSubtasks(
                 task = task,
                 subtasks = subTasks[task.id] ?: emptyList(),
@@ -355,6 +371,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
                     expandedTaskIds[task.id] = !(expandedTaskIds[task.id] ?: true)
                 },
                 allSubTasks = subTasks,
+                today = today,
             )
         }
     }
@@ -419,6 +436,7 @@ private fun TaskItemWithSubtasks(
     onToggleExpanded: () -> Unit,
     allSubTasks: Map<String, List<Task>> = emptyMap(),
     depth: Int = 0,
+    today: LocalDate = LocalDate.now(),
 ) {
     val content: @Composable () -> Unit = {
         Column {
@@ -432,6 +450,7 @@ private fun TaskItemWithSubtasks(
                 onToggleExpanded = if (subtasks.isNotEmpty()) onToggleExpanded else null,
                 isExpanded = isExpanded,
                 nestingDepth = depth,
+                today = today,
             )
 
             if (subtasks.isNotEmpty() && isExpanded) {
@@ -450,9 +469,9 @@ private fun TaskItemWithSubtasks(
                             onToggleExpanded = {},
                             allSubTasks = allSubTasks,
                             depth = nextDepth,
+                            today = today,
                         )
                     } else {
-                        // At max depth: hide subtask count since user can't expand further.
                         TaskRow(
                             task = subtask,
                             onToggleComplete = { onToggleComplete(subtask.id, it) },
@@ -463,6 +482,7 @@ private fun TaskItemWithSubtasks(
                             onToggleExpanded = null,
                             isExpanded = true,
                             nestingDepth = nextDepth,
+                            today = today,
                         )
                     }
                 }
@@ -501,10 +521,10 @@ private fun TaskRow(
     onToggleExpanded: (() -> Unit)?,
     isExpanded: Boolean,
     nestingDepth: Int = 0,
+    today: LocalDate = LocalDate.now(),
 ) {
     val priorityColor = getPriorityColor(task.priority)
     val hasPriority = task.priority != TaskPriority.NONE
-    val today = remember { LocalDate.now() }
     val isOverdue = task.dueDate?.isBefore(today) == true && !task.isCompleted
     val dimAlpha = Dimensions.COMPLETED_TASK_ALPHA
 
@@ -679,7 +699,6 @@ private fun formatDueDate(
     }
 }
 
-@Composable
 private fun getPriorityColor(priority: TaskPriority): Color {
     return when (priority) {
         TaskPriority.HIGH -> Color(0xFFE53935)
