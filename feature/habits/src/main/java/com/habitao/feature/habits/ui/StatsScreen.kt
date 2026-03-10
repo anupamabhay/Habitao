@@ -393,7 +393,7 @@ private fun StatsContent(
                             ) {
                                 Text(
                                     text = "${(state.routineCompletionRate * 100).toInt()}%",
-                                    style = MaterialTheme.typography.titleLarge,
+                                    style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.secondary,
                                 )
@@ -465,7 +465,7 @@ private fun StatsContent(
 
                             Text(
                                 text = formatFocusTime(state.todaysFocusSeconds),
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
                             )
@@ -1100,10 +1100,12 @@ private fun FocusStatChip(
 private fun formatFocusTime(seconds: Int): String {
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
+    val secs = seconds % 60
 
-    return if (hours > 0) {
-        "$hours.${(minutes / 6f).toInt()}h"
-    } else {
-        "${minutes}m"
+    return when {
+        hours > 0 -> "${hours}h ${minutes}m ${secs}s"
+        minutes > 0 -> "${minutes}m ${secs}s"
+        seconds > 0 -> "${secs}s"
+        else -> "0s"
     }
 }

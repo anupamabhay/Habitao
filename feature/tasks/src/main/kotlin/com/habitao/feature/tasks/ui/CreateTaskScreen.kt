@@ -238,6 +238,24 @@ fun CreateTaskScreen(
                         )
                     }
                 },
+                actions = {
+                    if (showToolbar) {
+                        TextButton(
+                            onClick = { viewModel.processIntent(CreateTaskIntent.SaveTask) },
+                            enabled = !state.isSaving,
+                        ) {
+                            Text(
+                                text =
+                                    when {
+                                        state.isSaving -> "Saving..."
+                                        state.isEditMode -> "Save"
+                                        else -> "Create"
+                                    },
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                    }
+                },
                 windowInsets = WindowInsets.statusBars,
                 colors =
                     TopAppBarDefaults.topAppBarColors(
@@ -615,21 +633,23 @@ private fun MarkdownToolbar(
     val applyFormat: (String, String) -> Unit = { prefix, suffix ->
         val sel = textFieldValue.selection
         val text = textFieldValue.text
+        val safeStart = sel.start.coerceIn(0, text.length)
+        val safeEnd = sel.end.coerceIn(0, text.length)
         undoRedoManager.checkpoint(textFieldValue, force = true)
-        if (sel.start != sel.end) {
-            val before = text.substring(0, sel.start)
-            val selected = text.substring(sel.start, sel.end)
-            val after = text.substring(sel.end)
+        if (safeStart != safeEnd) {
+            val before = text.substring(0, safeStart)
+            val selected = text.substring(safeStart, safeEnd)
+            val after = text.substring(safeEnd)
             val newText = before + prefix + selected + suffix + after
-            val newCursor = sel.end + prefix.length + suffix.length
+            val newCursor = safeEnd + prefix.length + suffix.length
             onTextFieldValueChange(
                 TextFieldValue(text = newText, selection = TextRange(newCursor)),
             )
         } else {
-            val before = text.substring(0, sel.start)
-            val after = text.substring(sel.start)
+            val before = text.substring(0, safeStart)
+            val after = text.substring(safeStart)
             val newText = before + prefix + suffix + after
-            val newCursor = sel.start + prefix.length
+            val newCursor = safeStart + prefix.length
             onTextFieldValueChange(
                 TextFieldValue(text = newText, selection = TextRange(newCursor)),
             )
