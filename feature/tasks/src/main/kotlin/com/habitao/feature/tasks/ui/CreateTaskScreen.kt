@@ -16,12 +16,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
@@ -101,7 +101,6 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextLayoutResult
@@ -120,7 +119,6 @@ import com.habitao.domain.model.TaskPriority
 import com.habitao.feature.tasks.viewmodel.CreateTaskIntent
 import com.habitao.feature.tasks.viewmodel.CreateTaskState
 import com.habitao.feature.tasks.viewmodel.CreateTaskViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -176,11 +174,10 @@ fun CreateTaskScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val focusManager = LocalFocusManager.current
     val density = LocalDensity.current
 
-    // Hoisted description state so toolbar (in bottomBar) can interact with it
+    // Hoisted description state so bottom action row can edit markdown.
     var descriptionFocused by remember { mutableStateOf(false) }
     var descriptionTfv by remember {
         mutableStateOf(TextFieldValue(text = "", selection = TextRange(0)))
@@ -223,7 +220,6 @@ fun CreateTaskScreen(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
@@ -243,17 +239,53 @@ fun CreateTaskScreen(
                     }
                 },
                 windowInsets = WindowInsets.statusBars,
-                scrollBehavior = scrollBehavior,
                 colors =
                     TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surface,
                     ),
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
+    ) { paddingValues ->
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .navigationBarsPadding()
+                    .imePadding(),
+        ) {
+            CreateTaskForm(
+                state = state,
+                onIntent = viewModel::processIntent,
+                descriptionTfv = descriptionTfv,
+                onDescriptionTfvChange = { newTfv ->
+                    undoRedoManager.checkpoint(descriptionTfv)
+                    descriptionTfv = newTfv
+                    viewModel.processIntent(CreateTaskIntent.SetDescription(newTfv.text))
+                },
+                onDescriptionFocusChange = { focused ->
+                    descriptionFocused = focused
+                    if (focused) {
+                        lastFocusedField = "description"
+                    }
+                },
+                onTitleFocusChange = { focused ->
+                    if (focused) {
+                        descriptionFocused = false
+                        lastFocusedField = "title"
+                    }
+                },
+                onSubtaskFocusChange = { focused ->
+                    if (focused) {
+                        descriptionFocused = false
+                        lastFocusedField = "subtask"
+                    }
+                },
+                modifier = Modifier.weight(1f),
+            )
+
             if (showToolbar) {
                 MarkdownToolbar(
                     textFieldValue = descriptionTfv,
@@ -263,10 +295,7 @@ fun CreateTaskScreen(
                     },
                     undoRedoManager = undoRedoManager,
                     onDismiss = { focusManager.clearFocus() },
-                    modifier =
-                        Modifier
-                            .windowInsetsPadding(WindowInsets.ime)
-                            .navigationBarsPadding(),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             } else {
                 Button(
@@ -280,8 +309,6 @@ fun CreateTaskScreen(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .windowInsetsPadding(WindowInsets.ime)
-                            .navigationBarsPadding()
                             .padding(
                                 horizontal = Dimensions.screenPaddingHorizontal,
                                 vertical = Dimensions.elementSpacingLarge,
@@ -300,25 +327,7 @@ fun CreateTaskScreen(
                     )
                 }
             }
-        },
-    ) { paddingValues ->
-        CreateTaskForm(
-            state = state,
-            onIntent = viewModel::processIntent,
-            descriptionTfv = descriptionTfv,
-            onDescriptionTfvChange = { newTfv ->
-                undoRedoManager.checkpoint(descriptionTfv)
-                descriptionTfv = newTfv
-                viewModel.processIntent(CreateTaskIntent.SetDescription(newTfv.text))
-            },
-            onDescriptionFocusChange = { focused ->
-                descriptionFocused = focused
-                if (focused) {
-                    lastFocusedField = "description"
-                }
-            },
-            modifier = Modifier.padding(paddingValues),
-        )
+        }
     }
 }
 
@@ -329,6 +338,8 @@ private fun CreateTaskForm(
     descriptionTfv: TextFieldValue,
     onDescriptionTfvChange: (TextFieldValue) -> Unit,
     onDescriptionFocusChange: (Boolean) -> Unit,
+    onTitleFocusChange: (Boolean) -> Unit,
+    onSubtaskFocusChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val inputShape = RoundedCornerShape(16.dp)
@@ -350,7 +361,7 @@ private fun CreateTaskForm(
     Column(
         modifier =
             modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .verticalScroll(scrollState)
                 .padding(horizontal = Dimensions.screenPaddingHorizontal),
         verticalArrangement = Arrangement.spacedBy(Dimensions.sectionSpacing),
@@ -368,7 +379,12 @@ private fun CreateTaskForm(
                         fontWeight = FontWeight.Medium,
                     ),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                modifier = Modifier.fillMaxWidth(),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focusState ->
+                            onTitleFocusChange(focusState.isFocused)
+                        },
                 decorationBox = { innerTextField ->
                     if (state.title.isEmpty()) {
                         Text(
@@ -532,6 +548,7 @@ private fun CreateTaskForm(
                         onRemove = { onIntent(CreateTaskIntent.RemoveSubtask(subtask.id)) },
                         onSubmit = { onIntent(CreateTaskIntent.AddSubtask) },
                         shouldRequestFocus = subtask.id == subtaskIdToFocus,
+                        onFocusChange = onSubtaskFocusChange,
                         onFocusRequested = {
                             if (subtaskIdToFocus == subtask.id) {
                                 subtaskIdToFocus = null
@@ -568,7 +585,7 @@ private fun CreateTaskForm(
             }
         }
 
-        Spacer(modifier = Modifier.height(Dimensions.fabClearance + 32.dp))
+        Spacer(modifier = Modifier.height(Dimensions.sectionSpacing))
     }
 }
 
@@ -586,7 +603,7 @@ private fun SectionHeader(text: String) {
     )
 }
 
-/** Formatting toolbar that sits above the keyboard in the Scaffold bottomBar. */
+/** Formatting toolbar that sits above the keyboard. */
 @Composable
 private fun MarkdownToolbar(
     textFieldValue: TextFieldValue,
@@ -823,6 +840,8 @@ private fun MarkdownDescriptionField(
 ) {
     val baseColor = MaterialTheme.colorScheme.onSurfaceVariant
     val cursorPos = textFieldValue.selection.start
+    val density = LocalDensity.current
+    val imeBottom = WindowInsets.ime.getBottom(density)
 
     // Cache region parsing on text content -- avoids re-parsing on cursor-only changes
     val cachedRegions =
@@ -837,31 +856,23 @@ private fun MarkdownDescriptionField(
         }
     markdownTransformation.cursorPosition = cursorPos
 
-    // Cursor-aware auto-scroll: bring cursor into view on text changes (debounced)
+    // Keep editor visible when focus enters description field.
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-    var prevText by remember { mutableStateOf(textFieldValue.text) }
     val scope = rememberCoroutineScope()
 
-    // Debounced auto-scroll — batches rapid keystrokes to reduce layout thrash
-    LaunchedEffect(textFieldValue.text) {
-        if (textFieldValue.text != prevText) {
-            prevText = textFieldValue.text
-            delay(100)
-            val layout = textLayoutResult
-            if (layout != null && layout.layoutInput.text.isNotEmpty()) {
-                val transformedOffset =
-                    markdownTransformation.lastOffsetMapping
-                        .originalToTransformed(cursorPos)
-                        .coerceIn(0, layout.layoutInput.text.length)
-                val cursorRect = layout.getCursorRect(transformedOffset)
-                val paddedRect =
-                    Rect(cursorRect.left, cursorRect.top, cursorRect.right, cursorRect.bottom + 120f)
-                bringIntoViewRequester.bringIntoView(paddedRect)
-            } else {
-                bringIntoViewRequester.bringIntoView()
-            }
-        }
+    LaunchedEffect(textFieldValue.text, textFieldValue.selection) {
+        if (imeBottom <= 0) return@LaunchedEffect
+        val layout = textLayoutResult ?: return@LaunchedEffect
+        if (layout.layoutInput.text.isEmpty()) return@LaunchedEffect
+
+        val transformedOffset =
+            markdownTransformation.lastOffsetMapping
+                .originalToTransformed(cursorPos)
+                .coerceIn(0, layout.layoutInput.text.length)
+        val cursorRect = layout.getCursorRect(transformedOffset)
+        val paddedRect = Rect(cursorRect.left, cursorRect.top, cursorRect.right, cursorRect.bottom + 120f)
+        bringIntoViewRequester.bringIntoView(paddedRect)
     }
 
     BasicTextField(
@@ -871,7 +882,9 @@ private fun MarkdownDescriptionField(
             val result = handleMarkdownAutoFormat(oldText, newTfv.text, newTfv.selection)
             onTextFieldValueChange(result)
         },
-        onTextLayout = { textLayoutResult = it },
+        onTextLayout = { layout ->
+            textLayoutResult = layout
+        },
         textStyle =
             MaterialTheme.typography.bodyLarge.copy(
                 color = baseColor,
@@ -1298,6 +1311,7 @@ private fun SubtaskRow(
     onRemove: () -> Unit,
     onSubmit: () -> Unit,
     shouldRequestFocus: Boolean,
+    onFocusChange: (Boolean) -> Unit,
     onFocusRequested: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -1342,6 +1356,9 @@ private fun SubtaskRow(
                 Modifier
                     .weight(1f)
                     .focusRequester(focusRequester)
+                    .onFocusChanged { focusState ->
+                        onFocusChange(focusState.isFocused)
+                    }
                     .onKeyEvent { event ->
                         if (
                             event.type == KeyEventType.KeyUp &&

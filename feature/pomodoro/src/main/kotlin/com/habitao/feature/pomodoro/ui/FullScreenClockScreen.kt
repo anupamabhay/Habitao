@@ -503,24 +503,28 @@ fun TomatoClock(
     totalSeconds: Long,
     modifier: Modifier = Modifier,
 ) {
+    // Direct progress — no animation batching so each cell lights individually
     val progress = if (totalSeconds > 0L) 1f - (remainingSeconds.toFloat() / totalSeconds) else 1f
-
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = tween(durationMillis = 800, easing = LinearOutSlowInEasing),
-        label = "pixel_tomato_fill",
-    )
 
     // Pre-built pixel grid (17 cols x 19 rows)
     val grid = remember { buildTomatoGrid() }
-    // Count body rows for threshold mapping
-    val bodyRows =
+    // Ordered body cells for one-cell-at-a-time fill progression.
+    val bodyCellThresholds =
         remember(grid) {
-            val rows = mutableListOf<Int>()
+            val bodyCells = mutableListOf<Pair<Int, Int>>()
             for (r in grid.indices) {
-                if (grid[r].any { it == 1 }) rows.add(r)
+                for (c in grid[r].indices) {
+                    if (grid[r][c] == 1) {
+                        bodyCells.add(r to c)
+                    }
+                }
             }
-            rows
+
+            val totalCells = bodyCells.size.coerceAtLeast(1)
+            bodyCells.mapIndexed { index, cell ->
+                val threshold = index.toFloat() / totalCells.toFloat()
+                cell to threshold
+            }.toMap()
         }
 
     val tomatoLit = Color(0xFFE53935)
@@ -540,10 +544,6 @@ fun TomatoClock(
         val offsetX = (size.width - totalW) / 2f
         val offsetY = (size.height - totalH) / 2f
 
-        val firstBodyRow = bodyRows.firstOrNull() ?: 0
-        val lastBodyRow = bodyRows.lastOrNull() ?: (rows - 1)
-        val bodySpan = (lastBodyRow - firstBodyRow).coerceAtLeast(1)
-
         for (r in grid.indices) {
             for (c in grid[r].indices) {
                 val cellType = grid[r][c]
@@ -557,10 +557,8 @@ fun TomatoClock(
                         2 -> stemColor
                         3 -> leafColor
                         1 -> {
-                            // Body cells light up top-to-bottom based on progress
-                            val rowThreshold =
-                                (r - firstBodyRow).toFloat() / bodySpan
-                            if (animatedProgress >= rowThreshold) tomatoLit else tomatoDim
+                            val cellThreshold = bodyCellThresholds[r to c] ?: 1f
+                            if (progress >= cellThreshold) tomatoLit else tomatoDim
                         }
                         else -> Color.Transparent
                     }

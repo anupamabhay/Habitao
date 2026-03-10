@@ -27,6 +27,7 @@ import com.habitao.domain.repository.PomodoroRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -397,7 +398,7 @@ class TimerService : LifecycleService() {
                 actualDurationSeconds = actualDurationSeconds.toInt(),
                 createdAt = System.currentTimeMillis(),
             )
-        lifecycleScope.launch {
+        lifecycleScope.launch(NonCancellable + Dispatchers.IO) {
             pomodoroRepository.saveSession(session)
         }
     }
