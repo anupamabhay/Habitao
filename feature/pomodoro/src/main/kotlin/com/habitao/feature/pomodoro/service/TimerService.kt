@@ -416,6 +416,7 @@ class TimerService : LifecycleService() {
 
                 if (newTotalCount >= pomodoroPreferences.totalSessions) {
                     pomodoroPreferences.incrementRound()
+                    showRoundCompleteNotification(pomodoroPreferences.getTodaysRounds())
                     timerStateHolder.updateTimerState(TimerState.IDLE)
                     timerStateHolder.updateRemainingSeconds(0L)
                     timerStateHolder.updateTotalSeconds(0L)
@@ -518,6 +519,47 @@ class TimerService : LifecycleService() {
         }
     }
 
+    private fun showRoundCompleteNotification(roundNumber: Int) {
+        lifecycleScope.launch {
+            val settings = appSettingsManager.settings.first()
+            if (!settings.pomodoroNotificationsEnabled) return@launch
+
+            val contentIntent =
+                packageManager.getLaunchIntentForPackage(packageName)?.let { intent ->
+                    PendingIntent.getActivity(
+                        this@TimerService,
+                        REQUEST_CODE_COMPLETE,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    )
+                }
+
+            val totalSessions = pomodoroPreferences.totalSessions
+            val notification =
+                NotificationCompat.Builder(this@TimerService, COMPLETE_CHANNEL_ID)
+                    .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                    .setContentTitle("Round $roundNumber Complete!")
+                    .setContentText("All $totalSessions sessions finished. Great focus!")
+                    .setStyle(
+                        NotificationCompat.BigTextStyle().bigText(
+                            "You completed all $totalSessions focus sessions for round $roundNumber. " +
+                                "Take a well-deserved break!",
+                        ),
+                    )
+                    .setContentIntent(contentIntent)
+                    .setAutoCancel(true)
+                    .setCategory(NotificationCompat.CATEGORY_ALARM)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .apply {
+                        if (pomodoroPreferences.vibrateEnabled) {
+                            setVibrate(longArrayOf(0L, 300L, 200L, 300L))
+                        }
+                    }
+                    .build()
+            notificationManager.notify(NOTIFICATION_ROUND_COMPLETE_ID, notification)
+        }
+    }
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel =
@@ -578,6 +620,7 @@ class TimerService : LifecycleService() {
 
         private const val NOTIFICATION_ID = 1001
         private const val NOTIFICATION_COMPLETE_ID = 1002
+        private const val NOTIFICATION_ROUND_COMPLETE_ID = 1003
         private const val REQUEST_CODE_PAUSE = 2001
         private const val REQUEST_CODE_STOP = 2002
         private const val REQUEST_CODE_RESUME = 2003

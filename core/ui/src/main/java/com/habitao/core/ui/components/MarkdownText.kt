@@ -186,7 +186,9 @@ private fun AnnotatedString.Builder.appendFormattedLine(
                 val marker = text[i]
                 val end = text.indexOf(marker, i + 1)
                 if (end != -1 && end > i + 1) {
-                    withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                    withStyle(
+                        SpanStyle(fontStyle = FontStyle.Italic, fontFamily = FontFamily.Serif),
+                    ) {
                         append(text.substring(i + 1, end))
                     }
                     i = end + 1
@@ -290,7 +292,10 @@ fun findInlineRegions(
                             1,
                             end,
                             1,
-                            SpanStyle(fontStyle = FontStyle.Italic),
+                            SpanStyle(
+                                fontStyle = FontStyle.Italic,
+                                fontFamily = FontFamily.Serif,
+                            ),
                         ),
                     )
                     i = end + 1
