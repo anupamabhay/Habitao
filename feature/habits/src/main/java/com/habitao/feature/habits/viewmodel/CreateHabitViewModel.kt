@@ -347,6 +347,8 @@ class CreateHabitViewModel
                                 habitId = habit.id,
                                 habitTitle = habit.title,
                                 time = reminderTime,
+                                frequencyType = habit.frequencyType,
+                                scheduledDays = habit.scheduledDays,
                             )
                         } else {
                             reminderScheduler.cancelReminder(habit.id)
