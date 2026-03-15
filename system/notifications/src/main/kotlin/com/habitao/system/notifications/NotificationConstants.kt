@@ -8,6 +8,8 @@ object NotificationConstants {
     const val EXTRA_HABIT_TITLE = "HABIT_TITLE"
     const val EXTRA_REMINDER_HOUR = "REMINDER_HOUR"
     const val EXTRA_REMINDER_MINUTE = "REMINDER_MINUTE"
+    const val EXTRA_FREQUENCY_TYPE = "FREQUENCY_TYPE"
+    const val EXTRA_SCHEDULED_DAYS = "SCHEDULED_DAYS"
     const val ACTION_HABIT_REMINDER = "com.habitao.system.notifications.ACTION_HABIT_REMINDER"
     const val ACTION_MARK_COMPLETE = "com.habitao.system.notifications.ACTION_MARK_COMPLETE"
 
