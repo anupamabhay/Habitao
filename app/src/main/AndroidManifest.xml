@@ -46,6 +46,10 @@
             android:exported="false" />
 
         <receiver
+            android:name="com.habitao.system.notifications.RoutineReminderReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name="com.habitao.system.notifications.BootReceiver"
             android:exported="true">
             <intent-filter>

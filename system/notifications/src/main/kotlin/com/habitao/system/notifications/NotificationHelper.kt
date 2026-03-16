@@ -18,6 +18,8 @@ import com.habitao.system.notifications.NotificationConstants.CHANNEL_ID
 import com.habitao.system.notifications.NotificationConstants.CHANNEL_NAME
 import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_ID
 import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_TITLE
+import com.habitao.system.notifications.NotificationConstants.ROUTINE_CHANNEL_ID
+import com.habitao.system.notifications.NotificationConstants.ROUTINE_CHANNEL_NAME
 import kotlin.math.abs
 
 class NotificationHelper(
@@ -43,6 +45,19 @@ class NotificationHelper(
                 setSound(defaultSoundUri, audioAttributes)
             }
         notificationManager.createNotificationChannel(channel)
+
+        val routineChannel =
+            NotificationChannel(
+                ROUTINE_CHANNEL_ID,
+                ROUTINE_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = "Routine reminder notifications"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 500)
+                setSound(defaultSoundUri, audioAttributes)
+            }
+        notificationManager.createNotificationChannel(routineChannel)
     }
 
     fun hasNotificationPermission(): Boolean {
@@ -167,5 +182,35 @@ class NotificationHelper(
                 .build()
 
         NotificationManagerCompat.from(context).notify(abs(taskId.hashCode()) + 10000, notification)
+    }
+
+    fun showRoutineReminder(
+        routineId: String,
+        routineTitle: String,
+    ) {
+        val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val contentIntent =
+            context.packageManager.getLaunchIntentForPackage(context.packageName)?.let { intent ->
+                PendingIntent.getActivity(
+                    context,
+                    abs(routineId.hashCode()) + 20000,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+            }
+
+        val notification =
+            NotificationCompat.Builder(context, ROUTINE_CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("Routine Reminder")
+                .setContentText("Time for your routine: $routineTitle")
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSound(defaultSoundUri)
+                .setVibrate(longArrayOf(0, 500))
+                .build()
+
+        NotificationManagerCompat.from(context).notify(abs(routineId.hashCode()) + 20000, notification)
     }
 }

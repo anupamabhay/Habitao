@@ -20,4 +20,15 @@ object NotificationConstants {
     const val EXTRA_TASK_TITLE = "TASK_TITLE"
     const val ACTION_TASK_REMINDER = "com.habitao.system.notifications.ACTION_TASK_REMINDER"
     const val ACTION_TASK_MARK_COMPLETE = "com.habitao.system.notifications.ACTION_TASK_MARK_COMPLETE"
+
+    // Routine reminders
+    const val ROUTINE_CHANNEL_ID = "routine_reminders"
+    const val ROUTINE_CHANNEL_NAME = "Routine Reminders"
+    const val EXTRA_ROUTINE_ID = "ROUTINE_ID"
+    const val EXTRA_ROUTINE_TITLE = "ROUTINE_TITLE"
+    const val ACTION_ROUTINE_REMINDER = "com.habitao.system.notifications.ACTION_ROUTINE_REMINDER"
+    const val ACTION_ROUTINE_MARK_COMPLETE = "com.habitao.system.notifications.ACTION_ROUTINE_MARK_COMPLETE"
+    const val EXTRA_REPEAT_PATTERN = "REPEAT_PATTERN"
+    const val EXTRA_CUSTOM_INTERVAL = "CUSTOM_INTERVAL"
+    const val EXTRA_START_DATE = "START_DATE"
 }

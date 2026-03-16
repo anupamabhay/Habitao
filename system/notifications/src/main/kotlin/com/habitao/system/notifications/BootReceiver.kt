@@ -17,6 +17,9 @@ class BootReceiver : BroadcastReceiver() {
     @Inject
     lateinit var taskScheduler: TaskReminderScheduler
 
+    @Inject
+    lateinit var routineScheduler: RoutineReminderScheduler
+
     override fun onReceive(
         context: Context,
         intent: Intent,
@@ -27,6 +30,7 @@ class BootReceiver : BroadcastReceiver() {
                 try {
                     habitScheduler.rescheduleAllReminders()
                     taskScheduler.rescheduleAllReminders()
+                    routineScheduler.rescheduleAllReminders()
                 } catch (e: Exception) {
                     android.util.Log.e("BootReceiver", "Failed to reschedule reminders", e)
                 } finally {
