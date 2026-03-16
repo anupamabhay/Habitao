@@ -286,7 +286,7 @@ class CreateRoutineViewModel
                             },
                         customInterval =
                             if (currentState.repeatPattern == RepeatPattern.CUSTOM) {
-                                currentState.customInterval
+                                currentState.customInterval.coerceAtLeast(1)
                             } else {
                                 null
                             },
@@ -309,7 +309,7 @@ class CreateRoutineViewModel
                             },
                         customInterval =
                             if (currentState.repeatPattern == RepeatPattern.CUSTOM) {
-                                currentState.customInterval
+                                currentState.customInterval.coerceAtLeast(1)
                             } else {
                                 null
                             },
@@ -353,7 +353,7 @@ class CreateRoutineViewModel
                                 time = routine.reminderTime!!,
                                 repeatPattern = routine.repeatPattern,
                                 repeatDays = routine.repeatDays?.toSet() ?: emptySet(),
-                                customInterval = routine.customInterval ?: 1,
+                                customInterval = routine.customInterval?.coerceAtLeast(1) ?: 1,
                                 startDate = routine.startDate,
                             )
                         } else {

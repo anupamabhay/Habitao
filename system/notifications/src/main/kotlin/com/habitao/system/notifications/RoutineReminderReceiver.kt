@@ -3,7 +3,7 @@ package com.habitao.system.notifications
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.habitao.core.datastore.AppSettingsManager
+import android.os.Build
 import com.habitao.domain.model.RepeatPattern
 import com.habitao.system.notifications.NotificationConstants.ACTION_ROUTINE_REMINDER
 import com.habitao.system.notifications.NotificationConstants.EXTRA_CUSTOM_INTERVAL
@@ -25,8 +25,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class RoutineReminderReceiver : BroadcastReceiver() {
-    @Inject lateinit var appSettingsManager: AppSettingsManager
-
     @Inject lateinit var scheduler: RoutineReminderScheduler
 
     @Inject lateinit var notificationHelper: NotificationHelper
@@ -60,8 +58,13 @@ class RoutineReminderReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Show notification immediately
-                notificationHelper.showRoutineReminder(routineId, routineTitle)
+                val hasPermission =
+                    Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                        notificationHelper.hasNotificationPermission()
+
+                if (hasPermission) {
+                    notificationHelper.showRoutineReminder(routineId, routineTitle)
+                }
 
                 // Re-schedule for next time
                 scheduler.scheduleReminder(
@@ -70,7 +73,7 @@ class RoutineReminderReceiver : BroadcastReceiver() {
                     time = LocalTime.of(hour, minute),
                     repeatPattern = repeatPattern,
                     repeatDays = scheduledDays,
-                    customInterval = customInterval,
+                    customInterval = customInterval.coerceAtLeast(1),
                     startDate = startDate,
                 )
             } finally {

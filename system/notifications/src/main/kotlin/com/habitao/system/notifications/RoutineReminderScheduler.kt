@@ -131,27 +131,50 @@ class RoutineReminderScheduler
         ): Long {
             val now = LocalDateTime.now()
             var next = now.withHour(time.hour).withMinute(time.minute).withSecond(0).withNano(0)
+
+            // If the time has already passed today, start checking from tomorrow
             if (!next.isAfter(now)) {
                 next = next.plusDays(1)
             }
 
-            var attempts = 0
-            while (attempts < 30) { // Max 30 days lookahead to prevent infinite loop
-                val date = next.toLocalDate()
-                val isScheduled =
-                    when (repeatPattern) {
-                        RepeatPattern.DAILY -> true
-                        RepeatPattern.WEEKLY, RepeatPattern.SPECIFIC_DATES -> {
-                            if (repeatDays.isEmpty()) true else date.dayOfWeek in repeatDays
-                        }
-                        RepeatPattern.CUSTOM -> {
-                            val daysBetween = ChronoUnit.DAYS.between(startDate, date)
-                            daysBetween >= 0 && daysBetween % customInterval == 0L
+            // If the routine hasn't started yet, jump ahead to its start date
+            if (next.toLocalDate().isBefore(startDate)) {
+                next = startDate.atTime(time).withSecond(0).withNano(0)
+                // If the start date is today but the time has passed, start tomorrow
+                if (!next.isAfter(now)) {
+                    next = next.plusDays(1)
+                }
+            }
+
+            val safeInterval = customInterval.coerceAtLeast(1)
+
+            when (repeatPattern) {
+                RepeatPattern.DAILY -> {
+                    // next is already correct
+                }
+                RepeatPattern.WEEKLY, RepeatPattern.SPECIFIC_DATES -> {
+                    if (repeatDays.isNotEmpty()) {
+                        // Advance day-by-day until we hit a scheduled day (max 7 days)
+                        var attempts = 0
+                        while (attempts < 7 && next.toLocalDate().dayOfWeek !in repeatDays) {
+                            next = next.plusDays(1)
+                            attempts++
                         }
                     }
-                if (isScheduled) break
-                next = next.plusDays(1)
-                attempts++
+                }
+                RepeatPattern.CUSTOM -> {
+                    // Calculate mathematically based on days elapsed since start date
+                    val nextDate = next.toLocalDate()
+                    val daysBetween = ChronoUnit.DAYS.between(startDate, nextDate)
+
+                    if (daysBetween > 0 && daysBetween % safeInterval != 0L) {
+                        // How many days into the current cycle we are
+                        val daysIntoCycle = daysBetween % safeInterval
+                        // How many days to add to reach the next cycle boundary
+                        val daysToAdd = safeInterval - daysIntoCycle
+                        next = next.plusDays(daysToAdd)
+                    }
+                }
             }
             return next.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
         }
