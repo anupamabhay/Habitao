@@ -321,7 +321,13 @@ class CreateHabitViewModelTest {
                 advanceUntilIdle()
 
                 coVerify {
-                    reminderScheduler.scheduleReminder(any(), eq("Reminder Habit"), eq(LocalTime.of(8, 0)))
+                    reminderScheduler.scheduleReminder(
+                        habitId = any(),
+                        habitTitle = eq("Reminder Habit"),
+                        time = eq(LocalTime.of(8, 0)),
+                        frequencyType = any(),
+                        scheduledDays = any(),
+                    )
                 }
             }
 

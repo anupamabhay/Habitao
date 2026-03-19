@@ -6,6 +6,7 @@ import com.habitao.domain.model.RepeatPattern
 import com.habitao.domain.model.Routine
 import com.habitao.domain.model.RoutineStep
 import com.habitao.domain.repository.RoutineRepository
+import com.habitao.system.notifications.RoutineReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,6 +82,7 @@ class CreateRoutineViewModel
     @Inject
     constructor(
         private val routineRepository: RoutineRepository,
+        private val reminderScheduler: RoutineReminderScheduler,
     ) : ViewModel() {
         private val _state = MutableStateFlow(CreateRoutineState())
         val state: StateFlow<CreateRoutineState> = _state.asStateFlow()
@@ -284,7 +286,7 @@ class CreateRoutineViewModel
                             },
                         customInterval =
                             if (currentState.repeatPattern == RepeatPattern.CUSTOM) {
-                                currentState.customInterval
+                                currentState.customInterval.coerceAtLeast(1)
                             } else {
                                 null
                             },
@@ -307,7 +309,7 @@ class CreateRoutineViewModel
                             },
                         customInterval =
                             if (currentState.repeatPattern == RepeatPattern.CUSTOM) {
-                                currentState.customInterval
+                                currentState.customInterval.coerceAtLeast(1)
                             } else {
                                 null
                             },
@@ -344,6 +346,19 @@ class CreateRoutineViewModel
 
                 result.fold(
                     onSuccess = {
+                        if (routine.reminderEnabled && routine.reminderTime != null) {
+                            reminderScheduler.scheduleReminder(
+                                routineId = routine.id,
+                                routineTitle = routine.title,
+                                time = routine.reminderTime!!,
+                                repeatPattern = routine.repeatPattern,
+                                repeatDays = routine.repeatDays?.toSet() ?: emptySet(),
+                                customInterval = routine.customInterval?.coerceAtLeast(1) ?: 1,
+                                startDate = routine.startDate,
+                            )
+                        } else {
+                            reminderScheduler.cancelReminder(routine.id)
+                        }
                         _state.update { it.copy(isSaving = false) }
                         _savedEvent.emit(Unit)
                     },
