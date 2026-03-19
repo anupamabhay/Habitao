@@ -1,6 +1,7 @@
 package com.habitao.domain.model
 
-import java.time.LocalDate
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 
 data class RoutineLog(
     val id: String,
@@ -10,8 +11,8 @@ data class RoutineLog(
     val totalSteps: Int,
     val completionPercentage: Float = 0f,
     val isCompleted: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    val updatedAt: Long = Clock.System.now().toEpochMilliseconds(),
     val completedAt: Long? = null,
     val syncStatus: SyncStatus = SyncStatus.LOCAL,
     val deletedAt: Long? = null,

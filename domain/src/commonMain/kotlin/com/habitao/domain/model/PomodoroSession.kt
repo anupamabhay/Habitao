@@ -1,9 +1,10 @@
 package com.habitao.domain.model
 
-import java.util.UUID
+import com.habitao.domain.util.randomUUID
+import kotlinx.datetime.Clock
 
 data class PomodoroSession(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = randomUUID(),
     val sessionType: PomodoroType,
     val workDurationSeconds: Int = 1500,
     val breakDurationSeconds: Int = 300,
@@ -13,7 +14,7 @@ data class PomodoroSession(
     val completedAt: Long? = null,
     val wasInterrupted: Boolean = false,
     val actualDurationSeconds: Int? = null,
-    val createdAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
 )
 
 enum class PomodoroType {

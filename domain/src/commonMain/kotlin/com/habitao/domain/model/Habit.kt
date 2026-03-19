@@ -1,12 +1,16 @@
 package com.habitao.domain.model
 
-import java.time.LocalDate
-import java.time.LocalTime
-import java.util.UUID
+import com.habitao.domain.util.randomUUID
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.toLocalDateTime
 
 // Domain model representing a habit
 data class Habit(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = randomUUID(),
     val title: String,
     val description: String? = null,
     val icon: String? = null,
@@ -24,14 +28,14 @@ data class Habit(
     val frequencyType: FrequencyType = FrequencyType.DAILY,
     val frequencyValue: Int = 1,
     val scheduledDays: Set<DayOfWeek> = emptySet(),
-    val startDate: LocalDate = LocalDate.now(),
+    val startDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
     val endDate: LocalDate? = null,
     // Reminders
     val reminderEnabled: Boolean = false,
     val reminderTime: LocalTime? = null,
     // Metadata
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    val updatedAt: Long = Clock.System.now().toEpochMilliseconds(),
     val isArchived: Boolean = false,
     val sortOrder: Int = 0,
 ) {
@@ -51,9 +55,9 @@ data class Habit(
     // Get days until the next due date for EVERY_X_DAYS habits
     fun getDaysUntilDue(date: LocalDate): Int {
         if (frequencyType != FrequencyType.EVERY_X_DAYS) return 0
-        if (date < startDate) return java.time.temporal.ChronoUnit.DAYS.between(date, startDate).toInt()
+        if (date < startDate) return date.daysUntil(startDate)
 
-        val daysSinceStart = java.time.temporal.ChronoUnit.DAYS.between(startDate, date)
+        val daysSinceStart = startDate.daysUntil(date).toLong()
         val daysIntoCycle = (daysSinceStart % frequencyValue).toInt()
         return if (daysIntoCycle == 0) 0 else frequencyValue - daysIntoCycle
     }
@@ -120,22 +124,22 @@ enum class DayOfWeek(val shortName: String) {
     SUNDAY("Sun"),
 }
 
-// Extension to convert Java DayOfWeek to domain DayOfWeek
-fun java.time.DayOfWeek.toDomainDay(): DayOfWeek {
+// Extension to convert kotlinx.datetime DayOfWeek to domain DayOfWeek
+fun kotlinx.datetime.DayOfWeek.toDomainDay(): DayOfWeek {
     return when (this) {
-        java.time.DayOfWeek.MONDAY -> DayOfWeek.MONDAY
-        java.time.DayOfWeek.TUESDAY -> DayOfWeek.TUESDAY
-        java.time.DayOfWeek.WEDNESDAY -> DayOfWeek.WEDNESDAY
-        java.time.DayOfWeek.THURSDAY -> DayOfWeek.THURSDAY
-        java.time.DayOfWeek.FRIDAY -> DayOfWeek.FRIDAY
-        java.time.DayOfWeek.SATURDAY -> DayOfWeek.SATURDAY
-        java.time.DayOfWeek.SUNDAY -> DayOfWeek.SUNDAY
+        kotlinx.datetime.DayOfWeek.MONDAY -> DayOfWeek.MONDAY
+        kotlinx.datetime.DayOfWeek.TUESDAY -> DayOfWeek.TUESDAY
+        kotlinx.datetime.DayOfWeek.WEDNESDAY -> DayOfWeek.WEDNESDAY
+        kotlinx.datetime.DayOfWeek.THURSDAY -> DayOfWeek.THURSDAY
+        kotlinx.datetime.DayOfWeek.FRIDAY -> DayOfWeek.FRIDAY
+        kotlinx.datetime.DayOfWeek.SATURDAY -> DayOfWeek.SATURDAY
+        kotlinx.datetime.DayOfWeek.SUNDAY -> DayOfWeek.SUNDAY
     }
 }
 
 // Item in a checklist habit
 data class ChecklistItem(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = randomUUID(),
     val text: String,
     val sortOrder: Int = 0,
 )
@@ -174,7 +178,7 @@ enum class RepeatPattern {
 
 // Daily progress log for a habit on a specific date
 data class HabitLog(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = randomUUID(),
     val habitId: String,
     val date: LocalDate,
     // Progress tracking
@@ -184,8 +188,8 @@ data class HabitLog(
     // Checklist progress (for CHECKLIST habits)
     val completedChecklistItems: Set<String> = emptySet(),
     // Timestamps
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    val updatedAt: Long = Clock.System.now().toEpochMilliseconds(),
     val completedAt: Long? = null,
 ) {
     // Legacy property for backward compatibility

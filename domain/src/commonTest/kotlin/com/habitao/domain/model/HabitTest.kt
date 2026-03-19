@@ -1,27 +1,25 @@
 package com.habitao.domain.model
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
-import java.time.LocalDate
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
-@DisplayName("Habit domain model")
 class HabitTest {
     private lateinit var startDate: LocalDate
     private lateinit var endDate: LocalDate
 
-    @BeforeEach
+    @BeforeTest
     fun setup() {
-        startDate = LocalDate.of(2024, 1, 1)
-        endDate = LocalDate.of(2024, 1, 10)
+        startDate = LocalDate(2024, 1, 1)
+        endDate = LocalDate(2024, 1, 10)
     }
 
-    @Nested
-    @DisplayName("isScheduledFor")
     inner class IsScheduledForTests {
         @Test
         fun `returns false before start and after end dates`() {
@@ -29,8 +27,8 @@ class HabitTest {
             val habit = createBaseHabit().copy(endDate = endDate)
 
             // When
-            val beforeStart = habit.isScheduledFor(startDate.minusDays(1))
-            val afterEnd = habit.isScheduledFor(endDate.plusDays(1))
+            val beforeStart = habit.isScheduledFor(startDate.minus(1, DateTimeUnit.DAY))
+            val afterEnd = habit.isScheduledFor(endDate.plus(1, DateTimeUnit.DAY))
 
             // Then
             assertFalse(beforeStart)
@@ -57,7 +55,7 @@ class HabitTest {
             val habit = createBaseHabit().copy(frequencyType = FrequencyType.DAILY)
 
             // When
-            val scheduled = habit.isScheduledFor(startDate.plusDays(3))
+            val scheduled = habit.isScheduledFor(startDate.plus(3, DateTimeUnit.DAY))
 
             // Then
             assertTrue(scheduled)
@@ -73,8 +71,8 @@ class HabitTest {
                 )
 
             // When
-            val monday = habit.isScheduledFor(LocalDate.of(2024, 1, 1))
-            val tuesday = habit.isScheduledFor(LocalDate.of(2024, 1, 2))
+            val monday = habit.isScheduledFor(LocalDate(2024, 1, 1))
+            val tuesday = habit.isScheduledFor(LocalDate(2024, 1, 2))
 
             // Then
             assertTrue(monday)
@@ -87,7 +85,7 @@ class HabitTest {
             val habit = createBaseHabit().copy(frequencyType = FrequencyType.TIMES_PER_WEEK)
 
             // When
-            val scheduled = habit.isScheduledFor(startDate.plusDays(4))
+            val scheduled = habit.isScheduledFor(startDate.plus(4, DateTimeUnit.DAY))
 
             // Then
             assertTrue(scheduled)
@@ -103,8 +101,8 @@ class HabitTest {
                 )
 
             // When
-            val onInterval = habit.isScheduledFor(startDate.plusDays(2))
-            val offInterval = habit.isScheduledFor(startDate.plusDays(1))
+            val onInterval = habit.isScheduledFor(startDate.plus(2, DateTimeUnit.DAY))
+            val offInterval = habit.isScheduledFor(startDate.plus(1, DateTimeUnit.DAY))
 
             // Then: Both should return true since EVERY_X_DAYS always shows
             assertTrue(onInterval)
@@ -112,8 +110,6 @@ class HabitTest {
         }
     }
 
-    @Nested
-    @DisplayName("getFrequencyDescription")
     inner class GetFrequencyDescriptionTests {
         @Test
         fun `returns every day for daily frequency`() {
@@ -192,8 +188,6 @@ class HabitTest {
         }
     }
 
-    @Nested
-    @DisplayName("getTargetDescription")
     inner class GetTargetDescriptionTests {
         @Test
         fun `returns descriptions for each habit type`() {
@@ -245,8 +239,6 @@ class HabitTest {
         }
     }
 
-    @Nested
-    @DisplayName("HabitLog progress")
     inner class HabitLogProgressTests {
         @Test
         fun `returns fraction of current value over target`() {
@@ -305,8 +297,6 @@ class HabitTest {
         }
     }
 
-    @Nested
-    @DisplayName("Legacy conversions")
     inner class LegacyConversionTests {
         @Test
         fun `tracking type converts to habit type`() {
@@ -348,8 +338,6 @@ class HabitTest {
         }
     }
 
-    @Nested
-    @DisplayName("Habit presets")
     inner class HabitPresetsTests {
         @Test
         fun `getByCategory returns presets matching category`() {

@@ -4,7 +4,7 @@ import com.habitao.domain.model.Habit
 import com.habitao.domain.model.HabitLog
 import com.habitao.domain.model.StreakInfo
 import kotlinx.coroutines.flow.Flow
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 
 // Repository interface for habit operations
 interface HabitRepository {

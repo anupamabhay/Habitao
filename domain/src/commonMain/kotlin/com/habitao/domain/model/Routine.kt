@@ -1,8 +1,9 @@
 package com.habitao.domain.model
 
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.temporal.ChronoUnit
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.daysUntil
 
 data class Routine(
     val id: String,
@@ -11,7 +12,7 @@ data class Routine(
     val icon: String? = null,
     val color: String? = null,
     val repeatPattern: RepeatPattern,
-    val repeatDays: List<java.time.DayOfWeek>? = null,
+    val repeatDays: List<DayOfWeek>? = null,
     val customInterval: Int? = null,
     val startDate: LocalDate,
     val endDate: LocalDate? = null,
@@ -19,8 +20,8 @@ data class Routine(
     val completionThreshold: Float = 1.0f,
     val reminderEnabled: Boolean = false,
     val reminderTime: LocalTime? = null,
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    val updatedAt: Long = Clock.System.now().toEpochMilliseconds(),
     val isArchived: Boolean = false,
     val sortOrder: Int = 0,
     val syncStatus: SyncStatus = SyncStatus.LOCAL,
@@ -29,8 +30,8 @@ data class Routine(
 ) {
     /** Check if this routine is scheduled for the given date based on its repeat pattern. */
     fun isScheduledForDate(date: LocalDate): Boolean {
-        if (date.isBefore(startDate)) return false
-        if (endDate != null && date.isAfter(endDate)) return false
+        if (date < startDate) return false
+        if (endDate != null && date > endDate) return false
 
         return when (repeatPattern) {
             RepeatPattern.DAILY -> true
@@ -39,11 +40,11 @@ data class Routine(
             // "repeat on specific weekdays" — identical scheduling logic to WEEKLY.
             RepeatPattern.WEEKLY, RepeatPattern.SPECIFIC_DATES -> {
                 val days = repeatDays
-                if (days.isNullOrEmpty()) true else date.dayOfWeek in days
+                if (days.isNullOrEmpty()) true else date.dayOfWeek.toDomainDay() in days
             }
             RepeatPattern.CUSTOM -> {
                 val interval = customInterval ?: 1
-                val daysBetween = ChronoUnit.DAYS.between(startDate, date)
+                val daysBetween = startDate.daysUntil(date).toLong()
                 daysBetween >= 0 && daysBetween % interval == 0L
             }
         }

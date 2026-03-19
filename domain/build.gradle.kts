@@ -1,62 +1,41 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
 }
 
-// Domain module: pure Kotlin business logic, no Android framework dependencies in source.
-// Uses android-library plugin for proper AAR packaging with AGP 8.13+.
-// Source remains Android-free for future KMP migration.
-
-android {
-    namespace = "com.habitao.domain"
-    compileSdk = 35
-
-    defaultConfig {
-        minSdk = 26
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
-        freeCompilerArgs +=
-            listOf(
-                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            )
-    }
-
-    sourceSets {
-        getByName("main") {
-            java.srcDirs("src/main/kotlin")
+kotlin {
+    androidTarget {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "17"
+                freeCompilerArgs += listOf(
+                    "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                )
+            }
         }
     }
-}
 
-dependencies {
-    // Core Module (shared utilities)
-    implementation(projects.core.common)
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
 
-    // Kotlin
-    implementation(libs.kotlin.stdlib)
-
-    // Coroutines (core only - no Android)
-    implementation(libs.kotlinx.coroutines.core)
-
-    // Serialization (for data classes)
-    implementation(libs.kotlinx.serialization.json)
-
-    // DateTime (KMP-compatible)
-    implementation(libs.kotlinx.datetime)
-
-    // Testing
-    testImplementation(libs.bundles.testing.unit)
-    testRuntimeOnly(libs.junit5.engine)
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
+    sourceSets {
+        commonMain.dependencies {
+            implementation(projects.core.common)
+            implementation(libs.kotlin.stdlib)
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.datetime)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+        }
+        androidMain.dependencies {
+            // Android-specific domain helpers if needed
+        }
+        iosMain.dependencies {
+            // iOS-specific stubs if needed
+        }
+    }
 }

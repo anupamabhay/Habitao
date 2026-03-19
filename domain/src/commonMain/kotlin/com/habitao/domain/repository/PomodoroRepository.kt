@@ -2,7 +2,7 @@ package com.habitao.domain.repository
 
 import com.habitao.domain.model.PomodoroSession
 import kotlinx.coroutines.flow.Flow
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 
 interface PomodoroRepository {
     suspend fun saveSession(session: PomodoroSession): Result<Unit>

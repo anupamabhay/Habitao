@@ -1,7 +1,8 @@
 package com.habitao.domain.model
 
-import java.time.LocalDate
-import java.time.LocalTime
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 
 data class Task(
     val id: String,
@@ -13,15 +14,15 @@ data class Task(
     val dueTime: LocalTime? = null,
     val isRecurring: Boolean = false,
     val repeatPattern: RepeatPattern? = null,
-    val repeatDays: List<java.time.DayOfWeek>? = null,
+    val repeatDays: List<DayOfWeek>? = null,
     val priority: TaskPriority = TaskPriority.NONE,
     val tags: List<String> = emptyList(),
     val isCompleted: Boolean = false,
     val completedAt: Long? = null,
     val reminderEnabled: Boolean = false,
     val reminderMinutesBefore: Int = 60,
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    val updatedAt: Long = Clock.System.now().toEpochMilliseconds(),
     val sortOrder: Int = 0,
     val syncStatus: SyncStatus = SyncStatus.LOCAL,
     val lastSyncedAt: Long? = null,
