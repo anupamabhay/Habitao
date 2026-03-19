@@ -21,24 +21,12 @@ private const val DEFAULT_STATS_GRAPH_TYPE = "BAR"
 
 private val Context.appSettingsDataStore by preferencesDataStore(name = APP_SETTINGS_DATASTORE_NAME)
 
-data class AppSettings(
-    val bottomNavTabs: List<String> = emptyList(),
-    val defaultLaunchTab: String = "habits",
-    val maxVisibleTabs: Int = DEFAULT_MAX_VISIBLE_TABS,
-    val showTabLabels: Boolean = true,
-    val themeMode: String = DEFAULT_THEME_MODE,
-    val statsGraphType: String = DEFAULT_STATS_GRAPH_TYPE,
-    val habitRemindersEnabled: Boolean = true,
-    val taskRemindersEnabled: Boolean = true,
-    val pomodoroNotificationsEnabled: Boolean = true,
-)
-
 class AppSettingsManager(
     context: Context,
-) {
+) : AppSettingsRepository {
     private val dataStore = context.appSettingsDataStore
 
-    val settings: Flow<AppSettings> =
+    override val settings: Flow<AppSettings> =
         dataStore.data
             .catch { error ->
                 if (error is IOException) {
@@ -62,7 +50,7 @@ class AppSettingsManager(
                 )
             }
 
-    suspend fun setBottomNavTabs(tabIds: List<String>) {
+    override suspend fun setBottomNavTabs(tabIds: List<String>) {
         val serializedTabs =
             tabIds
                 .asSequence()
@@ -80,7 +68,7 @@ class AppSettingsManager(
         }
     }
 
-    suspend fun setDefaultLaunchTab(tabId: String) {
+    override suspend fun setDefaultLaunchTab(tabId: String) {
         val normalizedTabId = tabId.trim()
         dataStore.edit { preferences ->
             if (normalizedTabId.isBlank()) {
@@ -91,44 +79,44 @@ class AppSettingsManager(
         }
     }
 
-    suspend fun setMaxVisibleTabs(count: Int) {
+    override suspend fun setMaxVisibleTabs(count: Int) {
         val clamped = count.coerceIn(3, 5)
         dataStore.edit { preferences ->
             preferences[MAX_VISIBLE_TABS_KEY] = clamped
         }
     }
 
-    suspend fun setShowTabLabels(show: Boolean) {
+    override suspend fun setShowTabLabels(show: Boolean) {
         dataStore.edit { preferences ->
             preferences[SHOW_TAB_LABELS_KEY] = show
         }
     }
 
-    suspend fun setThemeMode(themeMode: String) {
+    override suspend fun setThemeMode(themeMode: String) {
         dataStore.edit { preferences ->
             preferences[THEME_MODE_KEY] = normalizeThemeMode(themeMode)
         }
     }
 
-    suspend fun setStatsGraphType(graphType: String) {
+    override suspend fun setStatsGraphType(graphType: String) {
         dataStore.edit { preferences ->
             preferences[STATS_GRAPH_TYPE_KEY] = normalizeGraphType(graphType)
         }
     }
 
-    suspend fun setHabitRemindersEnabled(enabled: Boolean) {
+    override suspend fun setHabitRemindersEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[HABIT_REMINDERS_ENABLED_KEY] = enabled
         }
     }
 
-    suspend fun setTaskRemindersEnabled(enabled: Boolean) {
+    override suspend fun setTaskRemindersEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[TASK_REMINDERS_ENABLED_KEY] = enabled
         }
     }
 
-    suspend fun setPomodoroNotificationsEnabled(enabled: Boolean) {
+    override suspend fun setPomodoroNotificationsEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[POMODORO_NOTIFICATIONS_ENABLED_KEY] = enabled
         }
