@@ -15,9 +15,6 @@ import java.io.IOException
 
 private const val APP_SETTINGS_DATASTORE_NAME = "app_settings"
 private const val TAB_SEPARATOR = ","
-private const val DEFAULT_MAX_VISIBLE_TABS = 4
-private const val DEFAULT_THEME_MODE = "SYSTEM"
-private const val DEFAULT_STATS_GRAPH_TYPE = "BAR"
 
 private val Context.appSettingsDataStore by preferencesDataStore(name = APP_SETTINGS_DATASTORE_NAME)
 

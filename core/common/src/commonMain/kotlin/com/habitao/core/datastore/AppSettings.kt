@@ -1,8 +1,8 @@
 package com.habitao.core.datastore
 
-private const val DEFAULT_MAX_VISIBLE_TABS = 4
-private const val DEFAULT_THEME_MODE = "SYSTEM"
-private const val DEFAULT_STATS_GRAPH_TYPE = "BAR"
+internal const val DEFAULT_MAX_VISIBLE_TABS = 4
+internal const val DEFAULT_THEME_MODE = "SYSTEM"
+internal const val DEFAULT_STATS_GRAPH_TYPE = "BAR"
 
 data class AppSettings(
     val bottomNavTabs: List<String> = emptyList(),
