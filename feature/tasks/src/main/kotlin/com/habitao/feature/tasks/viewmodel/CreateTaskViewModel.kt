@@ -5,9 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.Task
 import com.habitao.domain.model.TaskPriority
 import com.habitao.domain.repository.TaskRepository
+import com.habitao.domain.util.randomUUID
 import com.habitao.feature.tasks.MAX_SUBTASK_DEPTH
 import com.habitao.system.notifications.TaskReminderScheduler
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -16,10 +16,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.LocalTime
-import java.util.UUID
-import javax.inject.Inject
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 
 data class SubtaskItem(
     val id: String,
@@ -80,13 +78,10 @@ sealed class CreateTaskIntent {
     object ResetForm : CreateTaskIntent()
 }
 
-@HiltViewModel
-class CreateTaskViewModel
-    @Inject
-    constructor(
-        private val taskRepository: TaskRepository,
-        private val reminderScheduler: TaskReminderScheduler,
-    ) : ViewModel() {
+class CreateTaskViewModel(
+    private val taskRepository: TaskRepository,
+    private val reminderScheduler: TaskReminderScheduler,
+) : ViewModel() {
         private val _state = MutableStateFlow(CreateTaskState())
         val state: StateFlow<CreateTaskState> = _state.asStateFlow()
 
@@ -131,7 +126,7 @@ class CreateTaskViewModel
                                 subtasks =
                                     it.subtasks +
                                         SubtaskItem(
-                                            id = UUID.randomUUID().toString(),
+                                            id = randomUUID(),
                                             text = "",
                                             priority = TaskPriority.NONE,
                                             existingTaskId = null,
@@ -264,7 +259,7 @@ class CreateTaskViewModel
             _state.update { it.copy(isSaving = true, error = null) }
 
             viewModelScope.launch {
-                val taskId = currentTaskId ?: UUID.randomUUID().toString()
+                val taskId = currentTaskId ?: randomUUID()
                 val existing = loadedTask
 
                 val task =
@@ -376,7 +371,7 @@ class CreateTaskViewModel
                 } else {
                     val newSubtask =
                         Task(
-                            id = UUID.randomUUID().toString(),
+                            id = randomUUID(),
                             title = subtask.text.trim(),
                             parentTaskId = parentId,
                             dueDate = currentState.dueDate,

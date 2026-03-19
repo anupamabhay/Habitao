@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.Task
 import com.habitao.domain.model.TaskPriority
 import com.habitao.domain.repository.TaskRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,9 +14,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.LocalTime
-import javax.inject.Inject
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 
 enum class TaskFilter {
     ALL,
@@ -61,12 +64,9 @@ sealed class TasksIntent {
     data class SetSortOrder(val sortOrder: TaskSortOrder) : TasksIntent()
 }
 
-@HiltViewModel
-class TasksViewModel
-    @Inject
-    constructor(
-        private val taskRepository: TaskRepository,
-    ) : ViewModel() {
+class TasksViewModel(
+    private val taskRepository: TaskRepository,
+) : ViewModel() {
         private val errorFlow = MutableStateFlow<String?>(null)
         private val filterFlow = MutableStateFlow(TaskFilter.ALL)
         private val sortOrderFlow = MutableStateFlow(TaskSortOrder.DATE)
@@ -129,8 +129,8 @@ class TasksViewModel
                         .flatten()
                         .filter { it.isCompleted }
 
-                val today = LocalDate.now()
-                val tomorrow = today.plusDays(1)
+                val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+                val tomorrow = today.plus(1, DateTimeUnit.DAY)
 
                 val overdueTasks = mutableListOf<Task>()
                 val todayTasks = mutableListOf<Task>()
@@ -141,11 +141,11 @@ class TasksViewModel
                     val dueDate = task.dueDate
                     if (dueDate == null) {
                         upcomingTasks.add(task)
-                    } else if (dueDate.isBefore(today)) {
+                    } else if (dueDate < today) {
                         overdueTasks.add(task)
-                    } else if (dueDate.isEqual(today)) {
+                    } else if (dueDate == today) {
                         todayTasks.add(task)
-                    } else if (dueDate.isEqual(tomorrow)) {
+                    } else if (dueDate == tomorrow) {
                         tomorrowTasks.add(task)
                     } else {
                         upcomingTasks.add(task)
@@ -255,8 +255,8 @@ class TasksViewModel
             sortOrder: TaskSortOrder,
         ): List<Task> {
             val dateComparator =
-                compareBy<Task> { it.dueDate ?: LocalDate.MAX }
-                    .thenBy { it.dueTime ?: LocalTime.MAX }
+                compareBy<Task> { it.dueDate ?: LocalDate(9999, 12, 31) }
+                    .thenBy { it.dueTime ?: LocalTime(23, 59, 59, 999_999_999) }
             val priorityComparator = compareBy<Task> { priorityRank(it.priority) }
             val titleComparator = compareBy<Task> { it.title.trim().lowercase() }
 
@@ -269,13 +269,13 @@ class TasksViewModel
 
                     TaskSortOrder.PRIORITY ->
                         priorityComparator
-                            .thenBy { it.dueDate ?: LocalDate.MAX }
-                            .thenBy { it.dueTime ?: LocalTime.MAX }
+                            .thenBy { it.dueDate ?: LocalDate(9999, 12, 31) }
+                            .thenBy { it.dueTime ?: LocalTime(23, 59, 59, 999_999_999) }
                             .thenBy { it.title.trim().lowercase() }
 
                     TaskSortOrder.ALPHABETICAL ->
                         titleComparator
-                            .thenBy { it.dueDate ?: LocalDate.MAX }
+                            .thenBy { it.dueDate ?: LocalDate(9999, 12, 31) }
                             .thenBy { priorityRank(it.priority) }
                 }
 

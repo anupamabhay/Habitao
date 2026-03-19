@@ -60,7 +60,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.Task
 import com.habitao.domain.model.TaskPriority
@@ -69,15 +69,20 @@ import com.habitao.feature.tasks.viewmodel.TaskSortOrder
 import com.habitao.feature.tasks.viewmodel.TasksIntent
 import com.habitao.feature.tasks.viewmodel.TasksState
 import com.habitao.feature.tasks.viewmodel.TasksViewModel
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksScreen(
     onAddTask: () -> Unit,
     onEditTask: (String) -> Unit,
-    viewModel: TasksViewModel = hiltViewModel(),
+    viewModel: TasksViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -175,7 +180,7 @@ private fun TasksContent(
             )
         }
     val expandedTaskIds = remember { mutableStateMapOf<String, Boolean>() }
-    val today = remember { LocalDate.now() }
+    val today = remember { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
 
     val hasActiveTasks =
         state.overdueTasks.isNotEmpty() ||
@@ -436,7 +441,7 @@ private fun TaskItemWithSubtasks(
     onToggleExpanded: () -> Unit,
     allSubTasks: Map<String, List<Task>> = emptyMap(),
     depth: Int = 0,
-    today: LocalDate = LocalDate.now(),
+    today: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
 ) {
     val content: @Composable () -> Unit = {
         Column {
@@ -521,11 +526,11 @@ private fun TaskRow(
     onToggleExpanded: (() -> Unit)?,
     isExpanded: Boolean,
     nestingDepth: Int = 0,
-    today: LocalDate = LocalDate.now(),
+    today: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
 ) {
     val priorityColor = getPriorityColor(task.priority)
     val hasPriority = task.priority != TaskPriority.NONE
-    val isOverdue = task.dueDate?.isBefore(today) == true && !task.isCompleted
+    val isOverdue = task.dueDate?.let { it < today } == true && !task.isCompleted
     val dimAlpha = Dimensions.COMPLETED_TASK_ALPHA
 
     Row(
@@ -691,11 +696,11 @@ private fun formatDueDate(
     today: LocalDate,
 ): String {
     return when {
-        dueDate.isEqual(today) -> "Today"
-        dueDate.isEqual(today.plusDays(1)) -> "Tomorrow"
-        dueDate.isEqual(today.minusDays(1)) -> "Yesterday"
-        dueDate.year == today.year -> dueDate.format(DateTimeFormatter.ofPattern("MMM d"))
-        else -> dueDate.format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
+        dueDate == today -> "Today"
+        dueDate == today.plus(1, DateTimeUnit.DAY) -> "Tomorrow"
+        dueDate == today.minus(1, DateTimeUnit.DAY) -> "Yesterday"
+        dueDate.year == today.year -> "${dueDate.month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }} ${dueDate.dayOfMonth}"
+        else -> "${dueDate.month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }} ${dueDate.dayOfMonth}, ${dueDate.year}"
     }
 }
 

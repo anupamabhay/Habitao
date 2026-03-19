@@ -111,7 +111,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.habitao.core.ui.components.MarkdownVisualTransformation
 import com.habitao.core.ui.components.findInlineRegions
 import com.habitao.core.ui.theme.Dimensions
@@ -120,12 +120,11 @@ import com.habitao.feature.tasks.viewmodel.CreateTaskIntent
 import com.habitao.feature.tasks.viewmodel.CreateTaskState
 import com.habitao.feature.tasks.viewmodel.CreateTaskViewModel
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 /** Tracks text states for undo/redo with debounced checkpointing. */
 private class UndoRedoManager(private val maxHistory: Int = 50) {
@@ -170,7 +169,7 @@ fun CreateTaskScreen(
     onNavigateBack: () -> Unit,
     onTaskCreated: () -> Unit,
     taskId: String? = null,
-    viewModel: CreateTaskViewModel = hiltViewModel(),
+    viewModel: CreateTaskViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -1131,7 +1130,9 @@ private fun DatePickerField(
                     },
             )
             Text(
-                text = date?.format(DateTimeFormatter.ofPattern("MMM d, yyyy")) ?: "Date",
+                text = date?.let { d ->
+                    "${d.month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }} ${d.dayOfMonth}, ${d.year}"
+                } ?: "Date",
                 style = MaterialTheme.typography.bodyMedium,
                 color =
                     if (date != null) {
@@ -1146,7 +1147,7 @@ private fun DatePickerField(
     if (showDialog) {
         val datePickerState =
             rememberDatePickerState(
-                initialSelectedDateMillis = date?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
+                initialSelectedDateMillis = date?.atStartOfDayIn(TimeZone.UTC)?.toEpochMilliseconds(),
             )
 
         DatePickerDialog(
@@ -1156,9 +1157,9 @@ private fun DatePickerField(
                     val selectedMillis = datePickerState.selectedDateMillis
                     if (selectedMillis != null) {
                         val selectedDate =
-                            Instant.ofEpochMilli(selectedMillis)
-                                .atZone(ZoneId.of("UTC"))
-                                .toLocalDate()
+                            Instant.fromEpochMilliseconds(selectedMillis)
+                                .toLocalDateTime(TimeZone.UTC)
+                                .date
                         onDateSelected(selectedDate)
                     } else {
                         onDateSelected(null)
@@ -1211,7 +1212,11 @@ private fun TimePickerField(
                     },
             )
             Text(
-                text = time?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "Time",
+                text = time?.let { t ->
+                    val h = if (t.hour == 0 || t.hour == 12) 12 else t.hour % 12
+                    val amPm = if (t.hour < 12) "AM" else "PM"
+                    "${h}:${t.minute.toString().padStart(2, '0')} $amPm"
+                } ?: "Time",
                 style = MaterialTheme.typography.bodyMedium,
                 color =
                     if (time != null) {
@@ -1309,7 +1314,7 @@ private fun TimePickerField(
                         }
                         TextButton(
                             onClick = {
-                                onTimeSelected(LocalTime.of(timePickerState.hour, timePickerState.minute))
+                                onTimeSelected(LocalTime(timePickerState.hour, timePickerState.minute))
                                 showDialog = false
                             },
                         ) {
