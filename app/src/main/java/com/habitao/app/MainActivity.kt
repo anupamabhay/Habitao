@@ -64,7 +64,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.habitao.core.datastore.AppSettings
-import com.habitao.core.datastore.AppSettingsManager
+import com.habitao.core.datastore.AppSettingsRepository
 import com.habitao.core.ui.theme.HabitaoTheme
 import com.habitao.data.backup.BackupManager
 import com.habitao.feature.habits.ui.CreateHabitScreen
@@ -81,11 +81,10 @@ import com.habitao.feature.settings.ui.SettingsScreen
 import com.habitao.feature.settings.ui.SettingsTabOption
 import com.habitao.feature.tasks.ui.CreateTaskScreen
 import com.habitao.feature.tasks.ui.TasksScreen
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.android.ext.android.inject
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import javax.inject.Inject
 
 // -- Type-safe route definitions --
 
@@ -183,18 +182,11 @@ private enum class Tab(
     }
 }
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val appSettingsManager by lazy { AppSettingsManager(applicationContext) }
-
-    @Inject
-    lateinit var backupManager: BackupManager
-
-    @Inject
-    lateinit var habitReminderScheduler: com.habitao.system.notifications.HabitReminderScheduler
-
-    @Inject
-    lateinit var taskReminderScheduler: com.habitao.system.notifications.TaskReminderScheduler
+    private val appSettingsManager: AppSettingsRepository by inject()
+    private val backupManager: BackupManager by inject()
+    private val habitReminderScheduler: com.habitao.system.notifications.HabitReminderScheduler by inject()
+    private val taskReminderScheduler: com.habitao.system.notifications.TaskReminderScheduler by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -227,7 +219,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun HabitaoApp(
-    appSettingsManager: AppSettingsManager,
+    appSettingsManager: AppSettingsRepository,
     backupManager: BackupManager,
     habitReminderScheduler: com.habitao.system.notifications.HabitReminderScheduler,
     taskReminderScheduler: com.habitao.system.notifications.TaskReminderScheduler,

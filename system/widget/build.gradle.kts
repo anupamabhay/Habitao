@@ -2,8 +2,6 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
 }
 
 android {
@@ -73,9 +71,8 @@ dependencies {
     // WorkManager (for widget data updates)
     implementation(libs.work.runtime.ktx)
 
-    // Hilt
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.android.compiler)
+    // Koin
+    implementation(libs.koin.android)
 
     // Testing - Unit
     testImplementation(libs.bundles.testing.unit)

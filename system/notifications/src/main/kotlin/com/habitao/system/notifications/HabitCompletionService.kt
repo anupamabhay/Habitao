@@ -2,17 +2,17 @@ package com.habitao.system.notifications
 
 import com.habitao.domain.model.HabitType
 import com.habitao.domain.repository.HabitRepository
-import java.time.LocalDate
-import javax.inject.Inject
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 class HabitCompletionService
-    @Inject
     constructor(
         private val habitRepository: HabitRepository,
     ) {
         suspend fun markHabitComplete(habitId: String) {
             val habit = habitRepository.getHabitById(habitId).getOrNull() ?: return
-            val date = LocalDate.now()
+            val date = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
             val count =
                 when (habit.habitType) {
                     HabitType.SIMPLE -> 1

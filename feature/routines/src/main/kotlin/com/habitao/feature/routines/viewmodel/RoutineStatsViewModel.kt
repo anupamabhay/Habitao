@@ -63,7 +63,7 @@ class RoutineStatsViewModel
     constructor(
         private val routineRepository: RoutineRepository,
     ) : ViewModel() {
-                private val timeFilterFlow = MutableStateFlow(0)
+        private val timeFilterFlow = MutableStateFlow(0)
 
         private val dateRangeFlow =
             timeFilterFlow

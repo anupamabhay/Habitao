@@ -14,20 +14,21 @@ import com.habitao.system.notifications.NotificationConstants.EXTRA_ROUTINE_ID
 import com.habitao.system.notifications.NotificationConstants.EXTRA_ROUTINE_TITLE
 import com.habitao.system.notifications.NotificationConstants.EXTRA_SCHEDULED_DAYS
 import com.habitao.system.notifications.NotificationConstants.EXTRA_START_DATE
-import dagger.hilt.android.AndroidEntryPoint
+import com.habitao.domain.model.DayOfWeek
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.LocalTime
-import javax.inject.Inject
 
-@AndroidEntryPoint
-class RoutineReminderReceiver : BroadcastReceiver() {
-    @Inject lateinit var scheduler: RoutineReminderScheduler
-
-    @Inject lateinit var notificationHelper: NotificationHelper
+class RoutineReminderReceiver : BroadcastReceiver(), KoinComponent {
+    private val scheduler: RoutineReminderScheduler by inject()
+    private val notificationHelper: NotificationHelper by inject()
 
     override fun onReceive(
         context: Context,
@@ -46,8 +47,8 @@ class RoutineReminderReceiver : BroadcastReceiver() {
                 runCatching { RepeatPattern.valueOf(it) }.getOrNull()
             } ?: RepeatPattern.DAILY
         val customInterval = intent.getIntExtra(EXTRA_CUSTOM_INTERVAL, 1)
-        val startDateEpoch = intent.getLongExtra(EXTRA_START_DATE, LocalDate.now().toEpochDay())
-        val startDate = LocalDate.ofEpochDay(startDateEpoch)
+        val startDateEpoch = intent.getLongExtra(EXTRA_START_DATE, Clock.System.now().toEpochMilliseconds())
+        val startDate = Instant.fromEpochMilliseconds(startDateEpoch).toLocalDateTime(TimeZone.currentSystemDefault()).date
 
         val scheduledDays =
             intent.getStringArrayListExtra(EXTRA_SCHEDULED_DAYS)
@@ -70,7 +71,7 @@ class RoutineReminderReceiver : BroadcastReceiver() {
                 scheduler.scheduleReminder(
                     routineId = routineId,
                     routineTitle = routineTitle,
-                    time = LocalTime.of(hour, minute),
+                    time = LocalTime(hour = hour, minute = minute),
                     repeatPattern = repeatPattern,
                     repeatDays = scheduledDays,
                     customInterval = customInterval.coerceAtLeast(1),

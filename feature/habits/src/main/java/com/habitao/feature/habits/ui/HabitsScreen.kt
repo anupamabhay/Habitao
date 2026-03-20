@@ -76,6 +76,8 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
+private const val DAYS_PER_WEEK = 7L
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitsScreen(
@@ -389,7 +391,7 @@ private fun DateSelector(
                 // Only update if pager is not actively being scrolled
                 if (!pagerState.isScrollInProgress) {
                     val weekOffset = (page - middlePage).toLong()
-                    val newWeekStart = baseWeekStart.plus(weekOffset * 7, kotlinx.datetime.DateTimeUnit.DAY)
+                    val newWeekStart = baseWeekStart.plus(weekOffset * DAYS_PER_WEEK, kotlinx.datetime.DateTimeUnit.DAY)
                     val dayOfWeekIndex = currentSelectedDate.dayOfWeek.value - 1
                     val newDate = newWeekStart.plus(dayOfWeekIndex.toLong(), kotlinx.datetime.DateTimeUnit.DAY)
                     if (newDate != currentSelectedDate) {
@@ -404,7 +406,7 @@ private fun DateSelector(
         state = pagerState,
         beyondViewportPageCount = 1,
     ) { page ->
-        val weekStart = baseWeekStart.plus((page - middlePage).toLong() * 7, kotlinx.datetime.DateTimeUnit.DAY)
+        val weekStart = baseWeekStart.plus((page - middlePage).toLong() * DAYS_PER_WEEK, kotlinx.datetime.DateTimeUnit.DAY)
         val isCurrentWeek = page == middlePage
         Row(
             modifier = Modifier.fillMaxWidth(),

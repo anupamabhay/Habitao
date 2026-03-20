@@ -427,7 +427,7 @@ class StatsViewModel
 
         private fun getDateRangeForFilter(filter: Int): StatsDateRange =
             when (filter) {
-                1 -> StatsDateRange(startDate = today.minusDays(6), endDate = today)
+                1 -> StatsDateRange(startDate = today.minus(6, DateTimeUnit.DAY), endDate = today)
                 2 -> StatsDateRange(startDate = today.minus(29, DateTimeUnit.DAY), endDate = today)
                 else -> StatsDateRange(startDate = today, endDate = today)
             }

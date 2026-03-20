@@ -4,21 +4,17 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import com.habitao.core.datastore.AppSettingsManager
-import dagger.hilt.android.AndroidEntryPoint
+import com.habitao.core.datastore.AppSettingsRepository
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@AndroidEntryPoint
-class TaskReminderReceiver : BroadcastReceiver() {
-    @Inject
-    lateinit var notificationHelper: NotificationHelper
-
-    @Inject
-    lateinit var appSettingsManager: AppSettingsManager
+class TaskReminderReceiver : BroadcastReceiver(), KoinComponent {
+    private val notificationHelper: NotificationHelper by inject()
+    private val appSettingsManager: AppSettingsRepository by inject()
 
     override fun onReceive(
         context: Context,

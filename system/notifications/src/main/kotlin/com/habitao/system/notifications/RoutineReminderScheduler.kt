@@ -18,18 +18,23 @@ import com.habitao.system.notifications.NotificationConstants.EXTRA_ROUTINE_TITL
 import com.habitao.system.notifications.NotificationConstants.EXTRA_SCHEDULED_DAYS
 import com.habitao.system.notifications.NotificationConstants.EXTRA_START_DATE
 import kotlinx.coroutines.flow.first
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
-import javax.inject.Inject
+import com.habitao.domain.model.DayOfWeek
+import com.habitao.domain.model.toDomainDay
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.toInstant
 
 class RoutineReminderScheduler
-    @Inject
     constructor(
-        @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
+        private val context: Context,
         private val alarmManager: AlarmManager,
         private val routineRepository: RoutineRepository,
     ) {
@@ -40,7 +45,7 @@ class RoutineReminderScheduler
             repeatPattern: RepeatPattern = RepeatPattern.DAILY,
             repeatDays: Set<DayOfWeek> = emptySet(),
             customInterval: Int = 1,
-            startDate: LocalDate = LocalDate.now(),
+            startDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
         ) {
             val triggerAt = calculateNextTrigger(time, repeatPattern, repeatDays, customInterval, startDate)
             val pendingIntent =
@@ -111,7 +116,7 @@ class RoutineReminderScheduler
                     putExtra(EXTRA_REMINDER_MINUTE, time.minute)
                     putExtra(EXTRA_REPEAT_PATTERN, repeatPattern.name)
                     putExtra(EXTRA_CUSTOM_INTERVAL, customInterval)
-                    putExtra(EXTRA_START_DATE, startDate.toEpochDay())
+                    putExtra(EXTRA_START_DATE, startDate.atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds())
                     putStringArrayListExtra(EXTRA_SCHEDULED_DAYS, ArrayList(repeatDays.map { it.name }))
                 }
             return PendingIntent.getBroadcast(
@@ -129,20 +134,21 @@ class RoutineReminderScheduler
             customInterval: Int,
             startDate: LocalDate,
         ): Long {
-            val now = LocalDateTime.now()
-            var next = now.withHour(time.hour).withMinute(time.minute).withSecond(0).withNano(0)
+            val timeZone = TimeZone.currentSystemDefault()
+            val nowInstant = Clock.System.now()
+            val nowDateTime = nowInstant.toLocalDateTime(timeZone)
+            var nextDate = nowDateTime.date
+            val todayTrigger = nextDate.atTime(time.hour, time.minute).toInstant(timeZone)
 
-            // If the time has already passed today, start checking from tomorrow
-            if (!next.isAfter(now)) {
-                next = next.plusDays(1)
+            if (todayTrigger <= nowInstant) {
+                nextDate = nextDate.plus(1, DateTimeUnit.DAY)
             }
 
-            // If the routine hasn't started yet, jump ahead to its start date
-            if (next.toLocalDate().isBefore(startDate)) {
-                next = startDate.atTime(time).withSecond(0).withNano(0)
-                // If the start date is today but the time has passed, start tomorrow
-                if (!next.isAfter(now)) {
-                    next = next.plusDays(1)
+            if (nextDate < startDate) {
+                nextDate = startDate
+                val startTrigger = nextDate.atTime(time.hour, time.minute).toInstant(timeZone)
+                if (startTrigger <= nowInstant) {
+                    nextDate = nextDate.plus(1, DateTimeUnit.DAY)
                 }
             }
 
@@ -154,28 +160,23 @@ class RoutineReminderScheduler
                 }
                 RepeatPattern.WEEKLY, RepeatPattern.SPECIFIC_DATES -> {
                     if (repeatDays.isNotEmpty()) {
-                        // Advance day-by-day until we hit a scheduled day (max 7 days)
                         var attempts = 0
-                        while (attempts < 7 && next.toLocalDate().dayOfWeek !in repeatDays) {
-                            next = next.plusDays(1)
+                        while (attempts < 7 && nextDate.dayOfWeek.toDomainDay() !in repeatDays) {
+                            nextDate = nextDate.plus(1, DateTimeUnit.DAY)
                             attempts++
                         }
                     }
                 }
                 RepeatPattern.CUSTOM -> {
-                    // Calculate mathematically based on days elapsed since start date
-                    val nextDate = next.toLocalDate()
-                    val daysBetween = ChronoUnit.DAYS.between(startDate, nextDate)
+                    val daysBetween = startDate.daysUntil(nextDate).toLong()
 
                     if (daysBetween > 0 && daysBetween % safeInterval != 0L) {
-                        // How many days into the current cycle we are
                         val daysIntoCycle = daysBetween % safeInterval
-                        // How many days to add to reach the next cycle boundary
                         val daysToAdd = safeInterval - daysIntoCycle
-                        next = next.plusDays(daysToAdd)
+                        nextDate = nextDate.plus(daysToAdd, DateTimeUnit.DAY)
                     }
                 }
             }
-            return next.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            return nextDate.atTime(time.hour, time.minute).toInstant(timeZone).toEpochMilliseconds()
         }
     }

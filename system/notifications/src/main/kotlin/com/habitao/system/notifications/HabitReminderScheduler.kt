@@ -16,15 +16,17 @@ import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_TITLE
 import com.habitao.system.notifications.NotificationConstants.EXTRA_REMINDER_HOUR
 import com.habitao.system.notifications.NotificationConstants.EXTRA_REMINDER_MINUTE
 import com.habitao.system.notifications.NotificationConstants.EXTRA_SCHEDULED_DAYS
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
-import javax.inject.Inject
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 
 class HabitReminderScheduler
-    @Inject
     constructor(
-        @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
+        private val context: Context,
         private val alarmManager: AlarmManager,
         private val habitRepository: HabitRepository,
     ) {
@@ -119,19 +121,21 @@ class HabitReminderScheduler
             frequencyType: FrequencyType,
             scheduledDays: Set<DayOfWeek>,
         ): Long {
-            val now = LocalDateTime.now()
-            var next = now.withHour(time.hour).withMinute(time.minute).withSecond(0).withNano(0)
-            if (!next.isAfter(now)) {
-                next = next.plusDays(1)
+            val timeZone = TimeZone.currentSystemDefault()
+            val nowInstant = Clock.System.now()
+            val now = nowInstant.toLocalDateTime(timeZone)
+            var nextDate = now.date
+            val todayTrigger = nextDate.atTime(time.hour, time.minute).toInstant(timeZone)
+            if (todayTrigger <= nowInstant) {
+                nextDate = nextDate.plus(1, DateTimeUnit.DAY)
             }
             if (frequencyType == FrequencyType.SPECIFIC_DAYS && scheduledDays.isNotEmpty()) {
-                // Advance day-by-day until we land on a user-selected weekday (max 7 iterations)
                 var attempts = 0
-                while (attempts < 7 && !scheduledDays.contains(next.dayOfWeek.toDomainDay())) {
-                    next = next.plusDays(1)
+                while (attempts < 7 && nextDate.dayOfWeek.toDomainDay() !in scheduledDays) {
+                    nextDate = nextDate.plus(1, DateTimeUnit.DAY)
                     attempts++
                 }
             }
-            return next.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            return nextDate.atTime(time.hour, time.minute).toInstant(timeZone).toEpochMilliseconds()
         }
     }

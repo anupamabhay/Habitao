@@ -6,18 +6,17 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.habitao.domain.repository.TaskRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
-import javax.inject.Inject
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.minus
+import kotlinx.datetime.toInstant
 import kotlin.math.abs
 
 class TaskReminderScheduler
-    @Inject
     constructor(
-        @ApplicationContext private val context: Context,
+        private val context: Context,
         private val alarmManager: AlarmManager,
         private val taskRepository: TaskRepository,
     ) {
@@ -28,11 +27,11 @@ class TaskReminderScheduler
             dueTime: LocalTime?,
             minutesBefore: Int = 0,
         ) {
-            val reminderTime = dueTime ?: LocalTime.of(9, 0)
+            val reminderTime = dueTime ?: LocalTime(hour = 9, minute = 0)
             val triggerDateTime =
-                LocalDateTime.of(dueDate, reminderTime)
-                    .minusMinutes(minutesBefore.toLong())
-            val triggerMillis = triggerDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                dueDate.atTime(reminderTime.hour, reminderTime.minute)
+                    .minus(minutesBefore.toLong(), kotlinx.datetime.DateTimeUnit.MINUTE)
+            val triggerMillis = triggerDateTime.toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
 
             // Don't schedule if in the past
             if (triggerMillis <= System.currentTimeMillis()) return
