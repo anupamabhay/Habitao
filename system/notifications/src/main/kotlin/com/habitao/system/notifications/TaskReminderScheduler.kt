@@ -28,10 +28,11 @@ class TaskReminderScheduler
             minutesBefore: Int = 0,
         ) {
             val reminderTime = dueTime ?: LocalTime(hour = 9, minute = 0)
-            val triggerDateTime =
+            val triggerMillis =
                 dueDate.atTime(reminderTime.hour, reminderTime.minute)
+                    .toInstant(TimeZone.currentSystemDefault())
                     .minus(minutesBefore.toLong(), kotlinx.datetime.DateTimeUnit.MINUTE)
-            val triggerMillis = triggerDateTime.toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+                    .toEpochMilliseconds()
 
             // Don't schedule if in the past
             if (triggerMillis <= System.currentTimeMillis()) return

@@ -277,9 +277,7 @@ class StatsViewModel
                 val completed =
                     logs.count {
                         it.isCompleted &&
-                            !it.date.isBefore(
-                                range.startDate,
-                            ) && !it.date.isAfter(range.endDate)
+                            it.date >= range.startDate && it.date <= range.endDate
                     }
                 val total = routines.size * range.totalDays
                 val rate = if (total > 0) completed.toFloat() / total else 0f
@@ -295,7 +293,7 @@ class StatsViewModel
                 val filteredSessions =
                     sessions.filter {
                         val date = it.startedAt.toLocalDate(TimeZone.currentSystemDefault())
-                        !date.isBefore(range.startDate) && !date.isAfter(range.endDate)
+                        date >= range.startDate && date <= range.endDate
                     }
                 PomodoroStatsData(
                     sessions = filteredSessions,
@@ -340,8 +338,8 @@ class StatsViewModel
                 val completedHabits =
                     habitLogs.count { log ->
                         log.isCompleted &&
-                            !log.date.isBefore(range.startDate) &&
-                            !log.date.isAfter(range.endDate) &&
+                            log.date >= range.startDate &&
+                            log.date <= range.endDate &&
                             habitById[log.habitId]?.isScheduledFor(log.date) == true
                     }
 

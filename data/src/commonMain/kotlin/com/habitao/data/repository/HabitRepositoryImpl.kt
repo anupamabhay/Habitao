@@ -262,7 +262,7 @@ class HabitRepositoryImpl
             withContext(dispatcher) {
                 try {
                     // Get Monday of the week containing the date (ISO 8601 week)
-                    val daysFromMonday = weekContainingDate.dayOfWeek.isoDayNumber - 1
+                    val daysFromMonday = weekContainingDate.dayOfWeek.ordinal
                     val weekStart = weekContainingDate.minus(DatePeriod(days = daysFromMonday))
                     val weekEnd = weekStart.plus(DatePeriod(days = 6))
 

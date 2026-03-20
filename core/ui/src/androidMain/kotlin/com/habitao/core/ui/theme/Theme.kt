@@ -1,3 +1,5 @@
+@file:JvmName("HabitaoAndroidThemeKt")
+
 package com.habitao.core.ui.theme
 
 import android.app.Activity

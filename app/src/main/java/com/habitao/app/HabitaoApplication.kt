@@ -12,6 +12,7 @@ import com.habitao.system.notifications.NotificationHelper
 import com.habitao.system.notifications.notificationModule
 import org.koin.core.module.Module
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 
@@ -37,7 +38,7 @@ class HabitaoApplication : Application() {
             )
         }
 
-        val notificationHelper = org.koin.java.KoinJavaComponent.get(NotificationHelper::class.java)
+        val notificationHelper = GlobalContext.get().get<NotificationHelper>()
         notificationHelper.createNotificationChannel()
         notificationHelper.createTaskNotificationChannel()
         if (BuildConfig.DEBUG) {
