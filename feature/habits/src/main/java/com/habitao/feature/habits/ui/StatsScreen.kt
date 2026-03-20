@@ -66,7 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.feature.habits.viewmodel.ActivityDataPoint
 import com.habitao.feature.habits.viewmodel.HabitStatItem
@@ -75,7 +75,7 @@ import com.habitao.feature.habits.viewmodel.StatsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
+fun StatsScreen(viewModel: StatsViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showSettingsMenu by remember { mutableStateOf(false) }

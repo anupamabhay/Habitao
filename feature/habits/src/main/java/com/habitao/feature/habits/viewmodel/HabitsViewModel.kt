@@ -6,7 +6,6 @@ import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.Habit
 import com.habitao.domain.model.HabitLog
 import com.habitao.domain.repository.HabitRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,8 +15,10 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import javax.inject.Inject
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 // Sorting options for the habits list
 enum class SortOption {
@@ -36,7 +37,7 @@ data class HabitsState(
     val weeklyProgress: Map<String, Int> = emptyMap(), // habitId -> weekly progress for period-based habits
     val isLoading: Boolean = true,
     val error: String? = null,
-    val selectedDate: LocalDate = LocalDate.now(),
+    val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
     val sortOption: SortOption = SortOption.MANUAL,
 )
 
@@ -59,13 +60,11 @@ sealed class HabitsIntent {
     data class SetSortOption(val sortOption: SortOption) : HabitsIntent()
 }
 
-@HiltViewModel
 class HabitsViewModel
-    @Inject
     constructor(
         private val habitRepository: HabitRepository,
     ) : ViewModel() {
-        private val selectedDateFlow = MutableStateFlow(LocalDate.now())
+        private val selectedDateFlow = MutableStateFlow(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date)
         private val errorFlow = MutableStateFlow<String?>(null)
         private val sortOptionFlow = MutableStateFlow(SortOption.MANUAL)
         private val streaksFlow = MutableStateFlow<Map<String, Int>>(emptyMap())

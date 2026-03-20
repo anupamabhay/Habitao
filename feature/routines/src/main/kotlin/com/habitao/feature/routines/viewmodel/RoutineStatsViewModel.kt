@@ -3,7 +3,6 @@ package com.habitao.feature.routines.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.habitao.domain.repository.RoutineRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,12 +12,14 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
-import java.time.temporal.ChronoUnit
-import java.util.Locale
-import javax.inject.Inject
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.daysUntil
 
 data class RoutineStatItem(
     val routineId: String,
@@ -50,22 +51,19 @@ private data class RoutineStatsDateRange(
     val startDate: LocalDate,
     val endDate: LocalDate,
 ) {
-    val totalDays: Int = ChronoUnit.DAYS.between(startDate, endDate).toInt() + 1
+    val totalDays: Int = startDate.daysUntil(endDate) + 1
 
     fun allDates(): List<LocalDate> =
         (0 until totalDays).map { offset ->
-            startDate.plusDays(offset.toLong())
+            startDate.plus(offset, DateTimeUnit.DAY)
         }
 }
 
-@HiltViewModel
 class RoutineStatsViewModel
-    @Inject
     constructor(
         private val routineRepository: RoutineRepository,
     ) : ViewModel() {
-        private val dateLabelFormatter = DateTimeFormatter.ofPattern("M/d", Locale.getDefault())
-        private val timeFilterFlow = MutableStateFlow(0)
+                private val timeFilterFlow = MutableStateFlow(0)
 
         private val dateRangeFlow =
             timeFilterFlow
@@ -86,7 +84,7 @@ class RoutineStatsViewModel
 
         val state: StateFlow<RoutineStatsState> =
             combine(timeFilterFlow, dateRangeFlow, routinesFlow, routineLogsFlow) { timeFilter, range, routines, logs ->
-                val today = LocalDate.now()
+                val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
                 val allDates = range.allDates()
                 val completedPairs =
                     logs
@@ -173,11 +171,11 @@ class RoutineStatsViewModel
         }
 
         private fun getDateRangeForFilter(filter: Int): RoutineStatsDateRange {
-            val today = LocalDate.now()
+            val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
             return when (filter) {
-                1 -> RoutineStatsDateRange(startDate = today.minusDays(29), endDate = today)
-                2 -> RoutineStatsDateRange(startDate = today.minusDays(364), endDate = today)
-                else -> RoutineStatsDateRange(startDate = today.minusDays(6), endDate = today)
+                1 -> RoutineStatsDateRange(startDate = today.minus(29, DateTimeUnit.DAY), endDate = today)
+                2 -> RoutineStatsDateRange(startDate = today.minus(364, DateTimeUnit.DAY), endDate = today)
+                else -> RoutineStatsDateRange(startDate = today.minus(6, DateTimeUnit.DAY), endDate = today)
             }
         }
 
@@ -186,8 +184,8 @@ class RoutineStatsViewModel
             timeFilter: Int,
         ): String =
             when (timeFilter) {
-                0 -> date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-                else -> date.format(dateLabelFormatter)
+                0 -> date.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
+                else -> "${date.monthNumber}/${date.dayOfMonth}"
             }
 
         private fun calculateStreaks(

@@ -66,6 +66,10 @@ dependencies {
     implementation(libs.bundles.compose)
     debugImplementation(libs.bundles.compose.debug)
 
+    // Koin
+    implementation(libs.koin.android)
+    implementation(libs.koin.compose)
+
     // Testing - Unit
     testImplementation(libs.bundles.testing.unit)
     testRuntimeOnly(libs.junit5.engine)

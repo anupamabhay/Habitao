@@ -77,17 +77,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.habitao.core.ui.theme.Dimensions
+import com.habitao.domain.model.DayOfWeek
 import com.habitao.domain.model.RepeatPattern
 import com.habitao.feature.routines.viewmodel.CreateRoutineIntent
 import com.habitao.feature.routines.viewmodel.CreateRoutineState
 import com.habitao.feature.routines.viewmodel.CreateRoutineViewModel
-import java.time.DayOfWeek
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
-import java.util.Locale
+import kotlinx.datetime.LocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,7 +92,7 @@ fun CreateRoutineScreen(
     onNavigateBack: () -> Unit,
     onRoutineCreated: () -> Unit,
     routineId: String? = null,
-    viewModel: CreateRoutineViewModel = hiltViewModel(),
+    viewModel: CreateRoutineViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -690,7 +687,7 @@ private fun DayChip(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = day.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+                    text = day.shortName,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     maxLines = 1,
@@ -752,7 +749,7 @@ private fun ReminderTimeField(
                 )
             }
             Text(
-                text = time?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "9:00 AM",
+                text = time?.toMeridiemString() ?: "9:00 AM",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary,
@@ -761,7 +758,7 @@ private fun ReminderTimeField(
     }
 
     if (showDialog) {
-        val initialTime = time ?: LocalTime.of(9, 0)
+        val initialTime = time ?: LocalTime(hour = 9, minute = 0)
         val timePickerState =
             rememberTimePickerState(
                 initialHour = initialTime.hour,
@@ -841,7 +838,7 @@ private fun ReminderTimeField(
                         }
                         TextButton(
                             onClick = {
-                                onTimeSelected(LocalTime.of(timePickerState.hour, timePickerState.minute))
+                                onTimeSelected(LocalTime(hour = timePickerState.hour, minute = timePickerState.minute))
                                 showDialog = false
                             },
                         ) {
@@ -852,4 +849,13 @@ private fun ReminderTimeField(
             }
         }
     }
+}
+
+private fun LocalTime.toMeridiemString(): String {
+    val hour12 = when (val h = hour % 12) {
+        0 -> 12
+        else -> h
+    }
+    val meridiem = if (hour < 12) "AM" else "PM"
+    return "%d:%02d %s".format(hour12, minute, meridiem)
 }

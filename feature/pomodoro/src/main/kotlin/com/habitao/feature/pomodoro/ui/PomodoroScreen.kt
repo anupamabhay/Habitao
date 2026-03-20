@@ -49,7 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.PomodoroType
 import com.habitao.feature.pomodoro.service.TimerState
@@ -63,7 +63,7 @@ import com.habitao.feature.pomodoro.viewmodel.PomodoroViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PomodoroScreen(
-    viewModel: PomodoroViewModel = hiltViewModel(),
+    viewModel: PomodoroViewModel = koinViewModel(),
     onOpenFullScreen: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()

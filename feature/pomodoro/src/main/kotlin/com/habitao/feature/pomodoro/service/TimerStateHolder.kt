@@ -4,8 +4,6 @@ import com.habitao.domain.model.PomodoroType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import javax.inject.Inject
-import javax.inject.Singleton
 
 enum class TimerState {
     IDLE,
@@ -14,9 +12,7 @@ enum class TimerState {
     FINISHED,
 }
 
-@Singleton
 class TimerStateHolder
-    @Inject
     constructor() {
         private val _timerState = MutableStateFlow(TimerState.IDLE)
         val timerState: StateFlow<TimerState> = _timerState.asStateFlow()

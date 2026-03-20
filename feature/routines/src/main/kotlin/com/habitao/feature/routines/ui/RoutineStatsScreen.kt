@@ -44,7 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.feature.routines.viewmodel.RoutineActivityPoint
 import com.habitao.feature.routines.viewmodel.RoutineStatItem
@@ -55,7 +55,7 @@ import com.habitao.feature.routines.viewmodel.RoutineStatsViewModel
 @Composable
 fun RoutineStatsScreen(
     onNavigateBack: () -> Unit,
-    viewModel: RoutineStatsViewModel = hiltViewModel(),
+    viewModel: RoutineStatsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()

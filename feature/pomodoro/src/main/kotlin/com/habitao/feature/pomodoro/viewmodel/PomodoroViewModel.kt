@@ -14,8 +14,6 @@ import com.habitao.feature.pomodoro.service.PomodoroPreferences
 import com.habitao.feature.pomodoro.service.TimerService
 import com.habitao.feature.pomodoro.service.TimerState
 import com.habitao.feature.pomodoro.service.TimerStateHolder
-import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,8 +22,9 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import java.time.LocalDate
-import javax.inject.Inject
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 enum class FocusLinkType {
     TASK,
@@ -75,19 +74,17 @@ sealed class PomodoroIntent {
     data object ClearLinkedFocus : PomodoroIntent()
 }
 
-@HiltViewModel
 class PomodoroViewModel
-    @Inject
     constructor(
         private val timerStateHolder: TimerStateHolder,
         private val pomodoroRepository: PomodoroRepository,
         private val taskRepository: TaskRepository,
         private val habitRepository: HabitRepository,
         private val pomodoroPreferences: PomodoroPreferences,
-        @ApplicationContext private val context: Context,
+        private val context: Context,
     ) : ViewModel() {
         private val sessionsFlow =
-            pomodoroRepository.observeSessionsForDate(LocalDate.now())
+            pomodoroRepository.observeSessionsForDate(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date)
                 .map { result -> result.getOrElse { emptyList() } }
                 .catch { emit(emptyList()) }
 

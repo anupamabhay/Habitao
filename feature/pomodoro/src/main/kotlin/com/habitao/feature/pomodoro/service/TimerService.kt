@@ -20,11 +20,11 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
-import com.habitao.core.datastore.AppSettingsManager
+import com.habitao.core.datastore.AppSettingsRepository
 import com.habitao.domain.model.PomodoroSession
 import com.habitao.domain.model.PomodoroType
 import com.habitao.domain.repository.PomodoroRepository
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.android.ext.android.inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -32,25 +32,19 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.UUID
-import javax.inject.Inject
+import com.habitao.domain.util.randomUUID
 
-@AndroidEntryPoint
 class TimerService : LifecycleService() {
-    @Inject
-    lateinit var timerStateHolder: TimerStateHolder
+    private val timerStateHolder: TimerStateHolder by inject()
 
-    @Inject
-    lateinit var pomodoroRepository: PomodoroRepository
+    private val pomodoroRepository: PomodoroRepository by inject()
 
-    @Inject
-    lateinit var appSettingsManager: AppSettingsManager
+    private val appSettingsManager: AppSettingsRepository by inject()
 
     private var timerJob: Job? = null
     private lateinit var sharedPreferences: SharedPreferences
 
-    @Inject
-    lateinit var pomodoroPreferences: PomodoroPreferences
+    private val pomodoroPreferences: PomodoroPreferences by inject()
     private var completionMediaPlayer: MediaPlayer? = null
     private val soundHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private val notificationManager by lazy {
@@ -386,7 +380,7 @@ class TimerService : LifecycleService() {
         val startedAt = System.currentTimeMillis() - (total - timerStateHolder.remainingSeconds.value) * 1000
         val session =
             PomodoroSession(
-                id = UUID.randomUUID().toString(),
+                id = randomUUID(),
                 sessionType = sessionType,
                 workDurationSeconds = pomodoroPreferences.workDurationMinutes * 60,
                 breakDurationSeconds = pomodoroPreferences.shortBreakDurationMinutes * 60,

@@ -3,7 +3,7 @@ package com.habitao.feature.habits.viewmodel
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.habitao.core.datastore.AppSettingsManager
+import com.habitao.core.datastore.AppSettingsRepository
 import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.PomodoroSession
 import com.habitao.domain.model.PomodoroType
@@ -17,7 +17,6 @@ import com.habitao.domain.repository.TaskRepository
 import com.habitao.feature.pomodoro.service.PomodoroPreferences
 import com.habitao.feature.pomodoro.service.TimerState
 import com.habitao.feature.pomodoro.service.TimerStateHolder
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -34,13 +33,16 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.TextStyle
-import java.time.temporal.ChronoUnit
-import java.util.Locale
-import javax.inject.Inject
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 
 @Immutable
 data class HabitStatItem(
@@ -87,9 +89,9 @@ private data class StatsDateRange(
     val startDate: LocalDate,
     val endDate: LocalDate,
 ) {
-    val totalDays: Int = ChronoUnit.DAYS.between(startDate, endDate).toInt() + 1
+    val totalDays: Int = startDate.daysUntil(endDate) + 1
 
-    fun allDates(): List<LocalDate> = (0 until totalDays).map { startDate.plusDays(it.toLong()) }
+    fun allDates(): List<LocalDate> = (0 until totalDays).map { startDate.plus(it.toLong(), DateTimeUnit.DAY) }
 }
 
 private data class TaskStatsData(
@@ -120,9 +122,7 @@ private data class CoreStatsInput(
     val taskStats: TaskStatsData,
 )
 
-@HiltViewModel
 class StatsViewModel
-    @Inject
     constructor(
         private val habitRepository: HabitRepository,
         private val pomodoroRepository: PomodoroRepository,
@@ -130,9 +130,9 @@ class StatsViewModel
         private val routineRepository: RoutineRepository,
         private val timerStateHolder: TimerStateHolder,
         private val pomodoroPreferences: PomodoroPreferences,
-        private val appSettingsManager: AppSettingsManager,
+        private val appSettingsManager: AppSettingsRepository,
     ) : ViewModel() {
-        private val today = LocalDate.now()
+        private val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
         private val timeFilterFlow = MutableStateFlow(0)
 
         private val displayDateRangeFlow =
@@ -145,8 +145,8 @@ class StatsViewModel
                 .map { filter ->
                     when (filter) {
                         0 -> StatsDateRange(startDate = today, endDate = today)
-                        2 -> StatsDateRange(startDate = today.minusDays(29), endDate = today)
-                        else -> StatsDateRange(startDate = today.minusDays(6), endDate = today)
+                        2 -> StatsDateRange(startDate = today.minus(29, DateTimeUnit.DAY), endDate = today)
+                        else -> StatsDateRange(startDate = today.minus(6, DateTimeUnit.DAY), endDate = today)
                     }
                 }
                 .distinctUntilChanged()
@@ -294,7 +294,7 @@ class StatsViewModel
             ) { sessions, activeWorkSeconds, range ->
                 val filteredSessions =
                     sessions.filter {
-                        val date = it.startedAt.toLocalDate(ZoneId.systemDefault())
+                        val date = it.startedAt.toLocalDate(TimeZone.currentSystemDefault())
                         !date.isBefore(range.startDate) && !date.isAfter(range.endDate)
                     }
                 PomodoroStatsData(
@@ -428,7 +428,7 @@ class StatsViewModel
         private fun getDateRangeForFilter(filter: Int): StatsDateRange =
             when (filter) {
                 1 -> StatsDateRange(startDate = today.minusDays(6), endDate = today)
-                2 -> StatsDateRange(startDate = today.minusDays(29), endDate = today)
+                2 -> StatsDateRange(startDate = today.minus(29, DateTimeUnit.DAY), endDate = today)
                 else -> StatsDateRange(startDate = today, endDate = today)
             }
 
@@ -436,9 +436,9 @@ class StatsViewModel
             tasks: List<Task>,
             range: StatsDateRange,
         ): TaskStatsData {
-            val zone = ZoneId.systemDefault()
-            val startMillis = range.startDate.atStartOfDay(zone).toInstant().toEpochMilli()
-            val endMillis = range.endDate.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+            val zone = TimeZone.currentSystemDefault()
+            val startMillis = range.startDate.atStartOfDayIn(zone).toEpochMilliseconds()
+            val endMillis = range.endDate.plus(1, DateTimeUnit.DAY).atStartOfDayIn(zone).toEpochMilliseconds()
 
             val completedInRange =
                 tasks.count { task ->
@@ -486,7 +486,7 @@ class StatsViewModel
             routineLogs: List<RoutineLog>,
             taskStats: TaskStatsData,
         ): List<ActivityDataPoint> {
-            val zone = ZoneId.systemDefault()
+            val zone = TimeZone.currentSystemDefault()
             val habitsByHour =
                 habitLogs.countCompletedByHour(
                     zone = zone,
@@ -513,7 +513,7 @@ class StatsViewModel
         }
 
         private fun <T> List<T>.countCompletedByHour(
-            zone: ZoneId,
+            zone: TimeZone,
             dateSelector: (T) -> LocalDate,
             completedSelector: (T) -> Boolean,
             completedAtSelector: (T) -> Long,
@@ -532,16 +532,16 @@ class StatsViewModel
             if (isSingleDay) return "Today"
 
             return when (timeFilter) {
-                1 -> date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                1 -> date.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
                 2 -> date.dayOfMonth.toString()
-                else -> date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                else -> date.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
             }
         }
 
-        private fun Long.toLocalDate(zoneId: ZoneId): LocalDate =
-            Instant.ofEpochMilli(this).atZone(zoneId).toLocalDate()
+        private fun Long.toLocalDate(zoneId: TimeZone): LocalDate =
+            Instant.fromEpochMilliseconds(this).toLocalDateTime(zoneId).date
 
-        private fun Long.toLocalHour(zoneId: ZoneId): Int = Instant.ofEpochMilli(this).atZone(zoneId).hour
+        private fun Long.toLocalHour(zoneId: TimeZone): Int = Instant.fromEpochMilliseconds(this).toLocalDateTime(zoneId).hour
 
         private suspend fun loadStreakSafe(habitId: String): StreakInfo {
             return withContext(Dispatchers.IO) {

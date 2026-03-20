@@ -50,17 +50,20 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.habitao.domain.model.PomodoroType
 import com.habitao.feature.pomodoro.ui.components.TimerDisplay
 import com.habitao.feature.pomodoro.viewmodel.PomodoroViewModel
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlin.math.cos
 import kotlin.math.sin
 
 @Composable
 fun FullScreenClockScreen(
     onClose: () -> Unit,
-    viewModel: PomodoroViewModel = hiltViewModel(),
+    viewModel: PomodoroViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val pagerState = rememberPagerState(pageCount = { 4 })
@@ -137,14 +140,7 @@ fun FullScreenClockScreen(
                                 DigitalTimeText(state.remainingSeconds)
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text =
-                                        remember {
-                                            java.time.LocalDate.now().format(
-                                                java.time.format.DateTimeFormatter.ofPattern(
-                                                    "EEEE, MMMM d",
-                                                ),
-                                            )
-                                        },
+                                    text = remember { currentDateLabel() },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.White.copy(alpha = 0.5f),
                                 )
@@ -655,3 +651,11 @@ private tailrec fun Context.findActivity(): Activity? =
         is ContextWrapper -> baseContext.findActivity()
         else -> null
     }
+
+
+private fun currentDateLabel(): String {
+    val date = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    val day = date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
+    val month = date.month.name.lowercase().replaceFirstChar { it.uppercase() }
+    return "$day, $month ${date.dayOfMonth}"
+}

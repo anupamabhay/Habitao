@@ -7,7 +7,6 @@ import com.habitao.domain.model.Routine
 import com.habitao.domain.model.RoutineStep
 import com.habitao.domain.repository.RoutineRepository
 import com.habitao.system.notifications.RoutineReminderScheduler
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -16,14 +15,15 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.LocalTime
-import java.util.UUID
-import javax.inject.Inject
+import com.habitao.domain.model.DayOfWeek
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.LocalTime
 
 data class RoutineStepItem(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = com.habitao.domain.util.randomUUID(),
     val title: String = "",
     val estimatedMinutes: Int? = null,
 )
@@ -77,9 +77,7 @@ sealed class CreateRoutineIntent {
     object ClearError : CreateRoutineIntent()
 }
 
-@HiltViewModel
 class CreateRoutineViewModel
-    @Inject
     constructor(
         private val routineRepository: RoutineRepository,
         private val reminderScheduler: RoutineReminderScheduler,
@@ -267,8 +265,8 @@ class CreateRoutineViewModel
             viewModelScope.launch {
                 val now = System.currentTimeMillis()
                 val editingRoutineId = currentRoutineId
-                val routineId = editingRoutineId ?: UUID.randomUUID().toString()
-                val today = LocalDate.now()
+                val routineId = editingRoutineId ?: com.habitao.domain.util.randomUUID()
+                val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
                 val routine =
                     existingRoutine?.copy(

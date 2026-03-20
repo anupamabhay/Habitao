@@ -9,7 +9,6 @@ import com.habitao.domain.model.Habit
 import com.habitao.domain.model.HabitType
 import com.habitao.domain.repository.HabitRepository
 import com.habitao.system.notifications.HabitReminderScheduler
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,8 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalTime
-import javax.inject.Inject
+import kotlinx.datetime.LocalTime
 
 // State for Create Habit form
 data class CreateHabitState(
@@ -90,9 +88,7 @@ sealed class CreateHabitIntent {
     data class LoadHabitForEdit(val habitId: String) : CreateHabitIntent()
 }
 
-@HiltViewModel
 class CreateHabitViewModel
-    @Inject
     constructor(
         private val habitRepository: HabitRepository,
         private val reminderScheduler: HabitReminderScheduler,
@@ -267,7 +263,7 @@ class CreateHabitViewModel
                     // Set default time to 9:00 AM when enabling for the first time
                     reminderTime =
                         if (enabled && it.reminderTime == null) {
-                            LocalTime.of(9, 0)
+                            LocalTime(hour = 9, minute = 0)
                         } else {
                             it.reminderTime
                         },
@@ -314,7 +310,7 @@ class CreateHabitViewModel
                     }
 
                 // Use existing ID if editing, otherwise generate new
-                val habitId = currentState.editingHabitId ?: java.util.UUID.randomUUID().toString()
+                val habitId = currentState.editingHabitId ?: com.habitao.domain.util.randomUUID()
 
                 val habit =
                     Habit(

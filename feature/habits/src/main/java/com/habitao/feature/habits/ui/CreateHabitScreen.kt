@@ -86,7 +86,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.domain.model.DayOfWeek
 import com.habitao.domain.model.FrequencyType
@@ -94,8 +94,7 @@ import com.habitao.domain.model.HabitType
 import com.habitao.feature.habits.viewmodel.CreateHabitIntent
 import com.habitao.feature.habits.viewmodel.CreateHabitState
 import com.habitao.feature.habits.viewmodel.CreateHabitViewModel
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import kotlinx.datetime.LocalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,7 +102,7 @@ fun CreateHabitScreen(
     onNavigateBack: () -> Unit,
     onHabitCreated: () -> Unit,
     habitId: String? = null,
-    viewModel: CreateHabitViewModel = hiltViewModel(key = habitId ?: "create"),
+    viewModel: CreateHabitViewModel = koinViewModel(key = habitId ?: "create"),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -924,7 +923,7 @@ private fun ReminderSection(
                         }
 
                         Text(
-                            text = reminderTime?.format(DateTimeFormatter.ofPattern("h:mm a")) ?: "9:00 AM",
+                            text = reminderTime?.toMeridiemString() ?: "9:00 AM",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary,
@@ -938,7 +937,7 @@ private fun ReminderSection(
     // Time picker dialog
     if (showTimePicker) {
         TimePickerDialog(
-            initialTime = reminderTime ?: LocalTime.of(9, 0),
+            initialTime = reminderTime ?: LocalTime(hour = 9, minute = 0),
             onTimeSelected = {
                 onReminderTimeChange(it)
                 showTimePicker = false
@@ -1040,7 +1039,7 @@ private fun TimePickerDialog(
                     }
                     TextButton(
                         onClick = {
-                            onTimeSelected(LocalTime.of(timePickerState.hour, timePickerState.minute))
+                            onTimeSelected(LocalTime(hour = timePickerState.hour, minute = timePickerState.minute))
                         },
                     ) {
                         Text("OK")
@@ -1049,4 +1048,13 @@ private fun TimePickerDialog(
             }
         }
     }
+}
+
+private fun LocalTime.toMeridiemString(): String {
+    val hour12 = when (val h = hour % 12) {
+        0 -> 12
+        else -> h
+    }
+    val meridiem = if (hour < 12) "AM" else "PM"
+    return "%d:%02d %s".format(hour12, minute, meridiem)
 }

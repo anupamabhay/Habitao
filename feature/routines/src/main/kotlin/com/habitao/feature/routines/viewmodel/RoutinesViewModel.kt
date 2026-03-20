@@ -6,7 +6,6 @@ import com.habitao.domain.model.Routine
 import com.habitao.domain.model.RoutineLog
 import com.habitao.domain.model.RoutineStep
 import com.habitao.domain.repository.RoutineRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,8 +16,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import javax.inject.Inject
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 // State for Routines screen
 data class RoutinesState(
@@ -27,7 +28,7 @@ data class RoutinesState(
     val logs: Map<String, RoutineLog> = emptyMap(), // routineId -> log for selected date
     val isLoading: Boolean = true,
     val error: String? = null,
-    val selectedDate: LocalDate = LocalDate.now(),
+    val selectedDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
 )
 
 // Intents for Routines screen
@@ -43,13 +44,11 @@ sealed class RoutinesIntent {
     object ClearError : RoutinesIntent()
 }
 
-@HiltViewModel
 class RoutinesViewModel
-    @Inject
     constructor(
         private val routineRepository: RoutineRepository,
     ) : ViewModel() {
-        private val selectedDateFlow = MutableStateFlow(LocalDate.now())
+        private val selectedDateFlow = MutableStateFlow(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date)
         private val errorFlow = MutableStateFlow<String?>(null)
 
         // Uses observeAllRoutines() + in-memory filtering via isScheduledForDate() because the
@@ -129,7 +128,7 @@ class RoutinesViewModel
         }
 
         fun refreshDate() {
-            val today = LocalDate.now()
+            val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
             if (selectedDateFlow.value != today) {
                 selectedDateFlow.value = today
             }

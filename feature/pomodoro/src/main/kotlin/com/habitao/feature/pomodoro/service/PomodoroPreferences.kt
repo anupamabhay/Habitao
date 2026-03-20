@@ -2,16 +2,13 @@ package com.habitao.feature.pomodoro.service
 
 import android.content.Context
 import android.content.SharedPreferences
-import dagger.hilt.android.qualifiers.ApplicationContext
-import java.time.LocalDate
-import javax.inject.Inject
-import javax.inject.Singleton
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
-@Singleton
 class PomodoroPreferences
-    @Inject
     constructor(
-        @ApplicationContext context: Context,
+        context: Context,
     ) {
         val sharedPreferences: SharedPreferences =
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -75,7 +72,7 @@ class PomodoroPreferences
             set(value) = sharedPreferences.edit().putString(KEY_LAST_ROUND_RESET_DATE, value).apply()
 
         fun incrementRound() {
-            val today = LocalDate.now().toString()
+            val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
             if (lastRoundResetDate != today) {
                 completedRoundsToday = 0
                 lastRoundResetDate = today
@@ -84,7 +81,7 @@ class PomodoroPreferences
         }
 
         fun getTodaysRounds(): Int {
-            val today = LocalDate.now().toString()
+            val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
             return if (lastRoundResetDate != today) 0 else completedRoundsToday
         }
 

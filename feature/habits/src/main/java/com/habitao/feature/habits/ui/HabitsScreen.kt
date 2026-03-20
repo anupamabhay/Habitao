@@ -58,27 +58,30 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import com.habitao.core.ui.theme.AppShapes
 import com.habitao.core.ui.theme.Dimensions
 import com.habitao.feature.habits.viewmodel.HabitsIntent
 import com.habitao.feature.habits.viewmodel.HabitsState
 import com.habitao.feature.habits.viewmodel.HabitsViewModel
 import com.habitao.feature.habits.viewmodel.SortOption
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitsScreen(
     onAddHabit: () -> Unit,
     onEditHabit: (String) -> Unit = {},
-    viewModel: HabitsViewModel = hiltViewModel(),
+    viewModel: HabitsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -95,7 +98,7 @@ fun HabitsScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val greeting =
         remember {
-            val hour = java.time.LocalTime.now().hour
+            val hour = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).hour
             when {
                 hour < 12 -> "Good morning"
                 hour < 17 -> "Good afternoon"
@@ -318,9 +321,7 @@ private fun HabitsListHeader(
     ) {
         Text(
             text =
-                selectedDate.format(
-                    DateTimeFormatter.ofPattern("EEEE, MMMM d"),
-                ),
+                selectedDate.toLongLabel(),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(bottom = Dimensions.elementSpacing),
@@ -373,11 +374,11 @@ private fun DateSelector(
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val today = remember { LocalDate.now() }
+    val today = remember { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
     val pageCount = 10000
     val middlePage = pageCount / 2
     val pagerState = rememberPagerState(initialPage = middlePage, pageCount = { pageCount })
-    val baseWeekStart = remember(today) { today.with(DayOfWeek.MONDAY) }
+    val baseWeekStart = remember(today) { today.minus(DatePeriod(days = today.dayOfWeek.ordinal)) }
     val currentSelectedDate by rememberUpdatedState(selectedDate)
 
     // Sync date when pager settles on a new page — debounced and deduplicated
@@ -388,9 +389,9 @@ private fun DateSelector(
                 // Only update if pager is not actively being scrolled
                 if (!pagerState.isScrollInProgress) {
                     val weekOffset = (page - middlePage).toLong()
-                    val newWeekStart = baseWeekStart.plusWeeks(weekOffset)
+                    val newWeekStart = baseWeekStart.plus(weekOffset * 7, kotlinx.datetime.DateTimeUnit.DAY)
                     val dayOfWeekIndex = currentSelectedDate.dayOfWeek.value - 1
-                    val newDate = newWeekStart.plusDays(dayOfWeekIndex.toLong())
+                    val newDate = newWeekStart.plus(dayOfWeekIndex.toLong(), kotlinx.datetime.DateTimeUnit.DAY)
                     if (newDate != currentSelectedDate) {
                         onDateSelected(newDate)
                     }
@@ -403,14 +404,14 @@ private fun DateSelector(
         state = pagerState,
         beyondViewportPageCount = 1,
     ) { page ->
-        val weekStart = baseWeekStart.plusWeeks((page - middlePage).toLong())
+        val weekStart = baseWeekStart.plus((page - middlePage).toLong() * 7, kotlinx.datetime.DateTimeUnit.DAY)
         val isCurrentWeek = page == middlePage
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(Dimensions.elementSpacingSmall),
         ) {
             repeat(7) { dayIndex ->
-                val date = weekStart.plusDays(dayIndex.toLong())
+                val date = weekStart.plus(dayIndex.toLong(), kotlinx.datetime.DateTimeUnit.DAY)
                 DateChip(
                     date = date,
                     isSelected = date == selectedDate,
@@ -462,10 +463,7 @@ private fun DateChip(
         ) {
             Text(
                 text =
-                    date.dayOfWeek.getDisplayName(
-                        TextStyle.SHORT,
-                        Locale.getDefault(),
-                    ),
+                    date.dayOfWeek.toShortLabel(),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Medium,
             )
@@ -529,6 +527,15 @@ private fun SortDropdownMenu(
         }
     }
 }
+
+private fun LocalDate.toLongLabel(): String =
+    "${dayOfWeek.toFullLabel()}, ${month.toFullLabel()} $dayOfMonth"
+
+private fun DayOfWeek.toShortLabel(): String = name.take(3).lowercase().replaceFirstChar { it.uppercase() }
+
+private fun DayOfWeek.toFullLabel(): String = name.lowercase().replaceFirstChar { it.uppercase() }
+
+private fun kotlinx.datetime.Month.toFullLabel(): String = name.lowercase().replaceFirstChar { it.uppercase() }
 
 private fun SortOption.displayName(): String =
     when (this) {
