@@ -5,6 +5,7 @@ import android.util.Log
 import com.habitao.data.backup.BackupManager
 import com.habitao.data.di.allAndroidDataModules
 import com.habitao.feature.habits.di.habitsModule
+import com.habitao.feature.pomodoro.di.androidPomodoroModule
 import com.habitao.feature.pomodoro.di.pomodoroModule
 import com.habitao.feature.routines.di.routinesModule
 import com.habitao.feature.tasks.di.tasksModule
@@ -34,6 +35,7 @@ class HabitaoApplication : Application() {
                     tasksModule +
                     routinesModule +
                     pomodoroModule +
+                    androidPomodoroModule +
                     appModule,
             )
         }

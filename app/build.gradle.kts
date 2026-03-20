@@ -112,6 +112,7 @@ dependencies {
     implementation(projects.feature.tasks)
     implementation(projects.feature.pomodoro)
     implementation(projects.feature.settings)
+    implementation(projects.composeApp)
 
     // AndroidX Core
     implementation(libs.androidx.core.ktx)

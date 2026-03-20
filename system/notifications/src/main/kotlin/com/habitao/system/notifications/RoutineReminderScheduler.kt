@@ -20,6 +20,7 @@ import com.habitao.system.notifications.NotificationConstants.EXTRA_START_DATE
 import kotlinx.coroutines.flow.first
 import com.habitao.domain.model.DayOfWeek
 import com.habitao.domain.model.toDomainDay
+import com.habitao.domain.notification.RoutineScheduler
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -37,15 +38,15 @@ class RoutineReminderScheduler
         private val context: Context,
         private val alarmManager: AlarmManager,
         private val routineRepository: RoutineRepository,
-    ) {
-        fun scheduleReminder(
+    ) : RoutineScheduler {
+        override fun scheduleReminder(
             routineId: String,
             routineTitle: String,
             time: LocalTime,
-            repeatPattern: RepeatPattern = RepeatPattern.DAILY,
-            repeatDays: Set<DayOfWeek> = emptySet(),
-            customInterval: Int = 1,
-            startDate: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
+            repeatPattern: RepeatPattern,
+            repeatDays: Set<DayOfWeek>,
+            customInterval: Int,
+            startDate: LocalDate,
         ) {
             val triggerAt = calculateNextTrigger(time, repeatPattern, repeatDays, customInterval, startDate)
             val pendingIntent =
@@ -70,7 +71,7 @@ class RoutineReminderScheduler
             }
         }
 
-        fun cancelReminder(routineId: String) {
+        override fun cancelReminder(routineId: String) {
             val pendingIntent =
                 PendingIntent.getBroadcast(
                     context,
@@ -81,7 +82,7 @@ class RoutineReminderScheduler
             alarmManager.cancel(pendingIntent)
         }
 
-        suspend fun rescheduleAllReminders() {
+        override suspend fun rescheduleAllReminders() {
             val routinesResult = routineRepository.observeAllRoutines().first()
             val routines: List<Routine> = routinesResult.getOrElse { emptyList() }
             routines.filter { it.reminderEnabled && it.reminderTime != null && !it.isArchived && it.deletedAt == null }

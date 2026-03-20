@@ -8,6 +8,7 @@ import android.os.Build
 import com.habitao.domain.model.DayOfWeek
 import com.habitao.domain.model.FrequencyType
 import com.habitao.domain.model.toDomainDay
+import com.habitao.domain.notification.HabitScheduler
 import com.habitao.domain.repository.HabitRepository
 import com.habitao.system.notifications.NotificationConstants.ACTION_HABIT_REMINDER
 import com.habitao.system.notifications.NotificationConstants.EXTRA_FREQUENCY_TYPE
@@ -30,13 +31,13 @@ class HabitReminderScheduler
         private val context: Context,
         private val alarmManager: AlarmManager,
         private val habitRepository: HabitRepository,
-    ) {
-        fun scheduleReminder(
+    ) : HabitScheduler {
+        override fun scheduleReminder(
             habitId: String,
             habitTitle: String,
             time: LocalTime,
-            frequencyType: FrequencyType = FrequencyType.DAILY,
-            scheduledDays: Set<DayOfWeek> = emptySet(),
+            frequencyType: FrequencyType,
+            scheduledDays: Set<DayOfWeek>,
         ) {
             val triggerAt = calculateNextTrigger(time, frequencyType, scheduledDays)
             val pendingIntent = buildReminderPendingIntent(habitId, habitTitle, time, frequencyType, scheduledDays)
@@ -64,7 +65,7 @@ class HabitReminderScheduler
             }
         }
 
-        fun cancelReminder(habitId: String) {
+        override fun cancelReminder(habitId: String) {
             val pendingIntent =
                 PendingIntent.getBroadcast(
                     context,
@@ -75,7 +76,7 @@ class HabitReminderScheduler
             alarmManager.cancel(pendingIntent)
         }
 
-        suspend fun rescheduleAllReminders() {
+        override suspend fun rescheduleAllReminders() {
             val habits = habitRepository.getAllHabits().getOrElse { emptyList() }
             habits.filter { it.reminderEnabled && it.reminderTime != null }
                 .forEach { habit ->

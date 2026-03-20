@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import com.habitao.domain.notification.TaskScheduler
 import com.habitao.domain.repository.TaskRepository
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
@@ -19,13 +20,13 @@ class TaskReminderScheduler
         private val context: Context,
         private val alarmManager: AlarmManager,
         private val taskRepository: TaskRepository,
-    ) {
-        fun scheduleReminder(
+    ) : TaskScheduler {
+        override fun scheduleReminder(
             taskId: String,
             taskTitle: String,
             dueDate: LocalDate,
             dueTime: LocalTime?,
-            minutesBefore: Int = 0,
+            minutesBefore: Int,
         ) {
             val reminderTime = dueTime ?: LocalTime(hour = 9, minute = 0)
             val triggerMillis =
@@ -62,7 +63,7 @@ class TaskReminderScheduler
             }
         }
 
-        fun cancelReminder(taskId: String) {
+        override fun cancelReminder(taskId: String) {
             val pendingIntent =
                 PendingIntent.getBroadcast(
                     context,
@@ -73,7 +74,7 @@ class TaskReminderScheduler
             alarmManager.cancel(pendingIntent)
         }
 
-        suspend fun rescheduleAllReminders() {
+        override suspend fun rescheduleAllReminders() {
             val tasks = taskRepository.getAllTasks().getOrElse { emptyList() }
             tasks.filter { !it.isCompleted && it.reminderEnabled && it.dueDate != null }
                 .forEach { task ->
