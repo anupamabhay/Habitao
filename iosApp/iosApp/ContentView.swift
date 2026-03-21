@@ -4,7 +4,7 @@ import composeApp
 struct ContentView: View {
     var body: some View {
         ComposeView()
-            .ignoresSafeArea(.keyboard) // Compose handles insets
+            .ignoresSafeArea(.all)
     }
 }
 

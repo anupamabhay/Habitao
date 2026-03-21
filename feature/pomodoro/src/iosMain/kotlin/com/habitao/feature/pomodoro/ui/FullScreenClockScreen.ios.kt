@@ -4,8 +4,7 @@ import androidx.compose.runtime.Composable
 
 @Composable
 actual fun EnterImmersiveMode() {
-    // Immersive mode is handled differently on iOS or not required.
-    // E.g. UIApplication.sharedApplication.idleTimerDisabled = true
+    // No-op on iOS; we handle full-screen by ignoring window insets in Compose
 }
 
 @Composable

@@ -46,7 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.collectAsState
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -193,7 +193,7 @@ private fun HabitaoAppContent(
     val appSettings by
         remember(appSettingsManager) {
             appSettingsManager.settings.map<AppSettings, AppSettings?> { settings -> settings }
-        }.collectAsStateWithLifecycle(initialValue = null)
+        }.collectAsState(initial = null)
 
     val settings = appSettings
     if (settings == null) {

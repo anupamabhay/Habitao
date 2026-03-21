@@ -1,5 +1,7 @@
 package com.habitao.feature.pomodoro.timer
 
+import com.habitao.domain.model.PomodoroType
+import com.habitao.feature.pomodoro.preferences.PomodoroPreferencesSource
 import com.habitao.feature.pomodoro.service.TimerState
 import com.habitao.feature.pomodoro.service.TimerStateHolder
 import kotlinx.coroutines.CoroutineScope
@@ -15,11 +17,24 @@ import kotlinx.coroutines.launch
  */
 class IosTimerController(
     private val timerStateHolder: TimerStateHolder,
+    private val preferencesSource: PomodoroPreferencesSource,
 ) : TimerController {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var timerJob: Job? = null
 
     override fun start() {
+        // Initialize timer if starting from scratch
+        if (timerStateHolder.remainingSeconds.value <= 0L) {
+            val defaultMinutes = when (timerStateHolder.currentSessionType.value) {
+                PomodoroType.WORK -> preferencesSource.workDurationMinutes
+                PomodoroType.SHORT_BREAK -> preferencesSource.shortBreakDurationMinutes
+                PomodoroType.LONG_BREAK -> preferencesSource.longBreakDurationMinutes
+            }
+            val totalSeconds = defaultMinutes * 60L
+            timerStateHolder.updateTotalSeconds(totalSeconds)
+            timerStateHolder.updateRemainingSeconds(totalSeconds)
+        }
+
         timerStateHolder.updateTimerState(TimerState.RUNNING)
         scheduleCountdown()
     }

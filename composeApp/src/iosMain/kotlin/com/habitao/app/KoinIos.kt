@@ -2,9 +2,9 @@ package com.habitao.app
 
 import com.habitao.data.di.allIosDataModules
 import com.habitao.domain.notification.HabitScheduler
-import com.habitao.domain.notification.NoOpHabitScheduler
-import com.habitao.domain.notification.NoOpRoutineScheduler
-import com.habitao.domain.notification.NoOpTaskScheduler
+import com.habitao.domain.notification.IosHabitScheduler
+import com.habitao.domain.notification.IosRoutineScheduler
+import com.habitao.domain.notification.IosTaskScheduler
 import com.habitao.domain.notification.RoutineScheduler
 import com.habitao.domain.notification.TaskScheduler
 import com.habitao.feature.habits.di.habitsModule
@@ -17,9 +17,9 @@ import org.koin.dsl.module
 
 private val iosSchedulerModule =
     module {
-        single<HabitScheduler> { NoOpHabitScheduler() }
-        single<TaskScheduler> { NoOpTaskScheduler() }
-        single<RoutineScheduler> { NoOpRoutineScheduler() }
+        single<HabitScheduler> { IosHabitScheduler() }
+        single<TaskScheduler> { IosTaskScheduler() }
+        single<RoutineScheduler> { IosRoutineScheduler() }
     }
 
 fun initKoinIos() {

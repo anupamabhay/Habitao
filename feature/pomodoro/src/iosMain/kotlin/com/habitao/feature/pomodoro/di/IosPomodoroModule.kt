@@ -10,5 +10,5 @@ import org.koin.dsl.module
 val iosPomodoroModule =
     module {
         single<PomodoroPreferencesSource> { IosPomodoroPreferences() }
-        single<TimerController> { IosTimerController(get()) }
+        single<TimerController> { IosTimerController(get(), get()) }
     }
