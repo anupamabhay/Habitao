@@ -14,16 +14,16 @@ import org.koin.dsl.module
 
 val repositoryModule = module {
     single<HabitRepository> {
-        HabitRepositoryImpl(get(), get(), Dispatchers.IO)
+        HabitRepositoryImpl(get(), get(), Dispatchers.Default)
     }
     single<PomodoroRepository> {
-        PomodoroRepositoryImpl(get(), Dispatchers.IO)
+        PomodoroRepositoryImpl(get(), Dispatchers.Default)
     }
     single<RoutineRepository> {
-        RoutineRepositoryImpl(get(), Dispatchers.IO)
+        RoutineRepositoryImpl(get(), Dispatchers.Default)
     }
     single<TaskRepository> {
-        TaskRepositoryImpl(get(), Dispatchers.IO)
+        TaskRepositoryImpl(get(), Dispatchers.Default)
     }
 }
 

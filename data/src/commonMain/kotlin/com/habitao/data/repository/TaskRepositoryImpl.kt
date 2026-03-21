@@ -18,7 +18,7 @@ import kotlinx.datetime.plus
 class TaskRepositoryImpl
     constructor(
         private val taskDao: TaskDao,
-        private val dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
+        private val dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default,
     ) : TaskRepository {
         override suspend fun createTask(task: Task): Result<Unit> =
             withContext(dispatcher) {

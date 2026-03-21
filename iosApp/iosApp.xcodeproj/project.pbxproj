@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FB1CF9000F007C117D /* Main.storyboard */; };
 		A13B2ADC2B5F6CE5009A16B0 /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13B2ADB2B5F6CE5009A16B0 /* iOSApp.swift */; };
 		A13B2ADE2B5F6CE5009A16B0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13B2ADD2B5F6CE5009A16B0 /* ContentView.swift */; };
 		A13B2AE22B5F6CE5009A16B0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A13B2AE12B5F6CE5009A16B0 /* Assets.xcassets */; };
@@ -37,7 +36,7 @@
 		A13B2AE12B5F6CE5009A16B0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A13B2AE42B5F6CE5009A16B0 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A13B2AE62B5F6CE5009A16B0 /* iosApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iosApp.entitlements; sourceTree = "<group>"; };
-		A13B2AF32B5F6CE5009A16B0 /* composeApp.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = composeApp.xcframework; path = "../build/XCFrameworks/release/composeApp.xcframework"; sourceTree = "<group>"; };
+		A13B2AF32B5F6CE5009A16B0 /* composeApp.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = composeApp.xcframework; path = ../composeApp/build/XCFrameworks/debug/composeApp.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,12 +55,12 @@
 			isa = PBXGroup;
 			children = (
 				A13B2ADA2B5F6CE5009A16B0 /* iosApp */,
-				A13B2AD92B5F6CE5009A16B0 /* Products */,
+				A13B2AD92B5F6CE5009A16B1 /* Products */,
 				A13B2AF22B5F6CE5009A16B0 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
-		A13B2AD92B5F6CE5009A16B0 /* Products */ = {
+		A13B2AD92B5F6CE5009A16B1 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				A13B2AD92B5F6CE5009A16B0 /* iosApp.app */,
@@ -142,7 +141,7 @@
 				Base,
 			);
 			mainGroup = A13B2AD02B5F6CE5009A16B0;
-			productRefGroup = A13B2AD92B5F6CE5009A16B0 /* Products */;
+			productRefGroup = A13B2AD92B5F6CE5009A16B1 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -309,6 +308,8 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.habitao.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -335,6 +336,8 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.habitao.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

@@ -392,7 +392,7 @@ private fun DateSelector(
                 if (!pagerState.isScrollInProgress) {
                     val weekOffset = (page - middlePage).toLong()
                     val newWeekStart = baseWeekStart.plus(weekOffset * DAYS_PER_WEEK, kotlinx.datetime.DateTimeUnit.DAY)
-                    val dayOfWeekIndex = currentSelectedDate.dayOfWeek.value - 1
+                    val dayOfWeekIndex = currentSelectedDate.dayOfWeek.ordinal
                     val newDate = newWeekStart.plus(dayOfWeekIndex.toLong(), kotlinx.datetime.DateTimeUnit.DAY)
                     if (newDate != currentSelectedDate) {
                         onDateSelected(newDate)

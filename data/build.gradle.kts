@@ -35,7 +35,7 @@ kotlin {
 
             // Room KMP
             implementation(libs.room.runtime)
-            implementation(libs.room.ktx)
+
 
             // Koin (KMP)
             implementation(libs.koin.core)
@@ -45,6 +45,7 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.room.ktx)
             // Android DataStore factory
             implementation(libs.datastore.preferences)
             // Koin Android

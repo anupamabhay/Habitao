@@ -151,7 +151,7 @@ class RoutinesViewModel
                                     createdAt = existingRoutine.createdAt,
                                     startDate = existingRoutine.startDate,
                                     nextScheduledDate = existingRoutine.nextScheduledDate,
-                                    updatedAt = System.currentTimeMillis(),
+                                    updatedAt = Clock.System.now().toEpochMilliseconds(),
                                 ),
                                 steps,
                             )

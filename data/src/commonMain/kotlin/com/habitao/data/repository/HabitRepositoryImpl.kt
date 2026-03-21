@@ -36,7 +36,7 @@ class HabitRepositoryImpl
     constructor(
         private val habitDao: HabitDao,
         private val habitLogDao: HabitLogDao,
-        private val dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
+        private val dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default,
     ) : HabitRepository {
         // ============== CRUD OPERATIONS ==============
 

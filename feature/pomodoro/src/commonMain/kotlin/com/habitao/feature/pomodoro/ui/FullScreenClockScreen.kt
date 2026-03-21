@@ -1,13 +1,12 @@
 package com.habitao.feature.pomodoro.ui
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
-import android.view.WindowManager
-import androidx.activity.compose.BackHandler
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -43,13 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
+
 import org.koin.compose.viewmodel.koinViewModel
 import com.habitao.domain.model.PomodoroType
 import com.habitao.feature.pomodoro.ui.components.TimerDisplay
@@ -57,9 +50,11 @@ import com.habitao.feature.pomodoro.viewmodel.PomodoroViewModel
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FullScreenClockScreen(
     onClose: () -> Unit,
@@ -276,7 +271,7 @@ fun AnalogClock(
             sweepAngle = animatedSweep,
             useCenter = false,
             style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
-            size = Size(radius * 2, radius * 2),
+            size = Size(radius * 2f, radius * 2f),
             topLeft = Offset(center.x - radius, center.y - radius),
         )
 
@@ -290,7 +285,7 @@ fun AnalogClock(
 
         // Draw tick marks
         for (i in 0 until 60) {
-            val angle = i * 6f * (Math.PI / 180f)
+            val angle = i * 6f * (PI / 180f)
             val isHour = i % 5 == 0
             val tickLength = if (isHour) 12.dp.toPx() else 6.dp.toPx()
             val tickStroke = if (isHour) 3.dp.toPx() else 1.5.dp.toPx()
@@ -312,7 +307,7 @@ fun AnalogClock(
         }
 
         // Draw hand
-        val angleInRadians = (animatedSweep - 90f) * (Math.PI / 180f)
+        val angleInRadians = (animatedSweep - 90f) * (PI / 180f)
         val handLength = radius * 0.85f
         val handX = center.x + (handLength * cos(angleInRadians)).toFloat()
         val handY = center.y + (handLength * sin(angleInRadians)).toFloat()
@@ -532,11 +527,11 @@ fun TomatoClock(
         val cols = grid[0].size
         val rows = grid.size
         val gap = 2.dp.toPx()
-        val cellW = (size.width - gap * (cols - 1)) / cols
-        val cellH = (size.height - gap * (rows - 1)) / rows
+        val cellW = (size.width - gap * (cols - 1).toFloat()) / cols.toFloat()
+        val cellH = (size.height - gap * (rows - 1).toFloat()) / rows.toFloat()
         val cell = minOf(cellW, cellH)
-        val totalW = cols * cell + (cols - 1) * gap
-        val totalH = rows * cell + (rows - 1) * gap
+        val totalW = cols.toFloat() * cell + (cols - 1).toFloat() * gap
+        val totalH = rows.toFloat() * cell + (rows - 1).toFloat() * gap
         val offsetX = (size.width - totalW) / 2f
         val offsetY = (size.height - totalH) / 2f
 
@@ -602,55 +597,10 @@ private fun buildTomatoGrid(): Array<IntArray> {
 }
 
 @Composable
-private fun EnterImmersiveMode() {
-    val context = LocalContext.current
-    val activity = remember(context) { context.findActivity() }
+expect fun EnterImmersiveMode()
 
-    DisposableEffect(activity) {
-        activity?.let { targetActivity ->
-            val controller =
-                WindowCompat.getInsetsController(
-                    targetActivity.window,
-                    targetActivity.window.decorView,
-                )
-            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            controller.hide(WindowInsetsCompat.Type.systemBars())
-            targetActivity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
-            // AOD-style: dim screen brightness to minimum
-            val layoutParams = targetActivity.window.attributes
-            layoutParams.screenBrightness = AOD_BRIGHTNESS
-            targetActivity.window.attributes = layoutParams
-        }
-
-        onDispose {
-            activity?.let { targetActivity ->
-                val controller =
-                    WindowCompat.getInsetsController(
-                        targetActivity.window,
-                        targetActivity.window.decorView,
-                    )
-                controller.show(WindowInsetsCompat.Type.systemBars())
-                targetActivity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
-                // Restore system brightness
-                val layoutParams = targetActivity.window.attributes
-                layoutParams.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-                targetActivity.window.attributes = layoutParams
-            }
-        }
-    }
-}
-
-/** AOD brightness: very dim but still visible on OLED */
-private const val AOD_BRIGHTNESS = 0.01f
-
-private tailrec fun Context.findActivity(): Activity? =
-    when (this) {
-        is Activity -> this
-        is ContextWrapper -> baseContext.findActivity()
-        else -> null
-    }
+@Composable
+expect fun BackHandler(enabled: Boolean = true, onBack: () -> Unit)
 
 
 private fun currentDateLabel(): String {

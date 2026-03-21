@@ -1,13 +1,13 @@
 [versions]
 # Kotlin & Core
-kotlin = "2.0.0"
+kotlin = "2.0.21"
 kotlinx-coroutines = "1.8.1"
 kotlinx-serialization = "1.7.1"
 kotlinx-datetime = "0.6.0"
-ksp = "2.0.0-1.0.21"
-compose-multiplatform = "1.6.11"
-koin = "4.1.1"
-koin-compose = "4.1.1"
+ksp = "2.0.21-1.0.27"
+compose-multiplatform = "1.7.0"
+koin = "4.0.0"
+koin-compose = "4.0.0"
 sqlite = "2.5.0-alpha05"
 
 # Android
@@ -38,7 +38,7 @@ hilt = "2.51.1"
 hilt-navigation-compose = "1.2.0"
 
 # Database
-room = "2.7.0-alpha05"
+room = "2.7.0-alpha11"
 
 # DataStore
 datastore = "1.1.1"

@@ -120,6 +120,7 @@ import com.habitao.feature.tasks.viewmodel.CreateTaskIntent
 import com.habitao.feature.tasks.viewmodel.CreateTaskState
 import com.habitao.feature.tasks.viewmodel.CreateTaskViewModel
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
@@ -141,7 +142,7 @@ private class UndoRedoManager(private val maxHistory: Int = 50) {
         state: TextFieldValue,
         force: Boolean = false,
     ) {
-        val now = System.currentTimeMillis()
+        val now = Clock.System.now().toEpochMilliseconds()
         val elapsed = now - lastCheckpoint
         if (!force && elapsed < 400 && undoStack.isNotEmpty()) return
         if (undoStack.lastOrNull()?.text == state.text) return

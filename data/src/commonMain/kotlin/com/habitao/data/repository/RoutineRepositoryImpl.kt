@@ -23,7 +23,7 @@ import com.habitao.domain.util.randomUUID
 class RoutineRepositoryImpl
     constructor(
         private val routineDao: RoutineDao,
-        private val dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
+        private val dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default,
     ) : RoutineRepository {
         override suspend fun createRoutine(
             routine: Routine,

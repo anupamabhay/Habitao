@@ -857,5 +857,6 @@ private fun LocalTime.toMeridiemString(): String {
         else -> h
     }
     val meridiem = if (hour < 12) "AM" else "PM"
-    return "%d:%02d %s".format(hour12, minute, meridiem)
+    val minuteStr = minute.toString().padStart(2, '0')
+    return "$hour12:$minuteStr $meridiem"
 }

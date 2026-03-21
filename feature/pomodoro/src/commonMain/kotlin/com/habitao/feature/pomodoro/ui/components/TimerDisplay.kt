@@ -102,5 +102,5 @@ private fun formatTimerText(seconds: Long): String {
     val safeSeconds = seconds.coerceAtLeast(0L)
     val minutesPart = safeSeconds / 60
     val secondsPart = safeSeconds % 60
-    return String.format("%02d:%02d", minutesPart, secondsPart)
+    return "${minutesPart.toString().padStart(2, '0')}:${secondsPart.toString().padStart(2, '0')}"
 }

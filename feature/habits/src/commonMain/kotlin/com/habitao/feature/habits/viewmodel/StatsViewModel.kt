@@ -14,7 +14,7 @@ import com.habitao.domain.repository.HabitRepository
 import com.habitao.domain.repository.PomodoroRepository
 import com.habitao.domain.repository.RoutineRepository
 import com.habitao.domain.repository.TaskRepository
-import com.habitao.feature.pomodoro.service.PomodoroPreferences
+import com.habitao.feature.pomodoro.preferences.PomodoroPreferencesSource
 import com.habitao.feature.pomodoro.service.TimerState
 import com.habitao.feature.pomodoro.service.TimerStateHolder
 import kotlinx.coroutines.Dispatchers
@@ -129,7 +129,7 @@ class StatsViewModel
         private val taskRepository: TaskRepository,
         private val routineRepository: RoutineRepository,
         private val timerStateHolder: TimerStateHolder,
-        private val pomodoroPreferences: PomodoroPreferences,
+        private val pomodoroPreferences: PomodoroPreferencesSource,
         private val appSettingsManager: AppSettingsRepository,
     ) : ViewModel() {
         private val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -502,7 +502,7 @@ class StatsViewModel
 
             return (0..23).map { hour ->
                 ActivityDataPoint(
-                    label = "%02d:00".format(hour),
+                    label = "${hour.toString().padStart(2, '0')}:00",
                     habitsCompleted = habitsByHour[hour] ?: 0,
                     routinesCompleted = routinesByHour[hour] ?: 0,
                     tasksCompleted = taskStats.completedByHour[hour] ?: 0,
@@ -542,7 +542,7 @@ class StatsViewModel
         private fun Long.toLocalHour(zoneId: TimeZone): Int = Instant.fromEpochMilliseconds(this).toLocalDateTime(zoneId).hour
 
         private suspend fun loadStreakSafe(habitId: String): StreakInfo {
-            return withContext(Dispatchers.IO) {
+            return withContext(Dispatchers.Default) {
                 habitRepository.calculateStreak(habitId)
                     .getOrElse { StreakInfo(0, 0, 0) }
             }

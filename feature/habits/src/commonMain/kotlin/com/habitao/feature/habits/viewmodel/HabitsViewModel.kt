@@ -249,7 +249,7 @@ class HabitsViewModel
                     .onFailure { error ->
                         errorFlow.value = error.message ?: "Failed to update habit"
                     }
-                streakRefreshTrigger.value = System.currentTimeMillis()
+                streakRefreshTrigger.value = Clock.System.now().toEpochMilliseconds()
                 // No need to manually refresh - Flow observation handles it
             }
         }
@@ -267,7 +267,7 @@ class HabitsViewModel
                     .onFailure { error ->
                         errorFlow.value = error.message ?: "Failed to update habit"
                     }
-                streakRefreshTrigger.value = System.currentTimeMillis()
+                streakRefreshTrigger.value = Clock.System.now().toEpochMilliseconds()
             }
         }
 
@@ -284,7 +284,7 @@ class HabitsViewModel
                     .onFailure { error ->
                         errorFlow.value = error.message ?: "Failed to update habit"
                     }
-                streakRefreshTrigger.value = System.currentTimeMillis()
+                streakRefreshTrigger.value = Clock.System.now().toEpochMilliseconds()
             }
         }
 
@@ -318,7 +318,7 @@ class HabitsViewModel
                     .onFailure { error ->
                         errorFlow.value = error.message ?: "Failed to update checklist item"
                     }
-                streakRefreshTrigger.value = System.currentTimeMillis()
+                streakRefreshTrigger.value = Clock.System.now().toEpochMilliseconds()
             }
         }
 

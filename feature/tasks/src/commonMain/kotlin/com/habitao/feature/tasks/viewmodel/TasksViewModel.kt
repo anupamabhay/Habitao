@@ -191,7 +191,7 @@ class TasksViewModel(
                             taskRepository.upsertTask(
                                 task.copy(
                                     createdAt = existingTask.createdAt,
-                                    updatedAt = System.currentTimeMillis(),
+                                    updatedAt = Clock.System.now().toEpochMilliseconds(),
                                 ),
                             )
                         },
@@ -231,7 +231,7 @@ class TasksViewModel(
                     val updatedTask =
                         task.copy(
                             isCompleted = isCompleted,
-                            completedAt = if (isCompleted) System.currentTimeMillis() else null,
+                            completedAt = if (isCompleted) Clock.System.now().toEpochMilliseconds() else null,
                         )
                     taskRepository.updateTask(updatedTask).onFailure {
                         errorFlow.value = it.message ?: "Failed to update task"

@@ -19,7 +19,7 @@ import kotlinx.datetime.plus
 class PomodoroRepositoryImpl
     constructor(
         private val pomodoroSessionDao: PomodoroSessionDao,
-        private val dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
+        private val dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default,
     ) : PomodoroRepository {
         override suspend fun saveSession(session: PomodoroSession): Result<Unit> =
             withContext(dispatcher) {

@@ -25,7 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+ 
 import androidx.compose.ui.text.font.FontWeight
 import com.habitao.core.ui.theme.Dimensions
 
@@ -76,16 +76,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                 )
-                val context = LocalContext.current
-                val versionName =
-                    remember {
-                        try {
-                            val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-                            pInfo.versionName ?: "Unknown"
-                        } catch (_: Exception) {
-                            "Unknown"
-                        }
-                    }
+                val versionName = "1.0.0"
                 Text(
                     text = "Version $versionName",
                     style = MaterialTheme.typography.bodyMedium,
