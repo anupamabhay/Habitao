@@ -3,22 +3,16 @@ package com.habitao.system.notifications
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@AndroidEntryPoint
-class BootReceiver : BroadcastReceiver() {
-    @Inject
-    lateinit var habitScheduler: HabitReminderScheduler
-
-    @Inject
-    lateinit var taskScheduler: TaskReminderScheduler
-
-    @Inject
-    lateinit var routineScheduler: RoutineReminderScheduler
+class BootReceiver : BroadcastReceiver(), KoinComponent {
+    private val habitScheduler: HabitReminderScheduler by inject()
+    private val taskScheduler: TaskReminderScheduler by inject()
+    private val routineScheduler: RoutineReminderScheduler by inject()
 
     override fun onReceive(
         context: Context,

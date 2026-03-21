@@ -1,8 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
 }
 
 android {
@@ -51,9 +49,11 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
-    // Hilt
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.android.compiler)
+    // DateTime
+    implementation(libs.kotlinx.datetime)
+
+    // Koin
+    implementation(libs.koin.android)
 
     // Testing - Unit
     testImplementation(libs.bundles.testing.unit)

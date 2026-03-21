@@ -1,10 +1,67 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
     alias(libs.plugins.room)
+}
+
+kotlin {
+    androidTarget {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "17"
+                freeCompilerArgs += listOf(
+                    "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                )
+            }
+        }
+    }
+
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation(projects.domain)
+            implementation(projects.core.common)
+
+            // Kotlin
+            implementation(libs.kotlin.stdlib)
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.datetime)
+
+            // Room KMP
+            implementation(libs.room.runtime)
+
+
+            // Koin (KMP)
+            implementation(libs.koin.core)
+
+            // DataStore KMP
+            implementation(libs.datastore.preferences.core)
+        }
+        androidMain.dependencies {
+            implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.room.ktx)
+            // Android DataStore factory
+            implementation(libs.datastore.preferences)
+            // Koin Android
+            implementation(libs.koin.android)
+            // Core Library Desugaring support
+            implementation(libs.androidx.core.ktx)
+        }
+        iosMain.dependencies {
+            // Bundled SQLite for iOS Room
+            implementation(libs.sqlite.bundled)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+        }
+    }
 }
 
 android {
@@ -13,19 +70,6 @@ android {
 
     defaultConfig {
         minSdk = 26
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
-        }
     }
 
     compileOptions {
@@ -34,64 +78,19 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-        freeCompilerArgs +=
-            listOf(
-                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            )
-    }
-
-    room {
-        schemaDirectory("$projectDir/schemas")
-    }
-
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-            isReturnDefaultValues = true
-        }
+    dependencies {
+        coreLibraryDesugaring(libs.desugar.jdk.libs)
     }
 }
 
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
 dependencies {
-    // Core Library Desugaring
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-
-    // Module Dependencies
-    implementation(projects.domain)
-    implementation(projects.core.common)
-
-    // AndroidX Core
-    implementation(libs.androidx.core.ktx)
-
-    // Coroutines
-    implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kotlinx.datetime)
-
-    // Room Database
-    implementation(libs.bundles.room)
-    ksp(libs.room.compiler)
-
-    // DataStore
-    implementation(libs.datastore.preferences)
-    implementation(libs.datastore.proto)
-    implementation(libs.protobuf.kotlin.lite)
-
-    // Dependency Injection
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.android.compiler)
-
-    // Security (Encryption)
-    implementation(libs.tink.android)
-
-    // Testing - Unit
-    testImplementation(libs.bundles.testing.unit)
-    testImplementation(libs.room.testing)
-    testImplementation(libs.robolectric)
-    testRuntimeOnly(libs.junit5.engine)
-
-    // Testing - Android/Instrumentation
-    androidTestImplementation(libs.bundles.testing.android)
+    // KSP for Room code generation
+    add("kspAndroid", libs.room.compiler)
+    add("kspIosX64", libs.room.compiler)
+    add("kspIosArm64", libs.room.compiler)
+    add("kspIosSimulatorArm64", libs.room.compiler)
 }

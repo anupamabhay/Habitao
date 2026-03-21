@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import com.habitao.core.datastore.AppSettingsManager
+import com.habitao.core.datastore.AppSettingsRepository
 import com.habitao.domain.model.DayOfWeek
 import com.habitao.domain.model.FrequencyType
 import com.habitao.system.notifications.NotificationConstants.EXTRA_FREQUENCY_TYPE
@@ -13,24 +13,18 @@ import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_TITLE
 import com.habitao.system.notifications.NotificationConstants.EXTRA_REMINDER_HOUR
 import com.habitao.system.notifications.NotificationConstants.EXTRA_REMINDER_MINUTE
 import com.habitao.system.notifications.NotificationConstants.EXTRA_SCHEDULED_DAYS
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.time.LocalTime
-import javax.inject.Inject
+import kotlinx.datetime.LocalTime
 
-@AndroidEntryPoint
-class HabitReminderReceiver : BroadcastReceiver() {
-    @Inject
-    lateinit var notificationHelper: NotificationHelper
-
-    @Inject
-    lateinit var scheduler: HabitReminderScheduler
-
-    @Inject
-    lateinit var appSettingsManager: AppSettingsManager
+class HabitReminderReceiver : BroadcastReceiver(), KoinComponent {
+    private val notificationHelper: NotificationHelper by inject()
+    private val scheduler: HabitReminderScheduler by inject()
+    private val appSettingsManager: AppSettingsRepository by inject()
 
     override fun onReceive(
         context: Context,
@@ -60,7 +54,7 @@ class HabitReminderReceiver : BroadcastReceiver() {
                     scheduler.scheduleReminder(
                         habitId = habitId,
                         habitTitle = habitTitle,
-                        time = LocalTime.of(hour, minute),
+                        time = LocalTime(hour = hour, minute = minute),
                         frequencyType = frequencyType,
                         scheduledDays = scheduledDays,
                     )
@@ -77,7 +71,7 @@ class HabitReminderReceiver : BroadcastReceiver() {
                 scheduler.scheduleReminder(
                     habitId = habitId,
                     habitTitle = habitTitle,
-                    time = LocalTime.of(hour, minute),
+                    time = LocalTime(hour = hour, minute = minute),
                     frequencyType = frequencyType,
                     scheduledDays = scheduledDays,
                 )

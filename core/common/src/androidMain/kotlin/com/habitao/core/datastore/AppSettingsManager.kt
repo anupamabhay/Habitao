@@ -1,0 +1,165 @@
+package com.habitao.core.datastore
+
+import android.content.Context
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import java.io.IOException
+
+private const val APP_SETTINGS_DATASTORE_NAME = "app_settings"
+private const val TAB_SEPARATOR = ","
+
+private val Context.appSettingsDataStore by preferencesDataStore(name = APP_SETTINGS_DATASTORE_NAME)
+
+class AppSettingsManager(
+    context: Context,
+) : AppSettingsRepository {
+    private val dataStore = context.appSettingsDataStore
+
+    override val settings: Flow<AppSettings> =
+        dataStore.data
+            .catch { error ->
+                if (error is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw error
+                }
+            }
+            .map { preferences ->
+                AppSettings(
+                    bottomNavTabs = preferences.bottomNavTabs(),
+                    defaultLaunchTab = preferences[DEFAULT_LAUNCH_TAB_KEY] ?: "habits",
+                    maxVisibleTabs = preferences[MAX_VISIBLE_TABS_KEY] ?: DEFAULT_MAX_VISIBLE_TABS,
+                    showTabLabels = preferences[SHOW_TAB_LABELS_KEY] ?: true,
+                    themeMode = preferences.themeMode(),
+                    statsGraphType = preferences.statsGraphType(),
+                    habitRemindersEnabled = preferences[HABIT_REMINDERS_ENABLED_KEY] ?: true,
+                    taskRemindersEnabled = preferences[TASK_REMINDERS_ENABLED_KEY] ?: true,
+                    pomodoroNotificationsEnabled =
+                        preferences[POMODORO_NOTIFICATIONS_ENABLED_KEY] ?: true,
+                )
+            }
+
+    override suspend fun setBottomNavTabs(tabIds: List<String>) {
+        val serializedTabs =
+            tabIds
+                .asSequence()
+                .map(String::trim)
+                .filter(String::isNotEmpty)
+                .distinct()
+                .joinToString(TAB_SEPARATOR)
+
+        dataStore.edit { preferences ->
+            if (serializedTabs.isBlank()) {
+                preferences.remove(BOTTOM_NAV_TABS_KEY)
+            } else {
+                preferences[BOTTOM_NAV_TABS_KEY] = serializedTabs
+            }
+        }
+    }
+
+    override suspend fun setDefaultLaunchTab(tabId: String) {
+        val normalizedTabId = tabId.trim()
+        dataStore.edit { preferences ->
+            if (normalizedTabId.isBlank()) {
+                preferences.remove(DEFAULT_LAUNCH_TAB_KEY)
+            } else {
+                preferences[DEFAULT_LAUNCH_TAB_KEY] = normalizedTabId
+            }
+        }
+    }
+
+    override suspend fun setMaxVisibleTabs(count: Int) {
+        val clamped = count.coerceIn(3, 5)
+        dataStore.edit { preferences ->
+            preferences[MAX_VISIBLE_TABS_KEY] = clamped
+        }
+    }
+
+    override suspend fun setShowTabLabels(show: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SHOW_TAB_LABELS_KEY] = show
+        }
+    }
+
+    override suspend fun setThemeMode(themeMode: String) {
+        dataStore.edit { preferences ->
+            preferences[THEME_MODE_KEY] = normalizeThemeMode(themeMode)
+        }
+    }
+
+    override suspend fun setStatsGraphType(graphType: String) {
+        dataStore.edit { preferences ->
+            preferences[STATS_GRAPH_TYPE_KEY] = normalizeGraphType(graphType)
+        }
+    }
+
+    override suspend fun setHabitRemindersEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[HABIT_REMINDERS_ENABLED_KEY] = enabled
+        }
+    }
+
+    override suspend fun setTaskRemindersEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[TASK_REMINDERS_ENABLED_KEY] = enabled
+        }
+    }
+
+    override suspend fun setPomodoroNotificationsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[POMODORO_NOTIFICATIONS_ENABLED_KEY] = enabled
+        }
+    }
+
+    private fun Preferences.bottomNavTabs(): List<String> {
+        return this[BOTTOM_NAV_TABS_KEY]
+            .orEmpty()
+            .split(TAB_SEPARATOR)
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+    }
+
+    private fun Preferences.themeMode(): String {
+        return normalizeThemeMode(this[THEME_MODE_KEY])
+    }
+
+    private fun normalizeThemeMode(themeMode: String?): String {
+        return when (themeMode?.trim()?.uppercase()) {
+            "LIGHT" -> "LIGHT"
+            "DARK" -> "DARK"
+            else -> DEFAULT_THEME_MODE
+        }
+    }
+
+    private fun Preferences.statsGraphType(): String {
+        return normalizeGraphType(this[STATS_GRAPH_TYPE_KEY])
+    }
+
+    private fun normalizeGraphType(graphType: String?): String {
+        return when (graphType?.trim()?.uppercase()) {
+            "LINE" -> "LINE"
+            else -> DEFAULT_STATS_GRAPH_TYPE
+        }
+    }
+
+    companion object {
+        private val BOTTOM_NAV_TABS_KEY = stringPreferencesKey("bottom_nav_tabs")
+        private val DEFAULT_LAUNCH_TAB_KEY = stringPreferencesKey("default_launch_tab")
+        private val MAX_VISIBLE_TABS_KEY = intPreferencesKey("max_visible_tabs")
+        private val SHOW_TAB_LABELS_KEY = booleanPreferencesKey("show_tab_labels")
+        private val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
+        private val STATS_GRAPH_TYPE_KEY = stringPreferencesKey("stats_graph_type")
+        private val HABIT_REMINDERS_ENABLED_KEY = booleanPreferencesKey("habit_reminders_enabled")
+        private val TASK_REMINDERS_ENABLED_KEY = booleanPreferencesKey("task_reminders_enabled")
+        private val POMODORO_NOTIFICATIONS_ENABLED_KEY =
+            booleanPreferencesKey("pomodoro_notifications_enabled")
+    }
+}

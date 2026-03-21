@@ -4,16 +4,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.habitao.system.notifications.NotificationConstants.EXTRA_HABIT_ID
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@AndroidEntryPoint
-class HabitCompletionReceiver : BroadcastReceiver() {
-    @Inject
-    lateinit var habitCompletionService: HabitCompletionService
+class HabitCompletionReceiver : BroadcastReceiver(), KoinComponent {
+    private val habitCompletionService: HabitCompletionService by inject()
 
     override fun onReceive(
         context: Context,

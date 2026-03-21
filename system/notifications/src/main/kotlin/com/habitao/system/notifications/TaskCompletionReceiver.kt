@@ -5,16 +5,14 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationManagerCompat
 import com.habitao.domain.repository.TaskRepository
-import dagger.hilt.android.AndroidEntryPoint
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@AndroidEntryPoint
-class TaskCompletionReceiver : BroadcastReceiver() {
-    @Inject
-    lateinit var taskRepository: TaskRepository
+class TaskCompletionReceiver : BroadcastReceiver(), KoinComponent {
+    private val taskRepository: TaskRepository by inject()
 
     override fun onReceive(
         context: Context,

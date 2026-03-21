@@ -27,14 +27,7 @@
 }
 
 # =============================================================================
-# Hilt / Dagger
 # =============================================================================
--keep class dagger.hilt.** { *; }
--keep class javax.inject.** { *; }
--keep class * extends dagger.hilt.android.lifecycle.HiltViewModel { *; }
--keepclasseswithmembers class * {
-    @dagger.hilt.android.lifecycle.HiltViewModel <init>(...);
-}
 
 # =============================================================================
 # Room

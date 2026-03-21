@@ -15,8 +15,9 @@ plugins {
     // KSP for annotation processing
     alias(libs.plugins.ksp) apply false
 
-    // Dependency Injection
-    alias(libs.plugins.hilt) apply false
+    // KMP + Compose Multiplatform
+    alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.compose.multiplatform) apply false
 
     // Database
     alias(libs.plugins.room) apply false
