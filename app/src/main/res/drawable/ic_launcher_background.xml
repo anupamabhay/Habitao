@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
-    Adaptive icon background layer for Habitao.
-    Uses the app's primary green color (#006C4C) to provide a clean,
-    recognisable brand backdrop on any launcher shape mask.
--->
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#FF006C4C" />
-</shape>
