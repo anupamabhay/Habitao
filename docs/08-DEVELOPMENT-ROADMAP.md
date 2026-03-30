@@ -151,94 +151,154 @@ These features reduce switching cost and increase user trust.
 
 ---
 
-## 5. High-Priority Roadmap Recommendation
+## 5. Phased Rollout Plan
 
-If the team wants the strongest balance of user value and implementation realism, the roadmap after current planned work should prioritize the following in order:
+This section breaks the roadmap into delivery phases and then into **one feature at a time** steps. The intent is to make implementation easier to schedule, review, and validate.
 
-### Tier 1 - Immediate follow-up after widgets and backup groundwork
+### Phase 1 - Platform Trust & Quick Wins
 
-1. **Universal quick add + Inbox**
-2. **Recurring tasks**
-3. **Projects + tags**
-4. **Global search**
-5. **Archive / pause / skip states**
-6. **Snooze + richer notification actions**
-7. **Habit templates**
-8. **Task-to-Pomodoro association**
+**Goal:** Reduce adoption friction and improve day-to-day convenience as quickly as possible.
 
-### Tier 2 - Competitive polish wave
+#### Step 1: Today Widget
+- **Why first:** It is already planned, highly visible, and expected from Android users.
+- **Scope:** Read-only "Today" widget with habits + tasks summary, then quick-complete actions in a follow-up iteration.
+- **Definition of done:** Users can glance at today’s work without launching the app.
 
-1. **Monthly heatmaps**
-2. **Advanced stats + weekly review**
-3. **Routine focus mode with step timers**
-4. **Full-screen desk clock mode**
-5. **Ambient focus sounds**
-6. **Onboarding template packs**
-7. **Widget variants**
-8. **Data import from competitor apps**
+#### Step 2: Universal Quick Add + Inbox
+- **Why next:** Fast capture is one of the most common reasons users stay with Todoist/TickTick-style apps.
+- **Scope:** Add a single entry point for quick task capture and route unfinished triage items into an Inbox.
+- **Definition of done:** A user can save an item in seconds without filling the full task form.
 
-### Tier 3 - Longer-term ecosystem upgrades
+#### Step 3: Recurring Tasks
+- **Why next:** This is a baseline parity feature for serious task management.
+- **Scope:** Daily, weekly, and custom repeat rules for top-level tasks.
+- **Definition of done:** Users can create repeating tasks that regenerate predictably.
 
-1. **Cloud backup automation**
-2. **Real-time multi-device sync**
-3. **Conflict review and sync troubleshooting UI**
-4. **Calendar planning surfaces / richer project views**
-5. **Attachments and deeper reference management**
-6. **Smart suggestions / behavior-driven insights**
+#### Step 4: Projects / Lists
+- **Why next:** Once recurring tasks and quick capture exist, users need structure.
+- **Scope:** Named projects/lists with assignment from create/edit task flows.
+- **Definition of done:** Users can separate personal, work, study, and errands clearly.
+
+#### Step 5: Tags / Labels
+- **Why next:** Tags add lightweight cross-project organization without forcing hierarchy.
+- **Scope:** Create, assign, filter, and display tags on tasks first; expand to habits later if useful.
+- **Definition of done:** Users can group tasks by context such as `home`, `deep-work`, or `urgent`.
+
+#### Step 6: Global Search
+- **Why next:** Search becomes valuable immediately once capture and organization features land.
+- **Scope:** Search tasks, habits, routines, subtasks, and optionally archived/completed items.
+- **Definition of done:** Users can locate existing items quickly without manually browsing sections.
+
+#### Step 7: Notification Snooze + Rich Actions
+- **Why next:** Reminder handling quality directly affects perceived polish.
+- **Scope:** Add snooze presets and action buttons like complete, open, and reschedule where appropriate.
+- **Definition of done:** Notifications become actionable instead of being simple reminders.
+
+### Phase 2 - Daily Workflow Polish
+
+**Goal:** Make the app feel more forgiving, customizable, and realistic for long-term use.
+
+#### Step 8: Archive / Pause / Skip States
+- **Why first in this phase:** Users need non-destructive ways to manage changing routines.
+- **Scope:** Archive inactive items, pause habits/routines temporarily, and skip individual days without deletion.
+- **Definition of done:** Users can manage interruptions and inactive items cleanly.
+
+#### Step 9: Habit Templates
+- **Why next:** Templates reduce setup effort and improve onboarding.
+- **Scope:** Provide a starter library such as water, workout, reading, and morning routine habits.
+- **Definition of done:** New users can start with proven defaults instead of blank forms.
+
+#### Step 10: Task-to-Pomodoro Association
+- **Why next:** It strengthens Habitao’s cross-feature differentiator.
+- **Scope:** Link a focus session to a task and surface the relationship in both task and stats views.
+- **Definition of done:** Users can understand what focused time was spent on.
+
+#### Step 11: Onboarding Starter Packs
+- **Why next:** After templates and core workflow polish exist, onboarding can become more opinionated.
+- **Scope:** Suggested setup packs like Student, Wellness, Creator, and Deep Work.
+- **Definition of done:** First-run experience helps users reach value faster.
+
+### Phase 3 - Power User Depth
+
+**Goal:** Add insight-heavy and visualization-heavy features once the core workflows are stable.
+
+#### Step 12: Monthly Heatmaps
+- **Why first in this phase:** This is a highly recognizable competitor feature for habits.
+- **Scope:** Month-level consistency view with clear done/skipped/missed states.
+- **Definition of done:** Users can understand streak patterns at a glance.
+
+#### Step 13: Advanced Stats Dashboard
+- **Why next:** More history means the app can provide richer insights.
+- **Scope:** Trend charts, best days, consistency trends, and completion summaries.
+- **Definition of done:** Stats move beyond totals into actionable patterns.
+
+#### Step 14: Weekly Review
+- **Why next:** Review turns raw data into reflection and habit reinforcement.
+- **Scope:** Weekly wins, misses, carry-over tasks, and focus summary.
+- **Definition of done:** Users get a guided summary instead of assembling it mentally.
+
+#### Step 15: Routine Focus Mode + Step Timers
+- **Why next:** Routines can become a strong differentiator when execution feels guided.
+- **Scope:** One-step-at-a-time routine view, optional per-step timers, and pause/resume.
+- **Definition of done:** Routines feel like a guided flow, not just a static checklist.
+
+#### Step 16: Full-Screen Desk Clock Mode
+- **Why next:** This is a natural improvement once Pomodoro-to-task linking exists.
+- **Scope:** Minimal distraction full-screen timer with large typography and clear progress.
+- **Definition of done:** Users can keep the app visible during focus sessions without clutter.
+
+#### Step 17: Ambient Sounds
+- **Why next:** Popular, useful, and easier to justify once focus mode is mature.
+- **Scope:** Curated set of built-in ambient sounds with simple controls.
+- **Definition of done:** Users can stay in one app for both focus timing and ambience.
+
+#### Step 18: Widget Variants
+- **Why next:** After the first widget proves value, specialized variants become safer to build.
+- **Scope:** Habit-only, task-only, and focus-oriented widgets.
+- **Definition of done:** Users can tailor widget surfaces to their preferred workflow.
+
+### Phase 4 - Portability & Long-Term Commitment
+
+**Goal:** Remove switching costs and build confidence for long-term use across devices.
+
+#### Step 19: Automatic Cloud Backup
+- **Why first in this phase:** Backup trust should precede true sync complexity.
+- **Scope:** Scheduled cloud backups built on top of the existing backup plan.
+- **Definition of done:** Users feel protected from data loss without manual effort.
+
+#### Step 20: Real-Time Sync
+- **Why next:** It is high-value but operationally more complex than backup.
+- **Scope:** Multi-device synchronization with conflict policy and clear sync status.
+- **Definition of done:** Users can move between devices without manual export/import.
+
+#### Step 21: Import from Competitor Apps
+- **Why next:** Import matters more once Habitao feels trustworthy enough to switch to fully.
+- **Scope:** Start with tasks from TickTick, Todoist, or Google Tasks.
+- **Definition of done:** Migration effort drops significantly for new users.
+
+#### Step 22: CSV Export + Sync Conflict Review
+- **Why next:** Both features increase user trust and transparency.
+- **Scope:** Spreadsheet-friendly exports plus a UI for resolving or understanding sync conflicts.
+- **Definition of done:** Users can inspect, export, and trust their own data.
 
 ---
 
-## 6. Suggested Release Sequencing
+## 6. Phase Exit Criteria
 
-### 6.1 Version 1.1 - Daily Use Polish
+Each phase should finish only when the shipped features feel complete together, not just technically merged.
 
-Focus on features that remove friction and close obvious parity gaps.
-
-- Ship the first **Today widget**
-- Add **quick add + Inbox**
-- Add **recurring tasks**
-- Add **projects / lists** and **tags / labels**
-- Add **global search**
-- Add **archive / pause / skip**
-- Improve **notification actions** and **snooze**
-- Add **habit templates**
-- Add **Pomodoro task association**
-
-**Outcome:** Habitao becomes much more competitive for daily planning and capture.
-
-### 6.2 Version 1.2 - Power User Depth
-
-Focus on insight, guidance, and stronger routine/focus workflows.
-
-- Add **monthly heatmaps**
-- Add **advanced stats dashboard**
-- Add **weekly review**
-- Add **routine focus mode**
-- Add **per-step timers / estimates**
-- Add **full-screen desk clock mode**
-- Add **ambient focus sounds**
-- Add **widget variants**
-- Add **starter packs and onboarding templates**
-
-**Outcome:** Habitao starts to feel meaningfully richer than a basic tracker.
-
-### 6.3 Version 2.0 - Trust, Portability, and Multi-Device
-
-Focus on long-term retention and switching confidence.
-
-- Ship **automatic cloud backup**
-- Ship **real-time sync**
-- Add **import from competitor apps**
-- Add **CSV export**
-- Add **conflict review / sync status UI**
-
-**Outcome:** Habitao becomes viable as a user's primary long-term productivity system.
+| Phase | Exit Criteria |
+|------|---------------|
+| **Phase 1** | Today widget is stable, quick capture is fast, and tasks can be organized/searchable without friction |
+| **Phase 2** | Users can adapt the system to real life using archive/pause/skip flows and stronger onboarding |
+| **Phase 3** | Stats and focus workflows feel richer than a basic checklist app |
+| **Phase 4** | Users can trust Habitao with long-term data and multi-device usage |
 
 ---
 
 ## 7. Features to Explicitly Defer for Now
 
-The following ideas may be attractive, but they should stay lower priority until the core roadmap above is solid:
+The following ideas may be attractive, but they should stay lower priority until the phased roadmap above is solid:
 
 - Social feeds or public habit sharing
 - Team collaboration
@@ -251,17 +311,43 @@ These can create scope creep before Habitao has finished core parity and daily-u
 
 ---
 
-## 8. Recommended Next Product Steps
+## 8. Independent Review of This Roadmap
 
-1. **Keep widgets and cloud backup/sync on the roadmap**
-2. **Adopt the Tier 1 feature set as the next planned wave**
-3. **Turn each Tier 1 item into a separate spec or issue**
-4. **Validate priorities with 5-10 target users before committing to the full 1.2 scope**
-5. **Use the unified dashboard and cross-feature insights as Habitao's main differentiator**
+Looking at this plan from a more skeptical, unbiased perspective:
+
+### What is strong about the plan
+- It prioritizes **retention and friction reduction** before novelty.
+- It uses **existing planned work** (widgets, backup/sync) as anchors instead of replacing them.
+- It sequences risky features like sync and imports **after** trust-building steps.
+- It leans into Habitao’s strongest differentiator: **habits + tasks + routines + focus in one place**.
+
+### What might still be risky
+- Phase 1 is still ambitious if widgets, Inbox, recurring tasks, projects, tags, search, and notifications are all attempted in one release window.
+- Search, projects, and tags can quietly expand scope because they affect navigation, filtering, creation flows, and future data design.
+- Sync and import can consume more time than expected because they introduce migration, conflict, and support burdens.
+
+### What to watch carefully
+- Do not start sync before backup is reliable.
+- Do not over-design projects/tags before validating how users actually organize tasks.
+- Do not add too many templates or onboarding variants before measuring whether they improve retention.
+
+### Recommended adjustment if timelines tighten
+- Keep **Today widget**, **Quick Add + Inbox**, **Recurring Tasks**, and **Notification Snooze/Actions** as the must-ship set.
+- Move either **Projects + Tags** or **Global Search** to a later increment if implementation bandwidth is limited.
 
 ---
 
-## 9. Summary
+## 9. Recommended Next Product Steps
+
+1. **Keep widgets and cloud backup/sync on the roadmap**
+2. **Adopt the phased rollout order above instead of attempting all improvements at once**
+3. **Turn each step into a separate issue, spec, or milestone**
+4. **Validate each phase with small user feedback loops before starting the next one**
+5. **Use cross-feature insights and task-linked focus flows as Habitao’s long-term differentiator**
+
+---
+
+## 10. Summary
 
 Beyond widgets and cloud backup/sync, the most valuable additions for Habitao are:
 
@@ -272,4 +358,4 @@ Beyond widgets and cloud backup/sync, the most valuable additions for Habitao ar
 - Better focus workflows (**task-linked Pomodoro, desk clock, ambient sounds**)
 - Better portability (**imports, exports, sync trust features**)
 
-If Habitao builds those in a staged way, it can move from a feature-complete productivity app to a genuinely competitive daily driver.
+The phased plan above keeps those ideas grounded in a practical delivery order: **one feature at a time, grouped into reviewable phases**.

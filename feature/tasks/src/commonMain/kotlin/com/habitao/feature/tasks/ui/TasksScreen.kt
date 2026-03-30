@@ -155,6 +155,9 @@ fun TasksScreen(
             onToggleComplete = { taskId, isCompleted ->
                 viewModel.processIntent(TasksIntent.ToggleComplete(taskId, isCompleted))
             },
+            onTaskExpandedChange = { taskId, isExpanded ->
+                viewModel.processIntent(TasksIntent.SetTaskExpanded(taskId, isExpanded))
+            },
             onTaskClick = onEditTask,
             modifier = Modifier.padding(paddingValues),
         )
@@ -165,6 +168,7 @@ fun TasksScreen(
 private fun TasksContent(
     state: TasksState,
     onToggleComplete: (String, Boolean) -> Unit,
+    onTaskExpandedChange: (String, Boolean) -> Unit,
     onTaskClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -179,7 +183,6 @@ private fun TasksContent(
                 "Completed" to false,
             )
         }
-    val expandedTaskIds = remember { mutableStateMapOf<String, Boolean>() }
     val today = remember { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
 
     val hasActiveTasks =
@@ -235,8 +238,9 @@ private fun TasksContent(
                         color = errorColor,
                         tasks = state.overdueTasks,
                         sectionExpanded = sectionExpanded,
-                        expandedTaskIds = expandedTaskIds,
+                        expandedTaskIds = state.expandedTaskIds,
                         subTasks = state.subTasks,
+                        onTaskExpandedChange = onTaskExpandedChange,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
                         today = today,
@@ -247,8 +251,9 @@ private fun TasksContent(
                         color = primaryColor,
                         tasks = state.todayTasks,
                         sectionExpanded = sectionExpanded,
-                        expandedTaskIds = expandedTaskIds,
+                        expandedTaskIds = state.expandedTaskIds,
                         subTasks = state.subTasks,
+                        onTaskExpandedChange = onTaskExpandedChange,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
                         today = today,
@@ -259,8 +264,9 @@ private fun TasksContent(
                         color = secondaryColor,
                         tasks = state.tomorrowTasks,
                         sectionExpanded = sectionExpanded,
-                        expandedTaskIds = expandedTaskIds,
+                        expandedTaskIds = state.expandedTaskIds,
                         subTasks = state.subTasks,
+                        onTaskExpandedChange = onTaskExpandedChange,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
                         today = today,
@@ -271,8 +277,9 @@ private fun TasksContent(
                         color = onSurfaceVariantColor,
                         tasks = state.upcomingTasks,
                         sectionExpanded = sectionExpanded,
-                        expandedTaskIds = expandedTaskIds,
+                        expandedTaskIds = state.expandedTaskIds,
                         subTasks = state.subTasks,
+                        onTaskExpandedChange = onTaskExpandedChange,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
                         today = today,
@@ -301,17 +308,18 @@ private fun TasksContent(
                                 contentType = { "task_item" },
                             ) { task ->
                                 TaskItemWithSubtasks(
-                                    task = task,
-                                    subtasks = state.completedSubTasks[task.id] ?: emptyList(),
-                                    onToggleComplete = onToggleComplete,
-                                    onTaskClick = onTaskClick,
-                                    isExpanded = expandedTaskIds[task.id] ?: true,
-                                    onToggleExpanded = {
-                                        expandedTaskIds[task.id] = !(expandedTaskIds[task.id] ?: true)
-                                    },
-                                    allSubTasks = state.completedSubTasks,
-                                    today = today,
-                                )
+                                     task = task,
+                                     subtasks = state.completedSubTasks[task.id] ?: emptyList(),
+                                     onToggleComplete = onToggleComplete,
+                                     onTaskClick = onTaskClick,
+                                     isExpanded = state.expandedTaskIds[task.id] ?: true,
+                                     onToggleExpanded = {
+                                         val nextExpanded = !(state.expandedTaskIds[task.id] ?: true)
+                                         onTaskExpandedChange(task.id, nextExpanded)
+                                     },
+                                     allSubTasks = state.completedSubTasks,
+                                     today = today,
+                                 )
                             }
 
                             items(
@@ -344,8 +352,9 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
     color: Color,
     tasks: List<Task>,
     sectionExpanded: MutableMap<String, Boolean>,
-    expandedTaskIds: MutableMap<String, Boolean>,
+    expandedTaskIds: Map<String, Boolean>,
     subTasks: Map<String, List<Task>>,
+    onTaskExpandedChange: (String, Boolean) -> Unit,
     onToggleComplete: (String, Boolean) -> Unit,
     onTaskClick: (String) -> Unit,
     today: LocalDate,
@@ -373,7 +382,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
                 onTaskClick = onTaskClick,
                 isExpanded = expandedTaskIds[task.id] ?: true,
                 onToggleExpanded = {
-                    expandedTaskIds[task.id] = !(expandedTaskIds[task.id] ?: true)
+                    val nextExpanded = !(expandedTaskIds[task.id] ?: true)
+                    onTaskExpandedChange(task.id, nextExpanded)
                 },
                 allSubTasks = subTasks,
                 today = today,
