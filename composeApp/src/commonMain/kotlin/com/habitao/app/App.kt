@@ -171,12 +171,16 @@ private enum class Tab(
 fun App(
     onExportBackup: (() -> Unit)? = null,
     onImportBackup: (() -> Unit)? = null,
+    quickActionRoute: String? = null,
+    onQuickActionConsumed: (() -> Unit)? = null,
 ) {
     val appSettingsManager = koinInject<AppSettingsRepository>()
     HabitaoAppContent(
         appSettingsManager = appSettingsManager,
         onExportBackup = onExportBackup ?: {},
         onImportBackup = onImportBackup ?: {},
+        quickActionRoute = quickActionRoute,
+        onQuickActionConsumed = onQuickActionConsumed ?: {},
     )
 }
 
@@ -186,6 +190,8 @@ private fun HabitaoAppContent(
     appSettingsManager: AppSettingsRepository,
     onExportBackup: () -> Unit,
     onImportBackup: () -> Unit,
+    quickActionRoute: String?,
+    onQuickActionConsumed: () -> Unit,
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -431,6 +437,28 @@ private fun HabitaoAppContent(
 
                 composable<FullScreenClockRoute> {
                     FullScreenClockScreen(onClose = { navController.popBackStack() })
+                }
+            }
+
+            LaunchedEffect(quickActionRoute) {
+                when (quickActionRoute) {
+                    QuickActionRoute.AddTask -> {
+                        navController.navigate(CreateTaskRoute())
+                        onQuickActionConsumed()
+                    }
+                    QuickActionRoute.AddHabit -> {
+                        navController.navigate(CreateHabitRoute)
+                        onQuickActionConsumed()
+                    }
+                    QuickActionRoute.AddRoutine -> {
+                        navController.navigate(CreateRoutineRoute())
+                        onQuickActionConsumed()
+                    }
+                    QuickActionRoute.GlobalSearch -> {
+                        navController.navigate(SearchRoute)
+                        onQuickActionConsumed()
+                    }
+                    null -> Unit
                 }
             }
         }

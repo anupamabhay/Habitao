@@ -6,4 +6,14 @@
     <string name="permission_exact_alarm_rationale">Habitao needs precise alarms for scheduled reminders.</string>
     <string name="permission_foreground_service_rationale">Habitao uses a foreground service for accurate timers.</string>
     <string name="permission_boot_rationale">Habitao restores reminders after device restart.</string>
+    <string name="shortcut_add_task">Add task</string>
+    <string name="shortcut_add_task_long">Quickly add a new task</string>
+    <string name="shortcut_add_habit">Add habit</string>
+    <string name="shortcut_add_habit_long">Quickly add a new habit</string>
+    <string name="shortcut_add_routine">Add routine</string>
+    <string name="shortcut_add_routine_long">Quickly add a new routine</string>
+    <string name="shortcut_global_search">Search</string>
+    <string name="shortcut_global_search_long">Search tasks, habits, and routines</string>
+    <string name="widget_today_title">Today</string>
+    <string name="widget_today_body">Open Habitao to check habits and tasks</string>
 </resources>

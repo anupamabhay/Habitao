@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_today_title">Today</string>
+    <string name="widget_today_body">Open Habitao to check habits and tasks</string>
+</resources>
+

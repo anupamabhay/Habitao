@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="add_task"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_add_task"
+        android:shortcutShortLabel="@string/shortcut_add_task"
+        android:shortcutLongLabel="@string/shortcut_add_task_long">
+        <intent
+            android:action="com.habitao.app.shortcut.ADD_TASK"
+            android:targetClass="com.habitao.app.MainActivity"
+            android:targetPackage="com.habitao.app" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="add_habit"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_add_habit"
+        android:shortcutShortLabel="@string/shortcut_add_habit"
+        android:shortcutLongLabel="@string/shortcut_add_habit_long">
+        <intent
+            android:action="com.habitao.app.shortcut.ADD_HABIT"
+            android:targetClass="com.habitao.app.MainActivity"
+            android:targetPackage="com.habitao.app" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="add_routine"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_add_routine"
+        android:shortcutShortLabel="@string/shortcut_add_routine"
+        android:shortcutLongLabel="@string/shortcut_add_routine_long">
+        <intent
+            android:action="com.habitao.app.shortcut.ADD_ROUTINE"
+            android:targetClass="com.habitao.app.MainActivity"
+            android:targetPackage="com.habitao.app" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="global_search"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_search"
+        android:shortcutShortLabel="@string/shortcut_global_search"
+        android:shortcutLongLabel="@string/shortcut_global_search_long">
+        <intent
+            android:action="com.habitao.app.shortcut.GLOBAL_SEARCH"
+            android:targetClass="com.habitao.app.MainActivity"
+            android:targetPackage="com.habitao.app" />
+    </shortcut>
+</shortcuts>
+
