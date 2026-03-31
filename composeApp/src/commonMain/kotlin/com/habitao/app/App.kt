@@ -72,6 +72,7 @@ import com.habitao.feature.settings.ui.NotificationSettingsScreen
 import com.habitao.feature.settings.ui.SettingsScreen
 import com.habitao.feature.settings.ui.SettingsTabOption
 import com.habitao.feature.tasks.ui.CreateTaskScreen
+import com.habitao.feature.tasks.ui.GlobalSearchScreen
 import com.habitao.feature.tasks.ui.TasksScreen
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -99,6 +100,8 @@ import org.koin.compose.koinInject
 @Serializable object NotificationsRoute
 
 @Serializable object FullScreenClockRoute
+
+@Serializable object SearchRoute
 
 @Serializable data class CreateRoutineRoute(val routineId: String? = null)
 
@@ -288,6 +291,7 @@ private fun HabitaoAppContent(
                         HabitsScreen(
                             onAddHabit = { navController.navigate(CreateHabitRoute) },
                             onEditHabit = { habitId -> navController.navigate(EditHabitRoute(habitId)) },
+                            onOpenGlobalSearch = { navController.navigate(SearchRoute) },
                         )
                     }
                 }
@@ -308,6 +312,7 @@ private fun HabitaoAppContent(
                             onAddRoutine = { navController.navigate(CreateRoutineRoute()) },
                             onEditRoutine = { routineId -> navController.navigate(CreateRoutineRoute(routineId = routineId)) },
                             onNavigateToStats = { navController.navigate(RoutineStatsRoute) },
+                            onOpenGlobalSearch = { navController.navigate(SearchRoute) },
                         )
                     }
                 }
@@ -321,8 +326,18 @@ private fun HabitaoAppContent(
                         TasksScreen(
                             onAddTask = { navController.navigate(CreateTaskRoute()) },
                             onEditTask = { taskId -> navController.navigate(CreateTaskRoute(taskId = taskId)) },
+                            onOpenGlobalSearch = { navController.navigate(SearchRoute) },
                         )
                     }
+                }
+
+                composable<SearchRoute> {
+                    GlobalSearchScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onOpenTask = { taskId -> navController.navigate(CreateTaskRoute(taskId = taskId)) },
+                        onOpenHabit = { habitId -> navController.navigate(EditHabitRoute(habitId)) },
+                        onOpenRoutine = { routineId -> navController.navigate(CreateRoutineRoute(routineId = routineId)) },
+                    )
                 }
 
                 composable<SettingsRoute> {

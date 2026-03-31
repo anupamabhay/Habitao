@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.RadioButtonUnchecked
@@ -35,6 +36,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -82,12 +84,14 @@ import kotlinx.datetime.toLocalDateTime
 fun TasksScreen(
     onAddTask: () -> Unit,
     onEditTask: (String) -> Unit,
+    onOpenGlobalSearch: () -> Unit,
     viewModel: TasksViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var sortMenuExpanded by remember { mutableStateOf(false) }
+    var quickAddTitle by remember { mutableStateOf("") }
 
     LaunchedEffect(state.error) {
         state.error?.let { error ->
@@ -102,6 +106,12 @@ fun TasksScreen(
             TopAppBar(
                 title = { Text("Tasks") },
                 actions = {
+                    IconButton(onClick = onOpenGlobalSearch) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Global search",
+                        )
+                    }
                     Box {
                         IconButton(onClick = { sortMenuExpanded = true }) {
                             Icon(
@@ -140,12 +150,45 @@ fun TasksScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddTask,
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Quick add task")
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tonalElevation = 2.dp,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = quickAddTitle,
+                            onValueChange = { quickAddTitle = it },
+                            singleLine = true,
+                            placeholder = { Text("Quick add to Inbox") },
+                            modifier = Modifier.width(220.dp),
+                        )
+                        IconButton(
+                            onClick = {
+                                viewModel.processIntent(TasksIntent.QuickAddTask(quickAddTitle))
+                                quickAddTitle = ""
+                            },
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Add to Inbox")
+                        }
+                    }
+                }
+
+                FloatingActionButton(
+                    onClick = onAddTask,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Open full task editor")
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },

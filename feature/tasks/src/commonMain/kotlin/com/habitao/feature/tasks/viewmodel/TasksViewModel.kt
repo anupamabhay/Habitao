@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.Task
 import com.habitao.domain.model.TaskPriority
 import com.habitao.domain.repository.TaskRepository
+import com.habitao.domain.util.randomUUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -66,6 +67,8 @@ sealed class TasksIntent {
     data class SetFilter(val filter: TaskFilter) : TasksIntent()
 
     data class SetSortOrder(val sortOrder: TaskSortOrder) : TasksIntent()
+
+    data class QuickAddTask(val title: String) : TasksIntent()
 }
 
 class TasksViewModel(
@@ -192,6 +195,7 @@ class TasksViewModel(
                 is TasksIntent.SetTaskExpanded -> setTaskExpanded(intent.taskId, intent.isExpanded)
                 is TasksIntent.SetFilter -> setFilter(intent.filter)
                 is TasksIntent.SetSortOrder -> setSortOrder(intent.sortOrder)
+                is TasksIntent.QuickAddTask -> quickAddTask(intent.title)
             }
         }
 
@@ -267,6 +271,28 @@ class TasksViewModel(
             isExpanded: Boolean,
         ) {
             expandedTaskIdsFlow.value = expandedTaskIdsFlow.value + (taskId to isExpanded)
+        }
+
+        private fun quickAddTask(title: String) {
+            val trimmedTitle = title.trim()
+            if (trimmedTitle.isEmpty()) {
+                errorFlow.value = "Title cannot be empty"
+                return
+            }
+
+            viewModelScope.launch {
+                taskRepository.createTask(
+                    Task(
+                        id = randomUUID(),
+                        title = trimmedTitle,
+                        dueDate = null,
+                        dueTime = null,
+                        priority = TaskPriority.NONE,
+                    ),
+                ).onFailure {
+                    errorFlow.value = it.message ?: "Failed to quick add task"
+                }
+            }
         }
 
         private fun sortTasks(
