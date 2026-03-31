@@ -53,6 +53,24 @@ class TasksViewModelTest {
             assertEquals(1, updatedState.subTasks[parent.id]?.size)
         }
 
+    @Test
+    fun `tasks without due dates should be routed to inbox instead of upcoming`() =
+        runTest {
+            repository.emitTasks(
+                listOf(
+                    createTask(id = "inbox-1", title = "Inbox task"),
+                    createTask(id = "upcoming-1", title = "Upcoming task", dueDate = LocalDate(2099, 1, 2)),
+                ),
+            )
+
+            val viewModel = TasksViewModel(repository)
+            advanceUntilIdle()
+
+            val state = viewModel.state.value
+            assertEquals(listOf("inbox-1"), state.inboxTasks.map { it.id })
+            assertEquals(listOf("upcoming-1"), state.upcomingTasks.map { it.id })
+        }
+
     private fun createTask(
         id: String,
         title: String,

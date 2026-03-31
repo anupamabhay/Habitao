@@ -39,6 +39,7 @@ data class TasksState(
     val overdueTasks: List<Task> = emptyList(),
     val todayTasks: List<Task> = emptyList(),
     val tomorrowTasks: List<Task> = emptyList(),
+    val inboxTasks: List<Task> = emptyList(),
     val upcomingTasks: List<Task> = emptyList(),
     val subTasks: Map<String, List<Task>> = emptyMap(),
     val completedTasks: List<Task> = emptyList(),
@@ -142,12 +143,13 @@ class TasksViewModel(
                 val overdueTasks = mutableListOf<Task>()
                 val todayTasks = mutableListOf<Task>()
                 val tomorrowTasks = mutableListOf<Task>()
+                val inboxTasks = mutableListOf<Task>()
                 val upcomingTasks = mutableListOf<Task>()
 
                 activeTopLevelTasks.forEach { task ->
                     val dueDate = task.dueDate
                     if (dueDate == null) {
-                        upcomingTasks.add(task)
+                        inboxTasks.add(task)
                     } else if (dueDate < today) {
                         overdueTasks.add(task)
                     } else if (dueDate == today) {
@@ -163,6 +165,7 @@ class TasksViewModel(
                     overdueTasks = sortTasks(overdueTasks, sortOrder),
                     todayTasks = sortTasks(todayTasks, sortOrder),
                     tomorrowTasks = sortTasks(tomorrowTasks, sortOrder),
+                    inboxTasks = sortTasks(inboxTasks, sortOrder),
                     upcomingTasks = sortTasks(upcomingTasks, sortOrder),
                     subTasks = activeSubTasks,
                     completedTasks = sortTasks(completedTopLevelTasks, sortOrder),

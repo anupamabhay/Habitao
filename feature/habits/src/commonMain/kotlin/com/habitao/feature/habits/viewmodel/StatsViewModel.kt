@@ -261,7 +261,7 @@ class StatsViewModel
                                 }
                             }
                             .awaitAll()
-                            .filter { it.currentStreak > 0 }
+                            .filter { it.currentStreak >= 2 }
                             .sortedByDescending { it.currentStreak }
                     }
                 }

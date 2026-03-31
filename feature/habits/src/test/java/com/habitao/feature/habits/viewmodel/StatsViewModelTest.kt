@@ -27,7 +27,9 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -65,9 +67,10 @@ class StatsViewModelTest {
     }
 
     @Test
-    fun `one day streak should appear immediately when logs update`() =
+    fun `streak should appear only after day two and still refresh in real time`() =
         runTest {
             val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+            val yesterday = today.minus(1, DateTimeUnit.DAY)
             val habit = createTestHabit()
             val habitsFlow = MutableStateFlow(Result.success(listOf(habit)))
             val logsFlow = MutableStateFlow(Result.success(emptyList<HabitLog>()))
@@ -111,12 +114,43 @@ class StatsViewModelTest {
 
             advanceUntilIdle()
 
-            val updatedState = viewModel.state.value
-            assertEquals(1, updatedState.currentBestStreak)
-            assertEquals(1, updatedState.habitStats.size)
-            assertEquals(1, updatedState.habitStats.first().currentStreak)
-            assertTrue(updatedState.habitStats.first().isCompletedToday)
-            assertFalse(updatedState.isLoading)
+            val oneDayState = viewModel.state.value
+            assertEquals(0, oneDayState.currentBestStreak)
+            assertTrue(oneDayState.habitStats.isEmpty())
+            assertFalse(oneDayState.isLoading)
+
+            streakInfo = StreakInfo(currentStreak = 2, longestStreak = 2, totalCompletions = 2)
+            logsFlow.value =
+                Result.success(
+                    listOf(
+                        HabitLog(
+                            id = "log-0",
+                            habitId = habit.id,
+                            date = yesterday,
+                            currentValue = 1,
+                            targetValue = 1,
+                            isCompleted = true,
+                            completedAt = Clock.System.now().toEpochMilliseconds(),
+                        ),
+                        HabitLog(
+                            id = "log-1",
+                            habitId = habit.id,
+                            date = today,
+                            currentValue = 1,
+                            targetValue = 1,
+                            isCompleted = true,
+                            completedAt = Clock.System.now().toEpochMilliseconds(),
+                        ),
+                    ),
+                )
+
+            advanceUntilIdle()
+
+            val twoDayState = viewModel.state.value
+            assertEquals(2, twoDayState.currentBestStreak)
+            assertEquals(1, twoDayState.habitStats.size)
+            assertEquals(2, twoDayState.habitStats.first().currentStreak)
+            assertTrue(twoDayState.habitStats.first().isCompletedToday)
         }
 
     private fun createTestHabit(): Habit =
