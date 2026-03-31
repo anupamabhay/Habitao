@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -124,7 +125,7 @@ private fun FilterChip(
     AssistChip(
         onClick = onClick,
         label = { Text(label) },
-        leadingIcon = { if (selected) Icon(Icons.Default.Search, contentDescription = null) },
+        leadingIcon = { if (selected) Icon(Icons.Default.Check, contentDescription = null) },
     )
 }
 
@@ -172,4 +173,3 @@ private fun SearchResultRow(
         }
     }
 }
-

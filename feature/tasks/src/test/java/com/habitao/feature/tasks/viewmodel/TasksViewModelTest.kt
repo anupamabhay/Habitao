@@ -18,6 +18,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TasksViewModelTest {
@@ -71,6 +72,20 @@ class TasksViewModelTest {
             assertEquals(listOf("upcoming-1"), state.upcomingTasks.map { it.id })
         }
 
+    @Test
+    fun `quick add should create trimmed inbox task`() =
+        runTest {
+            repository.emitTasks(emptyList())
+            val viewModel = TasksViewModel(repository)
+            advanceUntilIdle()
+
+            viewModel.processIntent(TasksIntent.QuickAddTask("  Quick inbox item  "))
+            advanceUntilIdle()
+
+            val state = viewModel.state.value
+            assertTrue(state.inboxTasks.any { it.title == "Quick inbox item" })
+        }
+
     private fun createTask(
         id: String,
         title: String,
@@ -97,7 +112,10 @@ private class FakeTaskRepository : TaskRepository {
 
     override fun observeAllTasks(): Flow<Result<List<Task>>> = tasksFlow.map { Result.success(it) }
 
-    override suspend fun createTask(task: Task): Result<Unit> = Result.success(Unit)
+    override suspend fun createTask(task: Task): Result<Unit> {
+        tasksFlow.value = tasksFlow.value + task
+        return Result.success(Unit)
+    }
 
     override suspend fun updateTask(task: Task): Result<Unit> = Result.success(Unit)
 

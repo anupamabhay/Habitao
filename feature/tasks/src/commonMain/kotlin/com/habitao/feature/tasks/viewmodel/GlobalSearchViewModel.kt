@@ -64,50 +64,51 @@ class GlobalSearchViewModel(
                     emptyList()
                 } else {
                     buildList {
-                        tasks
-                            .filter { task ->
-                                task.title.lowercase().contains(normalized) ||
-                                    task.description?.lowercase()?.contains(normalized) == true
-                            }.forEach { task ->
-                                add(
-                                    SearchResultItem(
-                                        id = task.id,
-                                        title = task.title,
-                                        description = task.description,
-                                        type = SearchResultType.TASK,
-                                    ),
-                                )
+                        fun addMatches(
+                            items: List<SearchResultItem>,
+                            type: SearchResultType,
+                        ) {
+                            items.filter { item ->
+                                item.title.lowercase().contains(normalized) ||
+                                    item.description?.lowercase()?.contains(normalized) == true
+                            }.forEach { item ->
+                                add(item.copy(type = type))
                             }
+                        }
 
-                        habits
-                            .filter { habit ->
-                                habit.title.lowercase().contains(normalized) ||
-                                    habit.description?.lowercase()?.contains(normalized) == true
-                            }.forEach { habit ->
-                                add(
-                                    SearchResultItem(
-                                        id = habit.id,
-                                        title = habit.title,
-                                        description = habit.description,
-                                        type = SearchResultType.HABIT,
-                                    ),
+                        addMatches(
+                            tasks.map { task ->
+                                SearchResultItem(
+                                    id = task.id,
+                                    title = task.title,
+                                    description = task.description,
+                                    type = SearchResultType.TASK,
                                 )
-                            }
-
-                        routines
-                            .filter { routine ->
-                                routine.title.lowercase().contains(normalized) ||
-                                    routine.description?.lowercase()?.contains(normalized) == true
-                            }.forEach { routine ->
-                                add(
-                                    SearchResultItem(
-                                        id = routine.id,
-                                        title = routine.title,
-                                        description = routine.description,
-                                        type = SearchResultType.ROUTINE,
-                                    ),
+                            },
+                            SearchResultType.TASK,
+                        )
+                        addMatches(
+                            habits.map { habit ->
+                                SearchResultItem(
+                                    id = habit.id,
+                                    title = habit.title,
+                                    description = habit.description,
+                                    type = SearchResultType.HABIT,
                                 )
-                            }
+                            },
+                            SearchResultType.HABIT,
+                        )
+                        addMatches(
+                            routines.map { routine ->
+                                SearchResultItem(
+                                    id = routine.id,
+                                    title = routine.title,
+                                    description = routine.description,
+                                    type = SearchResultType.ROUTINE,
+                                )
+                            },
+                            SearchResultType.ROUTINE,
+                        )
                     }
                 }
 
@@ -139,4 +140,3 @@ class GlobalSearchViewModel(
         filterFlow.value = filter
     }
 }
-
