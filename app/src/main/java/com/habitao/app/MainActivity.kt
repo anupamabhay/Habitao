@@ -7,30 +7,27 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.habitao.data.backup.BackupManager
 import com.habitao.system.notifications.HabitReminderScheduler
 import com.habitao.system.notifications.TaskReminderScheduler
 import org.koin.android.ext.android.inject
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class MainActivity : ComponentActivity() {
     private val backupManager: BackupManager by inject()
     private val habitReminderScheduler: HabitReminderScheduler by inject()
     private val taskReminderScheduler: TaskReminderScheduler by inject()
-    companion object {
-        private var quickActionRouteState by mutableStateOf<String?>(null)
-    }
+    private val quickActionRouteState = MutableStateFlow<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        quickActionRouteState = QuickActionIntentParser.toRoute(intent?.action)
+        quickActionRouteState.value = QuickActionIntentParser.toRoute(intent?.action)
 
         // Request highest available refresh rate
         @Suppress("DEPRECATION")
@@ -49,6 +46,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val coroutineScope = rememberCoroutineScope()
+            val quickActionRoute = quickActionRouteState.collectAsState().value
 
             val exportLauncher =
                 rememberLauncherForActivityResult(
@@ -94,8 +92,8 @@ class MainActivity : ComponentActivity() {
             App(
                 onExportBackup = { exportLauncher.launch(BackupManager.DEFAULT_FILENAME) },
                 onImportBackup = { importLauncher.launch(arrayOf(BackupManager.MIME_TYPE)) },
-                quickActionRoute = quickActionRouteState,
-                onQuickActionConsumed = { quickActionRouteState = null },
+                quickActionRoute = quickActionRoute,
+                onQuickActionConsumed = { quickActionRouteState.value = null },
             )
         }
     }
@@ -103,6 +101,6 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        quickActionRouteState = QuickActionIntentParser.toRoute(intent.action)
+        quickActionRouteState.value = QuickActionIntentParser.toRoute(intent.action)
     }
 }

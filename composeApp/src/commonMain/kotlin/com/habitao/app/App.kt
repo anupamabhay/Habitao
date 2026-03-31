@@ -441,6 +441,7 @@ private fun HabitaoAppContent(
             }
 
             LaunchedEffect(quickActionRoute) {
+                if (quickActionRoute == null) return@LaunchedEffect
                 when (quickActionRoute) {
                     QuickActionRoute.AddTask -> {
                         navController.navigate(CreateTaskRoute())
@@ -458,7 +459,7 @@ private fun HabitaoAppContent(
                         navController.navigate(SearchRoute)
                         onQuickActionConsumed()
                     }
-                    null -> Unit
+                    else -> Unit
                 }
             }
         }

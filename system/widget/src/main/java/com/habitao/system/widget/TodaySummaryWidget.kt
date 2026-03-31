@@ -17,6 +17,9 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 
+private const val MainActivityPackage = "com.habitao.app"
+private const val MainActivityClass = "com.habitao.app.MainActivity"
+
 class TodaySummaryWidget : GlanceAppWidget() {
     override suspend fun provideGlance(
         context: Context,
@@ -36,7 +39,7 @@ private fun TodaySummaryWidgetContent() {
                 .fillMaxSize()
                 .padding(12.dp)
                 .clickable(
-                    actionStartActivity(Intent().setClassName("com.habitao.app", "com.habitao.app.MainActivity")),
+                    actionStartActivity(Intent().setClassName(MainActivityPackage, MainActivityClass)),
                 ),
         verticalAlignment = Alignment.Vertical.CenterVertically,
         horizontalAlignment = Alignment.Horizontal.Start,

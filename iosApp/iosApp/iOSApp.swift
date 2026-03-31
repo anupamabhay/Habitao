@@ -10,6 +10,10 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
         if let shortcutItem = launchOptions?[.shortcutItem] as? UIApplicationShortcutItem {
             quickActionRoute = mapQuickAction(shortcutItem.type)
+            // Returning false is required so iOS knows launch was triggered by a quick action
+            // and avoids re-delivering it through the regular launch flow.
+            // In this cold-launch case, the shortcut is handled here instead of through
+            // application(_:performActionFor:completionHandler:).
             return false
         }
 
