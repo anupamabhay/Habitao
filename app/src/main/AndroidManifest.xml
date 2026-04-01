@@ -24,6 +24,25 @@
             android:exported="true"
             android:theme="@style/Theme.Habitao.Splash">
             <intent-filter>
+                <action android:name="com.habitao.app.shortcut.ADD_TASK" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.habitao.app.shortcut.ADD_HABIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.habitao.app.shortcut.ADD_ROUTINE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.habitao.app.shortcut.GLOBAL_SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
@@ -65,6 +84,17 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Pomodoro Timer" />
         </service>
+
+        <receiver
+            android:name="com.habitao.system.widget.TodaySummaryWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/today_summary_widget_info" />
+        </receiver>
 
     </application>
 

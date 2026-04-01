@@ -72,6 +72,7 @@ import com.habitao.feature.settings.ui.NotificationSettingsScreen
 import com.habitao.feature.settings.ui.SettingsScreen
 import com.habitao.feature.settings.ui.SettingsTabOption
 import com.habitao.feature.tasks.ui.CreateTaskScreen
+import com.habitao.feature.tasks.ui.GlobalSearchScreen
 import com.habitao.feature.tasks.ui.TasksScreen
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -99,6 +100,8 @@ import org.koin.compose.koinInject
 @Serializable object NotificationsRoute
 
 @Serializable object FullScreenClockRoute
+
+@Serializable object SearchRoute
 
 @Serializable data class CreateRoutineRoute(val routineId: String? = null)
 
@@ -168,12 +171,16 @@ private enum class Tab(
 fun App(
     onExportBackup: (() -> Unit)? = null,
     onImportBackup: (() -> Unit)? = null,
+    quickActionRoute: String? = null,
+    onQuickActionConsumed: (() -> Unit)? = null,
 ) {
     val appSettingsManager = koinInject<AppSettingsRepository>()
     HabitaoAppContent(
         appSettingsManager = appSettingsManager,
         onExportBackup = onExportBackup ?: {},
         onImportBackup = onImportBackup ?: {},
+        quickActionRoute = quickActionRoute,
+        onQuickActionConsumed = onQuickActionConsumed ?: {},
     )
 }
 
@@ -183,6 +190,8 @@ private fun HabitaoAppContent(
     appSettingsManager: AppSettingsRepository,
     onExportBackup: () -> Unit,
     onImportBackup: () -> Unit,
+    quickActionRoute: String?,
+    onQuickActionConsumed: () -> Unit,
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -288,6 +297,7 @@ private fun HabitaoAppContent(
                         HabitsScreen(
                             onAddHabit = { navController.navigate(CreateHabitRoute) },
                             onEditHabit = { habitId -> navController.navigate(EditHabitRoute(habitId)) },
+                            onOpenGlobalSearch = { navController.navigate(SearchRoute) },
                         )
                     }
                 }
@@ -308,6 +318,7 @@ private fun HabitaoAppContent(
                             onAddRoutine = { navController.navigate(CreateRoutineRoute()) },
                             onEditRoutine = { routineId -> navController.navigate(CreateRoutineRoute(routineId = routineId)) },
                             onNavigateToStats = { navController.navigate(RoutineStatsRoute) },
+                            onOpenGlobalSearch = { navController.navigate(SearchRoute) },
                         )
                     }
                 }
@@ -321,8 +332,18 @@ private fun HabitaoAppContent(
                         TasksScreen(
                             onAddTask = { navController.navigate(CreateTaskRoute()) },
                             onEditTask = { taskId -> navController.navigate(CreateTaskRoute(taskId = taskId)) },
+                            onOpenGlobalSearch = { navController.navigate(SearchRoute) },
                         )
                     }
+                }
+
+                composable<SearchRoute> {
+                    GlobalSearchScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onOpenTask = { taskId -> navController.navigate(CreateTaskRoute(taskId = taskId)) },
+                        onOpenHabit = { habitId -> navController.navigate(EditHabitRoute(habitId)) },
+                        onOpenRoutine = { routineId -> navController.navigate(CreateRoutineRoute(routineId = routineId)) },
+                    )
                 }
 
                 composable<SettingsRoute> {
@@ -416,6 +437,29 @@ private fun HabitaoAppContent(
 
                 composable<FullScreenClockRoute> {
                     FullScreenClockScreen(onClose = { navController.popBackStack() })
+                }
+            }
+
+            LaunchedEffect(quickActionRoute) {
+                if (quickActionRoute == null) return@LaunchedEffect
+                when (quickActionRoute) {
+                    QuickActionRoute.AddTask -> {
+                        navController.navigate(CreateTaskRoute())
+                        onQuickActionConsumed()
+                    }
+                    QuickActionRoute.AddHabit -> {
+                        navController.navigate(CreateHabitRoute)
+                        onQuickActionConsumed()
+                    }
+                    QuickActionRoute.AddRoutine -> {
+                        navController.navigate(CreateRoutineRoute())
+                        onQuickActionConsumed()
+                    }
+                    QuickActionRoute.GlobalSearch -> {
+                        navController.navigate(SearchRoute)
+                        onQuickActionConsumed()
+                    }
+                    else -> Unit
                 }
             }
         }

@@ -502,7 +502,7 @@ private fun StatsContent(
         if (state.habitStats.isEmpty()) {
             item(key = "empty_habit_stats") {
                 Text(
-                    text = "No habits tracked yet",
+                    text = "No active streaks yet",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

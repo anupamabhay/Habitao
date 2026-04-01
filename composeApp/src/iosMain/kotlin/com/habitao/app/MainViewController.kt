@@ -2,4 +2,7 @@ package com.habitao.app
 
 import androidx.compose.ui.window.ComposeUIViewController
 
-fun MainViewController() = ComposeUIViewController { App() }
+fun MainViewController(quickActionRoute: String? = null) =
+    ComposeUIViewController {
+        App(quickActionRoute = quickActionRoute)
+    }

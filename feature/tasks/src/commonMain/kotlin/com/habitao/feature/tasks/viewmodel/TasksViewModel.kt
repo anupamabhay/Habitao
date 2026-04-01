@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.habitao.domain.model.Task
 import com.habitao.domain.model.TaskPriority
 import com.habitao.domain.repository.TaskRepository
+import com.habitao.domain.util.randomUUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -39,11 +40,13 @@ data class TasksState(
     val overdueTasks: List<Task> = emptyList(),
     val todayTasks: List<Task> = emptyList(),
     val tomorrowTasks: List<Task> = emptyList(),
+    val inboxTasks: List<Task> = emptyList(),
     val upcomingTasks: List<Task> = emptyList(),
     val subTasks: Map<String, List<Task>> = emptyMap(),
     val completedTasks: List<Task> = emptyList(),
     val completedSubTasks: Map<String, List<Task>> = emptyMap(),
     val orphanCompletedSubTasks: List<Task> = emptyList(),
+    val expandedTaskIds: Map<String, Boolean> = emptyMap(),
     val isLoading: Boolean = true,
     val error: String? = null,
     val filter: TaskFilter = TaskFilter.ALL,
@@ -59,9 +62,13 @@ sealed class TasksIntent {
 
     data class ToggleComplete(val taskId: String, val isCompleted: Boolean) : TasksIntent()
 
+    data class SetTaskExpanded(val taskId: String, val isExpanded: Boolean) : TasksIntent()
+
     data class SetFilter(val filter: TaskFilter) : TasksIntent()
 
     data class SetSortOrder(val sortOrder: TaskSortOrder) : TasksIntent()
+
+    data class QuickAddTask(val title: String) : TasksIntent()
 }
 
 class TasksViewModel(
@@ -70,6 +77,7 @@ class TasksViewModel(
         private val errorFlow = MutableStateFlow<String?>(null)
         private val filterFlow = MutableStateFlow(TaskFilter.ALL)
         private val sortOrderFlow = MutableStateFlow(TaskSortOrder.DATE)
+        private val expandedTaskIdsFlow = MutableStateFlow<Map<String, Boolean>>(emptyMap())
 
         val state: StateFlow<TasksState> =
             combine(
@@ -79,7 +87,8 @@ class TasksViewModel(
                 errorFlow,
                 filterFlow,
                 sortOrderFlow,
-            ) { tasks, error, filter, sortOrder ->
+                expandedTaskIdsFlow,
+            ) { tasks, error, filter, sortOrder, expandedTaskIds ->
                 val filteredTasks =
                     when (filter) {
                         TaskFilter.ALL -> tasks
@@ -128,6 +137,8 @@ class TasksViewModel(
                         .values
                         .flatten()
                         .filter { it.isCompleted }
+                val visibleTaskIds = filteredTasks.map { it.id }.toSet()
+                val visibleExpandedTaskIds = expandedTaskIds.filterKeys { it in visibleTaskIds }
 
                 val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
                 val tomorrow = today.plus(1, DateTimeUnit.DAY)
@@ -135,12 +146,13 @@ class TasksViewModel(
                 val overdueTasks = mutableListOf<Task>()
                 val todayTasks = mutableListOf<Task>()
                 val tomorrowTasks = mutableListOf<Task>()
+                val inboxTasks = mutableListOf<Task>()
                 val upcomingTasks = mutableListOf<Task>()
 
                 activeTopLevelTasks.forEach { task ->
                     val dueDate = task.dueDate
                     if (dueDate == null) {
-                        upcomingTasks.add(task)
+                        inboxTasks.add(task)
                     } else if (dueDate < today) {
                         overdueTasks.add(task)
                     } else if (dueDate == today) {
@@ -156,11 +168,13 @@ class TasksViewModel(
                     overdueTasks = sortTasks(overdueTasks, sortOrder),
                     todayTasks = sortTasks(todayTasks, sortOrder),
                     tomorrowTasks = sortTasks(tomorrowTasks, sortOrder),
+                    inboxTasks = sortTasks(inboxTasks, sortOrder),
                     upcomingTasks = sortTasks(upcomingTasks, sortOrder),
                     subTasks = activeSubTasks,
                     completedTasks = sortTasks(completedTopLevelTasks, sortOrder),
                     completedSubTasks = completedSubTasks,
                     orphanCompletedSubTasks = sortTasks(orphanCompletedSubTasks, sortOrder),
+                    expandedTaskIds = visibleExpandedTaskIds,
                     isLoading = false,
                     error = error,
                     filter = filter,
@@ -178,8 +192,10 @@ class TasksViewModel(
                 is TasksIntent.UpdateTask -> updateTask(intent.task)
                 is TasksIntent.DeleteTask -> deleteTask(intent.taskId)
                 is TasksIntent.ToggleComplete -> toggleComplete(intent.taskId, intent.isCompleted)
+                is TasksIntent.SetTaskExpanded -> setTaskExpanded(intent.taskId, intent.isExpanded)
                 is TasksIntent.SetFilter -> setFilter(intent.filter)
                 is TasksIntent.SetSortOrder -> setSortOrder(intent.sortOrder)
+                is TasksIntent.QuickAddTask -> quickAddTask(intent.title)
             }
         }
 
@@ -248,6 +264,35 @@ class TasksViewModel(
 
         private fun setSortOrder(sortOrder: TaskSortOrder) {
             sortOrderFlow.value = sortOrder
+        }
+
+        private fun setTaskExpanded(
+            taskId: String,
+            isExpanded: Boolean,
+        ) {
+            expandedTaskIdsFlow.value = expandedTaskIdsFlow.value + (taskId to isExpanded)
+        }
+
+        private fun quickAddTask(title: String) {
+            val trimmedTitle = title.trim()
+            if (trimmedTitle.isEmpty()) {
+                errorFlow.value = "Title cannot be empty"
+                return
+            }
+
+            viewModelScope.launch {
+                taskRepository.createTask(
+                    Task(
+                        id = randomUUID(),
+                        title = trimmedTitle,
+                        dueDate = null,
+                        dueTime = null,
+                        priority = TaskPriority.NONE,
+                    ),
+                ).onFailure {
+                    errorFlow.value = it.message ?: "Failed to quick add task"
+                }
+            }
         }
 
         private fun sortTasks(
