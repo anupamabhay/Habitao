@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.RadioButtonUnchecked
@@ -35,6 +36,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -82,12 +84,14 @@ import kotlinx.datetime.toLocalDateTime
 fun TasksScreen(
     onAddTask: () -> Unit,
     onEditTask: (String) -> Unit,
+    onOpenGlobalSearch: () -> Unit,
     viewModel: TasksViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var sortMenuExpanded by remember { mutableStateOf(false) }
+    var quickAddTitle by remember { mutableStateOf("") }
 
     LaunchedEffect(state.error) {
         state.error?.let { error ->
@@ -102,6 +106,12 @@ fun TasksScreen(
             TopAppBar(
                 title = { Text("Tasks") },
                 actions = {
+                    IconButton(onClick = onOpenGlobalSearch) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Global search",
+                        )
+                    }
                     Box {
                         IconButton(onClick = { sortMenuExpanded = true }) {
                             Icon(
@@ -140,12 +150,45 @@ fun TasksScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddTask,
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(Dimensions.elementSpacing),
             ) {
-                Icon(Icons.Default.Add, contentDescription = "New Task")
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tonalElevation = 2.dp,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = quickAddTitle,
+                            onValueChange = { quickAddTitle = it },
+                            singleLine = true,
+                            placeholder = { Text("Quick add to Inbox") },
+                            modifier = Modifier.width(220.dp),
+                        )
+                        IconButton(
+                            onClick = {
+                                viewModel.processIntent(TasksIntent.QuickAddTask(quickAddTitle))
+                                quickAddTitle = ""
+                            },
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Add to Inbox")
+                        }
+                    }
+                }
+
+                FloatingActionButton(
+                    onClick = onAddTask,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Open full task editor")
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -154,6 +197,9 @@ fun TasksScreen(
             state = state,
             onToggleComplete = { taskId, isCompleted ->
                 viewModel.processIntent(TasksIntent.ToggleComplete(taskId, isCompleted))
+            },
+            onTaskExpandedChange = { taskId, isExpanded ->
+                viewModel.processIntent(TasksIntent.SetTaskExpanded(taskId, isExpanded))
             },
             onTaskClick = onEditTask,
             modifier = Modifier.padding(paddingValues),
@@ -165,6 +211,7 @@ fun TasksScreen(
 private fun TasksContent(
     state: TasksState,
     onToggleComplete: (String, Boolean) -> Unit,
+    onTaskExpandedChange: (String, Boolean) -> Unit,
     onTaskClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -175,17 +222,17 @@ private fun TasksContent(
                 "Today" to true,
                 "Tomorrow" to true,
                 "Upcoming" to true,
-                "No Date" to true,
+                "Inbox" to true,
                 "Completed" to false,
             )
         }
-    val expandedTaskIds = remember { mutableStateMapOf<String, Boolean>() }
     val today = remember { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
 
     val hasActiveTasks =
         state.overdueTasks.isNotEmpty() ||
             state.todayTasks.isNotEmpty() ||
             state.tomorrowTasks.isNotEmpty() ||
+            state.inboxTasks.isNotEmpty() ||
             state.upcomingTasks.isNotEmpty()
     val hasCompletedTasks = state.completedTasks.isNotEmpty() || state.orphanCompletedSubTasks.isNotEmpty()
 
@@ -207,7 +254,7 @@ private fun TasksContent(
 
                 val totalActive =
                     state.overdueTasks.size + state.todayTasks.size +
-                        state.tomorrowTasks.size + state.upcomingTasks.size
+                        state.tomorrowTasks.size + state.inboxTasks.size + state.upcomingTasks.size
                 val totalCompleted = state.completedTasks.size
                 val totalAll = totalActive + totalCompleted
 
@@ -235,8 +282,9 @@ private fun TasksContent(
                         color = errorColor,
                         tasks = state.overdueTasks,
                         sectionExpanded = sectionExpanded,
-                        expandedTaskIds = expandedTaskIds,
+                        expandedTaskIds = state.expandedTaskIds,
                         subTasks = state.subTasks,
+                        onTaskExpandedChange = onTaskExpandedChange,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
                         today = today,
@@ -247,8 +295,9 @@ private fun TasksContent(
                         color = primaryColor,
                         tasks = state.todayTasks,
                         sectionExpanded = sectionExpanded,
-                        expandedTaskIds = expandedTaskIds,
+                        expandedTaskIds = state.expandedTaskIds,
                         subTasks = state.subTasks,
+                        onTaskExpandedChange = onTaskExpandedChange,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
                         today = today,
@@ -259,8 +308,22 @@ private fun TasksContent(
                         color = secondaryColor,
                         tasks = state.tomorrowTasks,
                         sectionExpanded = sectionExpanded,
-                        expandedTaskIds = expandedTaskIds,
+                        expandedTaskIds = state.expandedTaskIds,
                         subTasks = state.subTasks,
+                        onTaskExpandedChange = onTaskExpandedChange,
+                        onToggleComplete = onToggleComplete,
+                        onTaskClick = onTaskClick,
+                        today = today,
+                    )
+
+                    section(
+                        title = "Inbox",
+                        color = onSurfaceVariantColor,
+                        tasks = state.inboxTasks,
+                        sectionExpanded = sectionExpanded,
+                        expandedTaskIds = state.expandedTaskIds,
+                        subTasks = state.subTasks,
+                        onTaskExpandedChange = onTaskExpandedChange,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
                         today = today,
@@ -271,8 +334,9 @@ private fun TasksContent(
                         color = onSurfaceVariantColor,
                         tasks = state.upcomingTasks,
                         sectionExpanded = sectionExpanded,
-                        expandedTaskIds = expandedTaskIds,
+                        expandedTaskIds = state.expandedTaskIds,
                         subTasks = state.subTasks,
+                        onTaskExpandedChange = onTaskExpandedChange,
                         onToggleComplete = onToggleComplete,
                         onTaskClick = onTaskClick,
                         today = today,
@@ -301,17 +365,18 @@ private fun TasksContent(
                                 contentType = { "task_item" },
                             ) { task ->
                                 TaskItemWithSubtasks(
-                                    task = task,
-                                    subtasks = state.completedSubTasks[task.id] ?: emptyList(),
-                                    onToggleComplete = onToggleComplete,
-                                    onTaskClick = onTaskClick,
-                                    isExpanded = expandedTaskIds[task.id] ?: true,
-                                    onToggleExpanded = {
-                                        expandedTaskIds[task.id] = !(expandedTaskIds[task.id] ?: true)
-                                    },
-                                    allSubTasks = state.completedSubTasks,
-                                    today = today,
-                                )
+                                     task = task,
+                                     subtasks = state.completedSubTasks[task.id] ?: emptyList(),
+                                     onToggleComplete = onToggleComplete,
+                                     onTaskClick = onTaskClick,
+                                     isExpanded = state.expandedTaskIds[task.id] ?: true,
+                                     onToggleExpanded = {
+                                         val nextExpanded = !(state.expandedTaskIds[task.id] ?: true)
+                                         onTaskExpandedChange(task.id, nextExpanded)
+                                     },
+                                     allSubTasks = state.completedSubTasks,
+                                     today = today,
+                                 )
                             }
 
                             items(
@@ -344,8 +409,9 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
     color: Color,
     tasks: List<Task>,
     sectionExpanded: MutableMap<String, Boolean>,
-    expandedTaskIds: MutableMap<String, Boolean>,
+    expandedTaskIds: Map<String, Boolean>,
     subTasks: Map<String, List<Task>>,
+    onTaskExpandedChange: (String, Boolean) -> Unit,
     onToggleComplete: (String, Boolean) -> Unit,
     onTaskClick: (String) -> Unit,
     today: LocalDate,
@@ -373,7 +439,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
                 onTaskClick = onTaskClick,
                 isExpanded = expandedTaskIds[task.id] ?: true,
                 onToggleExpanded = {
-                    expandedTaskIds[task.id] = !(expandedTaskIds[task.id] ?: true)
+                    val nextExpanded = !(expandedTaskIds[task.id] ?: true)
+                    onTaskExpandedChange(task.id, nextExpanded)
                 },
                 allSubTasks = subTasks,
                 today = today,
@@ -772,6 +839,15 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         Text(
             text = "No tasks yet",
             style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+
+        Spacer(modifier = Modifier.height(Dimensions.elementSpacing))
+
+        Text(
+            text = "Use the quick add button to drop a task into Inbox.",
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )

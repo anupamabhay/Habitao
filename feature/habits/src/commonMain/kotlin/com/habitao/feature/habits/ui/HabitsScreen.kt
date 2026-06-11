@@ -20,6 +20,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Sort
 import androidx.compose.material3.CircularProgressIndicator
@@ -83,6 +84,7 @@ private const val DAYS_PER_WEEK = 7L
 fun HabitsScreen(
     onAddHabit: () -> Unit,
     onEditHabit: (String) -> Unit = {},
+    onOpenGlobalSearch: () -> Unit = {},
     viewModel: HabitsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -116,6 +118,12 @@ fun HabitsScreen(
             TopAppBar(
                 title = { Text(greeting) },
                 actions = {
+                    IconButton(onClick = onOpenGlobalSearch) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Global search",
+                        )
+                    }
                     Box {
                         IconButton(onClick = { showSortMenu = true }) {
                             Icon(

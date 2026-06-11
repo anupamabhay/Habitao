@@ -33,6 +33,41 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.habitao.app.addTask</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Add Task</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>checklist</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.habitao.app.addHabit</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Add Habit</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>flame</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.habitao.app.addRoutine</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Add Routine</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>list.bullet.rectangle</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.habitao.app.globalSearch</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Search</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>magnifyingglass</string>
+		</dict>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

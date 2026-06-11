@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -86,6 +87,7 @@ fun RoutinesScreen(
     onAddRoutine: () -> Unit,
     onEditRoutine: (String) -> Unit,
     onNavigateToStats: () -> Unit,
+    onOpenGlobalSearch: () -> Unit = {},
     viewModel: RoutinesViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -120,6 +122,12 @@ fun RoutinesScreen(
             TopAppBar(
                 title = { Text("Routines") },
                 actions = {
+                    IconButton(onClick = onOpenGlobalSearch) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Global search",
+                        )
+                    }
                     IconButton(onClick = onNavigateToStats) {
                         Icon(
                             imageVector = Icons.Outlined.BarChart,
