@@ -1,7 +1,7 @@
 package com.habitao.system.widget
 
+import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceModifier
@@ -23,7 +23,7 @@ private const val MainActivityClass = "com.habitao.app.MainActivity"
 class TodaySummaryWidget : GlanceAppWidget() {
     override suspend fun provideGlance(
         context: Context,
-        id: androidx.glance.appwidget.GlanceId,
+        id: androidx.glance.GlanceId,
     ) {
         provideContent {
             TodaySummaryWidgetContent()
@@ -39,7 +39,7 @@ private fun TodaySummaryWidgetContent() {
                 .fillMaxSize()
                 .padding(12.dp)
                 .clickable(
-                    actionStartActivity(Intent().setClassName(MainActivityPackage, MainActivityClass)),
+                    actionStartActivity(ComponentName(MainActivityPackage, MainActivityClass)),
                 ),
         verticalAlignment = Alignment.Vertical.CenterVertically,
         horizontalAlignment = Alignment.Horizontal.Start,
